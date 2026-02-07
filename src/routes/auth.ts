@@ -21,28 +21,16 @@ const router = Router();
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 message:
- *                   type: string
- *                 user:
- *                   type: object
+ *               $ref: '#/components/schemas/ApiResponse'
  *       400:
  *         description: Bad request
  */
-// Register User
+// Register User - TODO: Implement register controller
 router.post('/register', (req, res) => {
-  res.status(201).json({
-    success: true,
-    message: 'User registered successfully',
-    user: {
-      id: '123',
-      name: req.body.name || 'Test User',
-      email: req.body.email || 'test@example.com',
-      role: req.body.role || 'customer'
-    }
+  res.status(501).json({
+    success: false,
+    message: 'Registration endpoint not yet implemented',
+    error: 'NOT_IMPLEMENTED'
   });
 });
 
@@ -64,14 +52,7 @@ router.post('/register', (req, res) => {
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 token:
- *                   type: string
- *                 user:
- *                   type: object
+ *               $ref: '#/components/schemas/ApiResponse'
  *       401:
  *         description: Invalid credentials
  */
@@ -96,14 +77,7 @@ router.post('/login', login);
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 token:
- *                   type: string
- *                 user:
- *                   type: object
+ *               $ref: '#/components/schemas/ApiResponse'
  *       401:
  *         description: Invalid credentials
  */

@@ -3,9 +3,7 @@ import { User } from '../src/models/User';
 import { Warehouse } from '../src/models/Warehouse';
 import { Inventory } from '../src/models/Inventory';
 import { ApiKey } from '../src/models/ApiKey';
-import { USER_ROLES } from '../src/utils/constants';
 import { generateApiKey } from '../src/utils/helpers';
-import bcrypt from 'bcryptjs';
 
 const seedData = async () => {
   try {
@@ -20,64 +18,73 @@ const seedData = async () => {
     console.log('Cleared existing data');
 
     // Create admin user
-    const adminPassword = await bcrypt.hash('admin123', 12);
     const admin = await User.create({
-      name: 'System Administrator',
+      userCode: 'AD-001',
+      firstName: 'System',
+      lastName: 'Administrator',
       email: 'admin@warehouse.com',
-      password: adminPassword,
-      role: USER_ROLES.ADMIN,
-      isActive: true,
+      passwordHash: 'admin123', // Will be hashed by pre-save hook
+      role: 'admin',
+      accountStatus: 'active',
       emailVerified: true
     });
     console.log('Created admin user:', admin.email);
 
     // Create warehouse staff users
-    const staffPassword = await bcrypt.hash('staff123', 12);
     const staffUsers = await Promise.all([
       User.create({
-        name: 'John Warehouse',
+        userCode: 'WS-001',
+        firstName: 'John',
+        lastName: 'Warehouse',
         email: 'john@warehouse.com',
-        password: staffPassword,
-        role: USER_ROLES.WAREHOUSE_STAFF,
-        isActive: true,
+        passwordHash: 'staff123', // Will be hashed by pre-save hook
+        role: 'warehouse',
+        accountStatus: 'active',
         emailVerified: true
       }),
       User.create({
-        name: 'Jane Operations',
+        userCode: 'WS-002',
+        firstName: 'Jane',
+        lastName: 'Operations',
         email: 'jane@warehouse.com',
-        password: staffPassword,
-        role: USER_ROLES.WAREHOUSE_STAFF,
-        isActive: true,
+        passwordHash: 'staff123', // Will be hashed by pre-save hook
+        role: 'warehouse',
+        accountStatus: 'active',
         emailVerified: true
       })
     ]);
     console.log(`Created ${staffUsers.length} warehouse staff users`);
 
     // Create test customers
-    const customerPassword = await bcrypt.hash('customer123', 12);
     const customers = await Promise.all([
       User.create({
-        name: 'Alice Customer',
+        userCode: 'CU-001',
+        firstName: 'Alice',
+        lastName: 'Customer',
         email: 'alice@customer.com',
-        password: customerPassword,
-        role: USER_ROLES.CUSTOMER,
-        isActive: true,
+        passwordHash: 'customer123', // Will be hashed by pre-save hook
+        role: 'customer',
+        accountStatus: 'active',
         emailVerified: true
       }),
       User.create({
-        name: 'Bob Customer',
+        userCode: 'CU-002',
+        firstName: 'Bob',
+        lastName: 'Customer',
         email: 'bob@customer.com',
-        password: customerPassword,
-        role: USER_ROLES.CUSTOMER,
-        isActive: true,
+        passwordHash: 'customer123', // Will be hashed by pre-save hook
+        role: 'customer',
+        accountStatus: 'active',
         emailVerified: true
       }),
       User.create({
-        name: 'Charlie Customer',
+        userCode: 'CU-003',
+        firstName: 'Charlie',
+        lastName: 'Customer',
         email: 'charlie@customer.com',
-        password: customerPassword,
-        role: USER_ROLES.CUSTOMER,
-        isActive: true,
+        passwordHash: 'customer123', // Will be hashed by pre-save hook
+        role: 'customer',
+        accountStatus: 'active',
         emailVerified: true
       })
     ]);
@@ -88,84 +95,26 @@ const seedData = async () => {
       Warehouse.create({
         name: 'Main Distribution Center',
         code: 'MDC',
-        address: {
-          street: '123 Logistics Blvd',
-          city: 'New York',
-          state: 'NY',
-          zipCode: '10001',
-          country: 'USA',
-          coordinates: { lat: 40.7128, lng: -74.0060 }
-        },
-        contact: {
-          phone: '+1-555-0101',
-          email: 'mdc@warehouse.com',
-          manager: 'John Warehouse'
-        },
-        dimensions: {
-          totalArea: 50000,
-          storageArea: 40000,
-          officeArea: 10000,
-          unit: 'sqft'
-        },
-        operatingHours: {
-          monday: { open: '06:00', close: '22:00' },
-          tuesday: { open: '06:00', close: '22:00' },
-          wednesday: { open: '06:00', close: '22:00' },
-          thursday: { open: '06:00', close: '22:00' },
-          friday: { open: '06:00', close: '22:00' },
-          saturday: { open: '08:00', close: '18:00' },
-          sunday: { open: 'closed', close: 'closed' }
-        },
-        capabilities: ['storage', 'packaging', 'shipping', 'returns'],
+        address: '123 Logistics Blvd',
+        city: 'New York',
+        state: 'NY',
+        zipCode: '10001',
+        country: 'USA',
         isActive: true,
-        capacity: {
-          totalPackages: 10000,
-          currentPackages: 0,
-          maxWeight: 100000,
-          currentWeight: 0
-        },
-        staff: staffUsers.map(user => user._id)
+        isDefault: true,
+        companyAbbreviation: 'CJS'
       }),
       Warehouse.create({
         name: 'West Coast Hub',
         code: 'WCH',
-        address: {
-          street: '456 Pacific Ave',
-          city: 'Los Angeles',
-          state: 'CA',
-          zipCode: '90001',
-          country: 'USA',
-          coordinates: { lat: 34.0522, lng: -118.2437 }
-        },
-        contact: {
-          phone: '+1-555-0202',
-          email: 'wch@warehouse.com',
-          manager: 'Jane Operations'
-        },
-        dimensions: {
-          totalArea: 35000,
-          storageArea: 28000,
-          officeArea: 7000,
-          unit: 'sqft'
-        },
-        operatingHours: {
-          monday: { open: '07:00', close: '21:00' },
-          tuesday: { open: '07:00', close: '21:00' },
-          wednesday: { open: '07:00', close: '21:00' },
-          thursday: { open: '07:00', close: '21:00' },
-          friday: { open: '07:00', close: '21:00' },
-          saturday: { open: '09:00', close: '17:00' },
-          sunday: { open: 'closed', close: 'closed' }
-        },
-        capabilities: ['storage', 'packaging', 'shipping'],
+        address: '456 Pacific Ave',
+        city: 'Los Angeles',
+        state: 'CA',
+        zipCode: '90001',
+        country: 'USA',
         isActive: true,
-        capacity: {
-          totalPackages: 7500,
-          currentPackages: 0,
-          maxWeight: 75000,
-          currentWeight: 0
-        },
-        staff: [staffUsers[1]._id]
+        isDefault: false,
+        companyAbbreviation: 'CJS'
       })
     ]);
     console.log(`Created ${warehouses.length} warehouses`);
@@ -198,6 +147,8 @@ const seedData = async () => {
           unit: 'kg'
         },
         tags: ['box', 'small', 'cardboard'],
+        isActive: true,
+        lowStockAlert: false,
         createdBy: admin._id
       },
       {
@@ -226,90 +177,8 @@ const seedData = async () => {
           unit: 'kg'
         },
         tags: ['box', 'medium', 'cardboard'],
-        createdBy: admin._id
-      },
-      {
-        name: 'Bubble Wrap Roll',
-        sku: 'BUBBLE-001',
-        category: 'Packaging',
-        quantity: 200,
-        minStockLevel: 25,
-        maxStockLevel: 400,
-        unitPrice: 15.99,
-        currency: 'USD',
-        location: {
-          warehouse: warehouses[1]._id,
-          aisle: 'B',
-          shelf: '2',
-          bin: '05'
-        },
-        dimensions: {
-          length: 100,
-          width: 50,
-          height: 50,
-          unit: 'cm'
-        },
-        weight: {
-          value: 2.5,
-          unit: 'kg'
-        },
-        tags: ['bubble', 'wrap', 'protection'],
-        createdBy: admin._id
-      },
-      {
-        name: 'Packing Tape',
-        sku: 'TAPE-001',
-        category: 'Packaging',
-        quantity: 150,
-        minStockLevel: 20,
-        maxStockLevel: 300,
-        unitPrice: 3.99,
-        currency: 'USD',
-        location: {
-          warehouse: warehouses[0]._id,
-          aisle: 'C',
-          shelf: '3',
-          bin: '01'
-        },
-        dimensions: {
-          length: 10,
-          width: 10,
-          height: 5,
-          unit: 'cm'
-        },
-        weight: {
-          value: 0.3,
-          unit: 'kg'
-        },
-        tags: ['tape', 'adhesive', 'sealing'],
-        createdBy: admin._id
-      },
-      {
-        name: 'Electronic Scale',
-        sku: 'SCALE-001',
-        category: 'Equipment',
-        quantity: 25,
-        minStockLevel: 5,
-        maxStockLevel: 50,
-        unitPrice: 89.99,
-        currency: 'USD',
-        location: {
-          warehouse: warehouses[0]._id,
-          aisle: 'D',
-          shelf: '1',
-          bin: '01'
-        },
-        dimensions: {
-          length: 30,
-          width: 25,
-          height: 10,
-          unit: 'cm'
-        },
-        weight: {
-          value: 3.2,
-          unit: 'kg'
-        },
-        tags: ['scale', 'electronic', 'weighing'],
+        isActive: true,
+        lowStockAlert: false,
         createdBy: admin._id
       }
     ];

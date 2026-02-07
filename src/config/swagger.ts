@@ -30,12 +30,17 @@ const options = {
       schemas: {
         User: {
           type: 'object',
-          required: ['name', 'email', 'password'],
+          required: ['firstName', 'lastName', 'email', 'passwordHash'],
           properties: {
-            name: { type: 'string', description: 'User full name' },
+            userCode: { type: 'string', description: 'User code in format XX-123' },
+            firstName: { type: 'string', description: 'User first name' },
+            lastName: { type: 'string', description: 'User last name' },
             email: { type: 'string', format: 'email', description: 'User email' },
-            password: { type: 'string', minLength: 6, description: 'User password' },
-            role: { type: 'string', enum: ['admin', 'staff', 'customer'], description: 'User role' }
+            passwordHash: { type: 'string', minLength: 8, description: 'User password (will be hashed)' },
+            phone: { type: 'string', description: 'User phone number' },
+            role: { type: 'string', enum: ['admin', 'customer', 'warehouse'], description: 'User role' },
+            accountStatus: { type: 'string', enum: ['pending', 'active', 'inactive'], description: 'Account status' },
+            emailVerified: { type: 'boolean', description: 'Email verification status' }
           }
         },
         Login: {
@@ -57,13 +62,53 @@ const options = {
         },
         Package: {
           type: 'object',
+          required: ['trackingNumber', 'userCode', 'userId', 'weight'],
           properties: {
             trackingNumber: { type: 'string', description: 'Package tracking number' },
-            status: { type: 'string', enum: ['pending', 'in_transit', 'delivered', 'cancelled'], description: 'Package status' },
+            userCode: { type: 'string', description: 'User code' },
+            userId: { type: 'string', description: 'User ID' },
             weight: { type: 'number', description: 'Package weight' },
-            dimensions: { type: 'object', description: 'Package dimensions' },
-            sender: { type: 'string', description: 'Sender information' },
-            recipient: { type: 'string', description: 'Recipient information' }
+            dimensions: { 
+              type: 'object', 
+              properties: {
+                length: { type: 'number' },
+                width: { type: 'number' },
+                height: { type: 'number' },
+                unit: { type: 'string', enum: ['cm', 'in'] }
+              },
+              description: 'Package dimensions' 
+            },
+            serviceMode: { type: 'string', enum: ['air', 'ocean', 'local'], description: 'Service mode' },
+            status: { type: 'string', enum: ['received', 'in_transit', 'out_for_delivery', 'delivered', 'pending', 'customs', 'returned'], description: 'Package status' },
+            shipper: { type: 'string', description: 'Shipper name' },
+            description: { type: 'string', description: 'Package description' },
+            itemDescription: { type: 'string', description: 'Item description' },
+            senderName: { type: 'string', description: 'Sender name' },
+            senderEmail: { type: 'string', format: 'email', description: 'Sender email' },
+            senderPhone: { type: 'string', description: 'Sender phone' },
+            senderAddress: { type: 'string', description: 'Sender address' },
+            senderCountry: { type: 'string', description: 'Sender country' },
+            recipient: {
+              type: 'object',
+              properties: {
+                name: { type: 'string' },
+                email: { type: 'string', format: 'email' },
+                shippingId: { type: 'string' },
+                phone: { type: 'string' },
+                address: { type: 'string' }
+              },
+              description: 'Recipient information'
+            },
+            warehouseLocation: { type: 'string', description: 'Warehouse location' },
+            customsRequired: { type: 'boolean', description: 'Customs required' },
+            customsStatus: { type: 'string', enum: ['not_required', 'pending', 'cleared'], description: 'Customs status' },
+            shippingCost: { type: 'number', description: 'Shipping cost' },
+            totalAmount: { type: 'number', description: 'Total amount' },
+            paymentStatus: { type: 'string', enum: ['pending', 'paid', 'partially_paid'], description: 'Payment status' },
+            isFragile: { type: 'boolean', description: 'Fragile package' },
+            isHazardous: { type: 'boolean', description: 'Hazardous package' },
+            requiresSignature: { type: 'boolean', description: 'Signature required' },
+            specialInstructions: { type: 'string', description: 'Special instructions' }
           }
         },
         ApiResponse: {
