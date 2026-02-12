@@ -4,6 +4,7 @@ import { Package } from '../../models/Package';
 import { User } from '../../models/User';
 import { successResponse, errorResponse, getPaginationData } from '../../utils/helpers';
 import { logger } from '../../utils/logger';
+import { TasokoService } from '../../services/tasokoService';
 
 interface PackageRequest extends AuthRequest {
   query: {
@@ -205,6 +206,9 @@ export const addPackage = async (req: PackageRequest, res: Response): Promise<vo
     const newPackage = await Package.create(packageData);
     await newPackage.populate('userId', 'firstName lastName email phone mailboxNumber');
 
+    // Send to Tasoko
+    await TasokoService.sendPackageCreated(newPackage);
+
     successResponse(res, {
       package: newPackage
     }, 'Package created successfully', 201);
@@ -234,6 +238,9 @@ export const updatePackage = async (req: PackageRequest, res: Response): Promise
       return;
     }
 
+    // Send update to Tasoko
+    await TasokoService.sendPackageUpdated(updatedPackage);
+
     successResponse(res, {
       package: updatedPackage
     });
@@ -252,6 +259,9 @@ export const deletePackage = async (req: AuthRequest, res: Response): Promise<vo
       errorResponse(res, 'Package not found', 404);
       return;
     }
+
+    // Send deletion to Tasoko
+    await TasokoService.sendPackageDeleted(deletedPackage);
 
     successResponse(res, null, 'Package deleted successfully');
   } catch (error) {

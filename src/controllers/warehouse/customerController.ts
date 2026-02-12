@@ -43,19 +43,15 @@ export const getCustomers = async (req: CustomerRequest, res: Response): Promise
     // Transform customers to match API response format
     const transformedCustomers = await Promise.all(
       customers.map(async (customer) => {
-        const activePackages = await Package.countDocuments({
-          userId: customer._id,
-          status: { $nin: ['delivered', 'returned'] }
-        });
-
         return {
-          user_code: customer.userCode,
-          full_name: `${customer.firstName} ${customer.lastName}`,
-          email: customer.email,
-          phone: customer.phone || '',
-          address_line: customer.address ? 
-            `${customer.address.street}, ${customer.address.city}, ${customer.address.state}` : '',
-          active_packages: activePackages
+          UserCode: customer.userCode,
+          FirstName: customer.firstName,
+          LastName: customer.lastName,
+          Branch: customer.branch || '',
+          CustomerServiceTypeID: customer.serviceTypeId || '',
+          CustomerLevelInstructions: customer.instructions || '',
+          CourierServiceTypeID: '',
+          CourierLevelInstructions: ''
         };
       })
     );

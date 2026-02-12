@@ -29,3 +29,8 @@ RATE_LIMIT_MAX_REQUESTS=100
 
 # CORS Configuration
 CORS_ORIGIN=http://localhost:3000
+
+# Tasoko API Configuration
+TASOKO_API_URL=https://tasoko-api-endpoint.com
+TASOKO_API_TOKEN=your-api-token-from-tasoko
+TASOKO_WEBHOOK_ENABLED=true

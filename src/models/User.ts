@@ -46,6 +46,10 @@ export interface IUser extends Document {
     language: string;
     timezone: string;
   };
+  // Tasoko API fields
+  branch?: string;
+  serviceTypeId?: string;
+  instructions?: string;
   comparePassword(candidatePassword: string): Promise<boolean>;
   getPublicProfile(): any;
 }
@@ -201,6 +205,21 @@ const userSchema = new Schema<IUser>({
       type: String,
       default: 'UTC'
     }
+  },
+  // Tasoko API fields
+  branch: {
+    type: String,
+    trim: true,
+    maxlength: [100, 'Branch name cannot exceed 100 characters']
+  },
+  serviceTypeId: {
+    type: String,
+    trim: true
+  },
+  instructions: {
+    type: String,
+    trim: true,
+    maxlength: [1000, 'Instructions cannot exceed 1000 characters']
   }
 }, {
   timestamps: true,

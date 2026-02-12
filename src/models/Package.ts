@@ -75,6 +75,32 @@ export interface IPackage extends Document {
   specialInstructions?: string;
   history?: Array<{ status: string; at: Date; note: string }>;
   
+  // Tasoko API fields
+  controlNumber?: string;        // EP0096513 format
+  courierId?: string;           // UUID from Tasoko
+  collectionId?: string;        // Collection reference
+  entryStaff?: string;         // Staff who entered package
+  entryDate?: Date;            // Entry date (date only)
+  entryDateTime?: Date;        // Full timestamp
+  branch?: string;             // "Down Town" etc.
+  claimed?: boolean;           // Package claimed status
+  apiToken?: string;           // API token reference
+  showControls?: boolean;      // UI control flag
+  hsCode?: string;            // HS tariff code
+  unknown?: boolean;          // Unknown package flag
+  aiProcessed?: boolean;      // AI processing status
+  originalHouseNumber?: string; // Original tracking
+  cubes?: number;             // Volume in cubic units
+  pieces?: number;            // Number of pieces
+  discrepancy?: boolean;      // Discrepancy flag
+  discrepancyDescription?: string;
+  serviceTypeId?: string;     // From Tasoko spec page 7
+  hazmatCodeId?: string;      // From Tasoko spec page 8
+  coloaded?: boolean;         // Co-loading flag
+  coloadIndicator?: string;   // Co-load indicator
+  packageStatus?: number;     // 0-4 status code
+  packagePayments?: string;   // Payment reference
+  
   createdAt: Date;
   updatedAt: Date;
 }
@@ -347,7 +373,120 @@ const packageSchema = new Schema<IPackage>({
     status: { type: String, required: true },
     at: { type: Date, default: Date.now },
     note: { type: String, trim: true }
-  }]
+  }],
+  
+  // Tasoko API fields
+  controlNumber: {
+    type: String,
+    trim: true,
+    uppercase: true,
+    maxlength: [50, 'Control number cannot exceed 50 characters']
+  },
+  courierId: {
+    type: String,
+    trim: true
+  },
+  collectionId: {
+    type: String,
+    trim: true
+  },
+  entryStaff: {
+    type: String,
+    trim: true,
+    maxlength: [100, 'Entry staff name cannot exceed 100 characters']
+  },
+  entryDate: {
+    type: Date
+  },
+  entryDateTime: {
+    type: Date
+  },
+  branch: {
+    type: String,
+    trim: true,
+    maxlength: [100, 'Branch name cannot exceed 100 characters']
+  },
+  claimed: {
+    type: Boolean,
+    default: false
+  },
+  apiToken: {
+    type: String,
+    trim: true
+  },
+  showControls: {
+    type: Boolean,
+    default: false
+  },
+  hsCode: {
+    type: String,
+    trim: true,
+    maxlength: [20, 'HS Code cannot exceed 20 characters']
+  },
+  unknown: {
+    type: Boolean,
+    default: false
+  },
+  aiProcessed: {
+    type: Boolean,
+    default: false
+  },
+  originalHouseNumber: {
+    type: String,
+    trim: true
+  },
+  cubes: {
+    type: Number,
+    min: [0, 'Cubes must be positive'],
+    default: 0
+  },
+  pieces: {
+    type: Number,
+    min: [1, 'Pieces must be at least 1'],
+    default: 1
+  },
+  discrepancy: {
+    type: Boolean,
+    default: false
+  },
+  discrepancyDescription: {
+    type: String,
+    trim: true,
+    maxlength: [500, 'Discrepancy description cannot exceed 500 characters']
+  },
+  serviceTypeId: {
+    type: String,
+    trim: true,
+    enum: [
+      '59cadcd4-7508-450b-85aa-9ec908d168fe', // AIR STANDARD
+      '25a1d8e5-a478-4cc3-b1fd-a37d0d787302', // AIR EXPRESS
+      '8df142ca-0573-4ce9-b11d-7a3e5f8ba196', // AIR PREMIUM
+      '7c9638e8-4bb3-499e-8af9-d09f757a099e', // SEA STANDARD
+      ''                                        // UNSPECIFIED
+    ]
+  },
+  hazmatCodeId: {
+    type: String,
+    trim: true
+  },
+  coloaded: {
+    type: Boolean,
+    default: false
+  },
+  coloadIndicator: {
+    type: String,
+    trim: true
+  },
+  packageStatus: {
+    type: Number,
+    min: 0,
+    max: 4,
+    default: 0
+  },
+  packagePayments: {
+    type: String,
+    trim: true
+  }
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
