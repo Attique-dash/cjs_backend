@@ -78,6 +78,11 @@ export const getStaffById = async (req: AuthRequest, res: Response): Promise<voi
 
 export const createStaff = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    if (!req.user) {
+      errorResponse(res, 'User not authenticated', 401);
+      return;
+    }
+
     const { name, email, password, role, phone, assignedWarehouse, permissions } = req.body;
 
     // Check if user already exists
@@ -106,9 +111,9 @@ export const createStaff = async (req: AuthRequest, res: Response): Promise<void
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const staffData = {
-      name,
+      firstName: name,
       email,
-      password: hashedPassword,
+      passwordHash: hashedPassword,
       role,
       phone,
       assignedWarehouse,
@@ -121,8 +126,8 @@ export const createStaff = async (req: AuthRequest, res: Response): Promise<void
     const staff = await User.create(staffData);
     
     // Remove password from response
-    const staffResponse = staff.toObject();
-    delete staffResponse.password;
+    const staffResponse: any = staff.toObject();
+    delete staffResponse.passwordHash;
 
     await staff.populate('assignedWarehouse', 'name code');
 
@@ -136,6 +141,11 @@ export const createStaff = async (req: AuthRequest, res: Response): Promise<void
 
 export const updateStaff = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    if (!req.user) {
+      errorResponse(res, 'User not authenticated', 401);
+      return;
+    }
+
     const { name, phone, role, assignedWarehouse, permissions, isActive } = req.body;
 
     const staff = await User.findOne({
@@ -195,6 +205,11 @@ export const updateStaff = async (req: AuthRequest, res: Response): Promise<void
 
 export const deleteStaff = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    if (!req.user) {
+      errorResponse(res, 'User not authenticated', 401);
+      return;
+    }
+
     const staff = await User.findOne({
       _id: req.params.id,
       role: { $in: [USER_ROLES.ADMIN, USER_ROLES.WAREHOUSE_STAFF] }
@@ -262,6 +277,11 @@ export const resetStaffPassword = async (req: AuthRequest, res: Response): Promi
 
 export const toggleStaffStatus = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    if (!req.user) {
+      errorResponse(res, 'User not authenticated', 401);
+      return;
+    }
+
     const staff = await User.findOne({
       _id: req.params.id,
       role: { $in: [USER_ROLES.ADMIN, USER_ROLES.WAREHOUSE_STAFF] }

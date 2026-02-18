@@ -9,6 +9,11 @@ import { logger } from '../../utils/logger';
 
 export const getShippingAddresses = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    if (!req.user) {
+      errorResponse(res, 'User not authenticated', 401);
+      return;
+    }
+
     const user = await User.findById(req.user._id).select('shippingAddresses');
     
     if (!user) {
@@ -35,6 +40,11 @@ export const getShippingAddresses = async (req: AuthRequest, res: Response): Pro
 
 export const getShippingAddressById = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    if (!req.user) {
+      errorResponse(res, 'User not authenticated', 401);
+      return;
+    }
+
     const user = await User.findById(req.user._id).select('shippingAddresses');
     
     if (!user) {
@@ -59,6 +69,11 @@ export const getShippingAddressById = async (req: AuthRequest, res: Response): P
 
 export const createShippingAddress = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    if (!req.user) {
+      errorResponse(res, 'User not authenticated', 401);
+      return;
+    }
+
     const { street, city, state, zipCode, country, isDefault } = req.body;
 
     const user = await User.findById(req.user._id);
@@ -102,6 +117,11 @@ export const createShippingAddress = async (req: AuthRequest, res: Response): Pr
 
 export const updateShippingAddress = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    if (!req.user) {
+      errorResponse(res, 'User not authenticated', 401);
+      return;
+    }
+
     const user = await User.findById(req.user._id);
     
     if (!user) {
@@ -141,6 +161,11 @@ export const updateShippingAddress = async (req: AuthRequest, res: Response): Pr
 
 export const deleteShippingAddress = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    if (!req.user) {
+      errorResponse(res, 'User not authenticated', 401);
+      return;
+    }
+
     const user = await User.findById(req.user._id);
     
     if (!user) {
@@ -170,6 +195,11 @@ export const deleteShippingAddress = async (req: AuthRequest, res: Response): Pr
 
 export const setDefaultAddress = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    if (!req.user) {
+      errorResponse(res, 'User not authenticated', 401);
+      return;
+    }
+
     const user = await User.findById(req.user._id);
     
     if (!user) {

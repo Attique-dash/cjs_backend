@@ -54,6 +54,11 @@ export const getInventoryById = async (req: AuthRequest, res: Response): Promise
 
 export const createInventory = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    if (!req.user) {
+      errorResponse(res, 'User not authenticated', 401);
+      return;
+    }
+
     const inventoryData = {
       ...req.body,
       createdBy: req.user._id
@@ -114,6 +119,12 @@ export const deleteInventory = async (req: AuthRequest, res: Response): Promise<
 
 export const adjustInventory = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    if (!req.user) {
+      errorResponse(res, 'User not authenticated', 401);
+      return;
+    }
+
+    const { id } = req.params;
     const { type, quantity, reason } = req.body;
 
     const item = await Inventory.findById(req.params.id);

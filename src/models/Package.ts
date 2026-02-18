@@ -73,6 +73,14 @@ export interface IPackage extends Document {
   
   // Additional
   specialInstructions?: string;
+  notes?: string;
+  trackingHistory?: Array<{
+    timestamp: Date;
+    status: string;
+    location: string;
+    description?: string;
+  }>;
+  actualDelivery?: Date;
   history?: Array<{ status: string; at: Date; note: string }>;
   
   // Tasoko API fields
@@ -368,6 +376,15 @@ const packageSchema = new Schema<IPackage>({
     type: String,
     trim: true,
     maxlength: [1000, 'Special instructions cannot exceed 1000 characters']
+  },
+  notes: {
+    type: String,
+    trim: true,
+    maxlength: [2000, 'Notes cannot exceed 2000 characters']
+  },
+  trackingHistory: [trackingHistorySchema],
+  actualDelivery: {
+    type: Date
   },
   history: [{
     status: { type: String, required: true },

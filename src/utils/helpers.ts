@@ -88,7 +88,11 @@ export const isValidEmail = (email: string): boolean => {
 // Generate random API key
 export const generateApiKey = (): string => {
   const prefix = 'wh_';
-  const random = Math.random().toString(36).substr(2, 32);
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let random = '';
+  for (let i = 0; i < 32; i++) {
+    random += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
   return prefix + random;
 };
 

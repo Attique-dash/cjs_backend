@@ -7,13 +7,18 @@ import { logger } from '../../utils/logger';
 
 export const getCustomerPackages = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    if (!req.user) {
+      errorResponse(res, 'User not authenticated', 401);
+      return;
+    }
+
     const page = parseInt(req.query.page as string) || PAGINATION.DEFAULT_PAGE;
     const limit = parseInt(req.query.limit as string) || PAGINATION.DEFAULT_LIMIT;
     const skip = (page - 1) * limit;
 
     const filter: any = {
       $or: [
-        { senderId: req.user._id },
+        { userId: req.user._id },
         { recipientId: req.user._id }
       ]
     };
@@ -40,10 +45,15 @@ export const getCustomerPackages = async (req: AuthRequest, res: Response): Prom
 
 export const getPackageById = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    if (!req.user) {
+      errorResponse(res, 'User not authenticated', 401);
+      return;
+    }
+
     const packageData = await Package.findOne({
       _id: req.params.id,
       $or: [
-        { senderId: req.user._id },
+        { userId: req.user._id },
         { recipientId: req.user._id }
       ]
     })
@@ -63,10 +73,15 @@ export const getPackageById = async (req: AuthRequest, res: Response): Promise<v
 
 export const trackPackage = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    if (!req.user) {
+      errorResponse(res, 'User not authenticated', 401);
+      return;
+    }
+
     const packageData = await Package.findOne({
       trackingNumber: req.params.trackingNumber.toUpperCase(),
       $or: [
-        { senderId: req.user._id },
+        { userId: req.user._id },
         { recipientId: req.user._id }
       ]
     })
@@ -87,12 +102,17 @@ export const trackPackage = async (req: AuthRequest, res: Response): Promise<voi
 
 export const reportIssue = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    if (!req.user) {
+      errorResponse(res, 'User not authenticated', 401);
+      return;
+    }
+
     const { issue, description } = req.body;
 
     const packageData = await Package.findOne({
       _id: req.params.id,
       $or: [
-        { senderId: req.user._id },
+        { userId: req.user._id },
         { recipientId: req.user._id }
       ]
     });
@@ -117,10 +137,15 @@ export const reportIssue = async (req: AuthRequest, res: Response): Promise<void
 
 export const getPackageHistory = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    if (!req.user) {
+      errorResponse(res, 'User not authenticated', 401);
+      return;
+    }
+
     const packageData = await Package.findOne({
       _id: req.params.id,
       $or: [
-        { senderId: req.user._id },
+        { userId: req.user._id },
         { recipientId: req.user._id }
       ]
     })

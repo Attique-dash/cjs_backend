@@ -58,6 +58,11 @@ export const getManifestById = async (req: AuthRequest, res: Response): Promise<
 
 export const createManifest = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    if (!req.user) {
+      errorResponse(res, 'User not authenticated', 401);
+      return;
+    }
+
     const manifestData = {
       ...req.body,
       createdBy: req.user._id,

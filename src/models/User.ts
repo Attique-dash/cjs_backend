@@ -8,6 +8,7 @@ export interface IUser extends Document {
   lastName: string;
   email: string;
   passwordHash: string;
+  password?: string; // For password assignment
   phone?: string;
   role: 'admin' | 'customer' | 'warehouse';
   address?: {
@@ -20,6 +21,7 @@ export interface IUser extends Document {
   mailboxNumber?: string;
   accountStatus: 'pending' | 'active' | 'inactive';
   emailVerified: boolean;
+  isActive?: boolean;
   lastLogin?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -118,6 +120,10 @@ const userSchema = new Schema<IUser>({
   emailVerified: {
     type: Boolean,
     default: false
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   },
   lastLogin: {
     type: Date,

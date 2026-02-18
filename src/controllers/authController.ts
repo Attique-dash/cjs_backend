@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { User } from '../models/User';
 import { successResponse, errorResponse } from '../utils/helpers';
 import { config } from '../config/env';
@@ -37,6 +37,7 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
     }
 
     // Generate JWT token
+    const signOptions: SignOptions = { expiresIn: config.jwtExpiresIn as any };
     const token = jwt.sign(
       { 
         userId: user._id, 
@@ -45,7 +46,7 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
         userCode: user.userCode
       },
       config.jwtSecret,
-      { expiresIn: config.jwtExpiresIn }
+      signOptions
     );
 
     // Update last login
@@ -97,6 +98,7 @@ export const customerLogin = async (req: AuthRequest, res: Response): Promise<vo
     }
 
     // Generate JWT token
+    const signOptions: SignOptions = { expiresIn: config.jwtExpiresIn as any };
     const token = jwt.sign(
       { 
         userId: user._id, 
@@ -105,7 +107,7 @@ export const customerLogin = async (req: AuthRequest, res: Response): Promise<vo
         userCode: user.userCode
       },
       config.jwtSecret,
-      { expiresIn: config.jwtExpiresIn }
+      signOptions
     );
 
     // Update last login

@@ -61,9 +61,10 @@ export class CustomerService {
 
   static async deleteCustomer(customerId: string): Promise<boolean> {
     try {
-      const customer = await User.findOneAndDelete({ _id: customerId, role: 'customer' });
+      const customer = await User.findOne({ _id: customerId, role: 'customer' });
       
       if (customer) {
+        await User.deleteOne({ _id: customerId });
         logger.info(`Customer deleted: ${customer.email}`);
         return true;
       }
