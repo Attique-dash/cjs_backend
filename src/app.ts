@@ -5,12 +5,21 @@ import rateLimit from 'express-rate-limit';
 import { errorHandler } from './middleware/errorHandler';
 import { logger } from './utils/logger';
 import routes from './routes';
-import { swaggerUi, specs } from './config/swagger';
+import { swaggerUi, specs, swaggerUiOptions } from './config/swagger';
 
 const app: Application = express();
 
-// Security middleware
-app.use(helmet());
+// Security middleware with CSP configuration for Swagger UI
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  },
+}));
 
 // CORS configuration
 app.use(cors({
@@ -53,21 +62,31 @@ app.get('/health', (req: Request, res: Response) => {
   });
 });
 
+// Swagger API Documentation - Main endpoint
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerUiOptions));
+
+// Alternative Swagger endpoints
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerUiOptions));
+app.use('/swagger', swaggerUi.serve, swaggerUi.setup(specs, swaggerUiOptions));
+
+// Redirect root to docs
+app.get('/', (req: Request, res: Response) => {
+  res.redirect('/docs');
+});
+
 // API routes
 app.use('/api', routes);
-
-// Swagger API Documentation
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
-  explorer: true,
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'Warehouse Management API Documentation'
-}));
 
 // 404 handler
 app.use('*', (req: Request, res: Response) => {
   res.status(404).json({
     error: 'Route not found',
-    message: `Cannot ${req.method} ${req.originalUrl}`
+    message: `Cannot ${req.method} ${req.originalUrl}`,
+    availableEndpoints: {
+      documentation: '/docs',
+      health: '/health',
+      api: '/api'
+    }
   });
 });
 
