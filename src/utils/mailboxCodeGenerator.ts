@@ -4,7 +4,7 @@ import { logger } from './logger';
 
 /**
  * Generate unique mailbox code for Clean J Shipping customers
- * Format: CJS-0001, CJS-0002, etc.
+ * Format: CLEAN-0001, CLEAN-0002, etc.
  * 
  * @param warehouseId - Optional warehouse ID to get company abbreviation
  * @returns Promise<string> - Unique mailbox code
@@ -12,7 +12,7 @@ import { logger } from './logger';
 export const generateMailboxCode = async (warehouseId?: string): Promise<string> => {
   try {
     // Get company abbreviation from warehouse or use default
-    let abbreviation = 'CJS'; // Default for Clean J Shipping
+    let abbreviation = 'CLEAN'; // Default for Clean J Shipping
     
     if (warehouseId) {
       const warehouse = await Warehouse.findById(warehouseId);
@@ -69,7 +69,7 @@ export const generateMailboxCode = async (warehouseId?: string): Promise<string>
     logger.error('Error generating mailbox code:', error);
     // Fallback to random code
     const random = Math.random().toString(36).substr(2, 4).toUpperCase();
-    return `CJS-${random}`;
+    return `CLEAN-${random}`;
   }
 };
 

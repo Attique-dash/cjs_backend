@@ -66,7 +66,7 @@ const seedData = async () => {
         role: 'customer',
         accountStatus: 'active',
         emailVerified: true,
-        mailboxNumber: 'CJS-0001'
+        mailboxNumber: 'CLEAN-0001'
       }),
       User.create({
         userCode: 'CU-002',
@@ -77,7 +77,7 @@ const seedData = async () => {
         role: 'customer',
         accountStatus: 'active',
         emailVerified: true,
-        mailboxNumber: 'CJS-0002'
+        mailboxNumber: 'CLEAN-0002'
       }),
       User.create({
         userCode: 'CU-003',
@@ -88,7 +88,7 @@ const seedData = async () => {
         role: 'customer',
         accountStatus: 'active',
         emailVerified: true,
-        mailboxNumber: 'CJS-0003'
+        mailboxNumber: 'CLEAN-0003'
       })
     ]);
     console.log(`Created ${customers.length} customer users`);
@@ -105,7 +105,7 @@ const seedData = async () => {
         country: 'USA',
         isActive: true,
         isDefault: true,
-        companyAbbreviation: 'CJS',
+        companyAbbreviation: 'CLEAN',
         airAddress: {
           name: 'Clean J Shipping Air Facility',
           street: '123 Airport Road',
@@ -114,7 +114,7 @@ const seedData = async () => {
           zipCode: '33101',
           country: 'USA',
           phone: '+1-305-555-0100',
-          email: 'air@cjs-shipping.com'
+          email: 'air@clean-shipping.com'
         },
         seaAddress: {
           name: 'Clean J Shipping Sea Terminal',
@@ -124,7 +124,7 @@ const seedData = async () => {
           zipCode: '90001',
           country: 'USA',
           phone: '+1-310-555-0200',
-          email: 'sea@cjs-shipping.com'
+          email: 'sea@clean-shipping.com'
         },
         chinaAddress: {
           name: 'Clean J Shipping China Office',
@@ -134,7 +134,7 @@ const seedData = async () => {
           zipCode: '200000',
           country: 'China',
           phone: '+86-21-555-0300',
-          email: 'china@cjs-shipping.com'
+          email: 'china@clean-shipping.com'
         }
       }),
       Warehouse.create({
@@ -147,36 +147,36 @@ const seedData = async () => {
         country: 'USA',
         isActive: true,
         isDefault: false,
-        companyAbbreviation: 'CJS',
+        companyAbbreviation: 'CLEAN',
         airAddress: {
-          name: 'CJS West Coast Air Facility',
+          name: 'CLEAN West Coast Air Facility',
           street: '321 LAX Boulevard',
           city: 'Los Angeles',
           state: 'CA',
           zipCode: '90045',
           country: 'USA',
           phone: '+1-310-555-0400',
-          email: 'west-air@cjs-shipping.com'
+          email: 'west-air@clean-shipping.com'
         },
         seaAddress: {
-          name: 'CJS West Coast Sea Terminal',
+          name: 'CLEAN West Coast Sea Terminal',
           street: '656 Long Beach Pier',
           city: 'Long Beach',
           state: 'CA',
           zipCode: '90802',
           country: 'USA',
           phone: '+1-562-555-0500',
-          email: 'west-sea@cjs-shipping.com'
+          email: 'west-sea@clean-shipping.com'
         },
         chinaAddress: {
-          name: 'CJS West Coast China Office',
+          name: 'CLEAN West Coast China Office',
           street: '999 Guangzhou Avenue',
           city: 'Guangzhou',
           state: 'Guangdong',
           zipCode: '510000',
           country: 'China',
           phone: '+86-20-555-0600',
-          email: 'west-china@cjs-shipping.com'
+          email: 'west-china@clean-shipping.com'
         }
       })
     ]);

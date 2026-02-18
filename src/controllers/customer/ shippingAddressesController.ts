@@ -39,7 +39,7 @@ export const getShippingAddresses = async (req: AuthRequest, res: Response): Pro
         email: warehouse.airAddress.email,
         instructions: warehouse.airAddress.instructions,
         fullAddress: `${warehouse.airAddress.name}\n${warehouse.airAddress.street}\n${warehouse.airAddress.city}, ${warehouse.airAddress.state} ${warehouse.airAddress.zipCode}\n${warehouse.airAddress.country}`,
-        recipientLine: req.user ? `${req.user.firstName} ${req.user.lastName} - ${req.user.mailboxNumber}` : 'John Doe - CJS-0001'
+        recipientLine: req.user ? `${req.user.firstName} ${req.user.lastName} - ${req.user.mailboxNumber}` : 'John Doe - CLEAN-0001'
       } : null,
       
       sea: warehouse.seaAddress ? {
@@ -54,7 +54,7 @@ export const getShippingAddresses = async (req: AuthRequest, res: Response): Pro
         email: warehouse.seaAddress.email,
         instructions: warehouse.seaAddress.instructions,
         fullAddress: `${warehouse.seaAddress.name}\n${warehouse.seaAddress.street}\n${warehouse.seaAddress.city}, ${warehouse.seaAddress.state} ${warehouse.seaAddress.zipCode}\n${warehouse.seaAddress.country}`,
-        recipientLine: req.user ? `${req.user.firstName} ${req.user.lastName} - ${req.user.mailboxNumber}` : 'John Doe - CJS-0001'
+        recipientLine: req.user ? `${req.user.firstName} ${req.user.lastName} - ${req.user.mailboxNumber}` : 'John Doe - CLEAN-0001'
       } : null,
       
       china: warehouse.chinaAddress ? {
@@ -69,7 +69,7 @@ export const getShippingAddresses = async (req: AuthRequest, res: Response): Pro
         email: warehouse.chinaAddress.email,
         instructions: warehouse.chinaAddress.instructions,
         fullAddress: `${warehouse.chinaAddress.name}\n${warehouse.chinaAddress.street}\n${warehouse.chinaAddress.city}, ${warehouse.chinaAddress.state} ${warehouse.chinaAddress.zipCode}\n${warehouse.chinaAddress.country}`,
-        recipientLine: req.user ? `${req.user.firstName} ${req.user.lastName} - ${req.user.mailboxNumber}` : 'John Doe - CJS-0001'
+        recipientLine: req.user ? `${req.user.firstName} ${req.user.lastName} - ${req.user.mailboxNumber}` : 'John Doe - CLEAN-0001'
       } : null
     };
 
@@ -78,7 +78,7 @@ export const getShippingAddresses = async (req: AuthRequest, res: Response): Pro
       mailboxNumber: req.user?.mailboxNumber || null,
       customerName: req.user ? `${req.user.firstName} ${req.user.lastName}` : null,
       companyName: 'Clean J Shipping',
-      companyAbbreviation: warehouse.companyAbbreviation || 'CJS',
+      companyAbbreviation: warehouse.companyAbbreviation || 'CLEAN',
       addresses,
       instructions: {
         general: `Always include your mailbox number (${req.user?.mailboxNumber || 'N/A'}) when shipping items to ensure proper delivery.`,
@@ -87,7 +87,7 @@ export const getShippingAddresses = async (req: AuthRequest, res: Response): Pro
         china: 'Use this address for shipments from China. Include your mailbox number in the recipient field.'
       },
       usageExample: {
-        recipientName: req.user ? `${req.user.firstName} ${req.user.lastName} - ${req.user.mailboxNumber}` : 'John Doe - CJS-0001',
+        recipientName: req.user ? `${req.user.firstName} ${req.user.lastName} - ${req.user.mailboxNumber}` : 'John Doe - CLEAN-0001',
         address: addresses.air ? `${addresses.air.name}, ${addresses.air.street}, ${addresses.air.city}, ${addresses.air.state} ${addresses.air.zipCode}, ${addresses.air.country}` : 'Address not configured'
       }
     };
@@ -154,7 +154,7 @@ export const getShippingAddressByType = async (req: AuthRequest, res: Response):
       type,
       mailboxNumber: req.user?.mailboxNumber || null,
       companyName: 'Clean J Shipping',
-      companyAbbreviation: warehouse.companyAbbreviation || 'CJS',
+      companyAbbreviation: warehouse.companyAbbreviation || 'CLEAN',
       address: {
         name: address.name,
         street: address.street,
@@ -213,7 +213,7 @@ export const getMyShippingInfo = async (req: AuthRequest, res: Response): Promis
       },
       company: {
         name: 'Clean J Shipping',
-        abbreviation: warehouse.companyAbbreviation || 'CJS'
+        abbreviation: warehouse.companyAbbreviation || 'CLEAN'
       },
       shippingAddresses: {
         air: warehouse.airAddress ? {

@@ -38,7 +38,7 @@ const migrateWarehouseAddresses = async () => {
         zipCode: '33101',
         country: 'USA',
         phone: '+1-305-555-0100',
-        email: 'air@cjs-shipping.com',
+        email: 'air@clean-shipping.com',
         instructions: 'Please include tracking number on all air shipments'
       },
       seaAddress: {
@@ -49,7 +49,7 @@ const migrateWarehouseAddresses = async () => {
         zipCode: '90001',
         country: 'USA',
         phone: '+1-310-555-0200',
-        email: 'sea@cjs-shipping.com',
+        email: 'sea@clean-shipping.com',
         instructions: 'Sea shipments typically arrive within 7-14 business days'
       },
       chinaAddress: {
@@ -60,7 +60,7 @@ const migrateWarehouseAddresses = async () => {
         zipCode: '200000',
         country: 'China',
         phone: '+86-21-555-0300',
-        email: 'china@cjs-shipping.com',
+        email: 'china@clean-shipping.com',
         instructions: 'China office handles all Asia-Pacific shipments'
       }
     };
@@ -84,7 +84,7 @@ const migrateWarehouseAddresses = async () => {
 
       // Add company abbreviation if missing
       if (!warehouse.companyAbbreviation) {
-        updates.companyAbbreviation = 'CJS';
+        updates.companyAbbreviation = 'CLEAN';
       }
 
       // Apply updates if there are any
