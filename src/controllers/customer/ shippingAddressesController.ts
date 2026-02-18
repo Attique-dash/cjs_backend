@@ -38,7 +38,8 @@ export const getShippingAddresses = async (req: AuthRequest, res: Response): Pro
         phone: warehouse.airAddress.phone,
         email: warehouse.airAddress.email,
         instructions: warehouse.airAddress.instructions,
-        fullAddress: `${warehouse.airAddress.name}\n${warehouse.airAddress.street}\n${warehouse.airAddress.city}, ${warehouse.airAddress.state} ${warehouse.airAddress.zipCode}\n${warehouse.airAddress.country}`
+        fullAddress: `${warehouse.airAddress.name}\n${warehouse.airAddress.street}\n${warehouse.airAddress.city}, ${warehouse.airAddress.state} ${warehouse.airAddress.zipCode}\n${warehouse.airAddress.country}`,
+        recipientLine: req.user ? `${req.user.firstName} ${req.user.lastName} - ${req.user.mailboxNumber}` : 'John Doe - CJS-0001'
       } : null,
       
       sea: warehouse.seaAddress ? {
@@ -52,7 +53,8 @@ export const getShippingAddresses = async (req: AuthRequest, res: Response): Pro
         phone: warehouse.seaAddress.phone,
         email: warehouse.seaAddress.email,
         instructions: warehouse.seaAddress.instructions,
-        fullAddress: `${warehouse.seaAddress.name}\n${warehouse.seaAddress.street}\n${warehouse.seaAddress.city}, ${warehouse.seaAddress.state} ${warehouse.seaAddress.zipCode}\n${warehouse.seaAddress.country}`
+        fullAddress: `${warehouse.seaAddress.name}\n${warehouse.seaAddress.street}\n${warehouse.seaAddress.city}, ${warehouse.seaAddress.state} ${warehouse.seaAddress.zipCode}\n${warehouse.seaAddress.country}`,
+        recipientLine: req.user ? `${req.user.firstName} ${req.user.lastName} - ${req.user.mailboxNumber}` : 'John Doe - CJS-0001'
       } : null,
       
       china: warehouse.chinaAddress ? {
@@ -66,20 +68,27 @@ export const getShippingAddresses = async (req: AuthRequest, res: Response): Pro
         phone: warehouse.chinaAddress.phone,
         email: warehouse.chinaAddress.email,
         instructions: warehouse.chinaAddress.instructions,
-        fullAddress: `${warehouse.chinaAddress.name}\n${warehouse.chinaAddress.street}\n${warehouse.chinaAddress.city}, ${warehouse.chinaAddress.state} ${warehouse.chinaAddress.zipCode}\n${warehouse.chinaAddress.country}`
+        fullAddress: `${warehouse.chinaAddress.name}\n${warehouse.chinaAddress.street}\n${warehouse.chinaAddress.city}, ${warehouse.chinaAddress.state} ${warehouse.chinaAddress.zipCode}\n${warehouse.chinaAddress.country}`,
+        recipientLine: req.user ? `${req.user.firstName} ${req.user.lastName} - ${req.user.mailboxNumber}` : 'John Doe - CJS-0001'
       } : null
     };
 
-    // Include customer's mailbox number
+    // Include customer's mailbox number and name
     const response = {
       mailboxNumber: req.user?.mailboxNumber || null,
+      customerName: req.user ? `${req.user.firstName} ${req.user.lastName}` : null,
       companyName: 'Clean J Shipping',
       companyAbbreviation: warehouse.companyAbbreviation || 'CJS',
       addresses,
       instructions: {
+        general: `Always include your mailbox number (${req.user?.mailboxNumber || 'N/A'}) when shipping items to ensure proper delivery.`,
         air: 'Use this address for air/express shipments. Include your mailbox number in the recipient field.',
         sea: 'Use this address for sea/ocean freight shipments. Include your mailbox number in the recipient field.',
         china: 'Use this address for shipments from China. Include your mailbox number in the recipient field.'
+      },
+      usageExample: {
+        recipientName: req.user ? `${req.user.firstName} ${req.user.lastName} - ${req.user.mailboxNumber}` : 'John Doe - CJS-0001',
+        address: addresses.air ? `${addresses.air.name}, ${addresses.air.street}, ${addresses.air.city}, ${addresses.air.state} ${addresses.air.zipCode}, ${addresses.air.country}` : 'Address not configured'
       }
     };
 

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { login, customerLogin } from '../controllers/authController';
+import { login, customerLogin, register } from '../controllers/authController';
 
 const router = Router();
 
@@ -25,14 +25,8 @@ const router = Router();
  *       400:
  *         description: Bad request
  */
-// Register User - TODO: Implement register controller
-router.post('/register', (req, res) => {
-  res.status(501).json({
-    success: false,
-    message: 'Registration endpoint not yet implemented',
-    error: 'NOT_IMPLEMENTED'
-  });
-});
+// Register User
+router.post('/register', register);
 
 /**
  * @swagger

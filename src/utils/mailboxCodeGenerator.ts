@@ -27,18 +27,27 @@ export const generateMailboxCode = async (warehouseId?: string): Promise<string>
       }
     }
 
-    // Find the last mailbox code with this abbreviation
-    const lastUser = await User.findOne({
+    // Find all users with this abbreviation and get the highest number
+    const users = await User.find({
       mailboxNumber: new RegExp(`^${abbreviation}-`, 'i')
-    }).sort({ mailboxNumber: -1 });
+    }).select('mailboxNumber');
 
     let nextNumber = 1;
     
-    if (lastUser && lastUser.mailboxNumber) {
-      // Extract number from format like "CJS-0001"
-      const match = lastUser.mailboxNumber.match(/-(\d+)$/);
-      if (match) {
-        nextNumber = parseInt(match[1], 10) + 1;
+    if (users && users.length > 0) {
+      // Extract numbers from all mailbox codes and find the highest
+      const numbers = users
+        .map(user => {
+          if (user.mailboxNumber) {
+            const match = user.mailboxNumber.match(/-(\d+)$/);
+            return match ? parseInt(match[1], 10) : 0;
+          }
+          return 0;
+        })
+        .filter(num => num > 0);
+      
+      if (numbers.length > 0) {
+        nextNumber = Math.max(...numbers) + 1;
       }
     }
 
