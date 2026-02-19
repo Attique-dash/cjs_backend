@@ -165,9 +165,8 @@ export const register = async (req: RegisterRequest, res: Response): Promise<voi
     // Generate mailbox code
     const mailboxNumber = await generateMailboxCode();
 
-    // Generate user code (format: XX-123)
-    const userCodeCounter = Math.floor(Math.random() * 900) + 100; // 100-999
-    const userCode = `CU-${userCodeCounter}`;
+    // Use mailbox number as user code for consistency
+    const userCode = mailboxNumber;
 
     // Create new customer
     const newCustomer = await User.create({

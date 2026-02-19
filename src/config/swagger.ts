@@ -50,8 +50,8 @@ const options = {
           properties: {
             userCode: { 
               type: 'string', 
-              description: 'User code in format XX-123',
-              example: 'CU-001'
+              description: 'User code in format CLEAN-XXXX',
+              example: 'CLEAN-0001'
             },
             firstName: { 
               type: 'string', 
@@ -89,7 +89,38 @@ const options = {
             mailboxNumber: {
               type: 'string',
               description: 'Customer mailbox number',
-              example: 'CJS-0001'
+              example: 'CLEAN-0001'
+            },
+            address: {
+              type: 'object',
+              description: 'Customer address',
+              properties: {
+                street: {
+                  type: 'string',
+                  description: 'Street address',
+                  example: '123 Main St'
+                },
+                city: {
+                  type: 'string',
+                  description: 'City',
+                  example: 'New York'
+                },
+                state: {
+                  type: 'string',
+                  description: 'State',
+                  example: 'NY'
+                },
+                zipCode: {
+                  type: 'string',
+                  description: 'ZIP code',
+                  example: '10001'
+                },
+                country: {
+                  type: 'string',
+                  description: 'Country',
+                  example: 'USA'
+                }
+              }
             },
             accountStatus: { 
               type: 'string', 
@@ -167,7 +198,7 @@ const options = {
             userCode: { 
               type: 'string', 
               description: 'User code',
-              example: 'CU-001'
+              example: 'CLEAN-0001'
             },
             userId: { 
               type: 'string', 
