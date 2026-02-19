@@ -209,7 +209,7 @@ const packageSchema = new Schema<IPackage>({
     required: [true, 'User code is required'],
     trim: true,
     uppercase: true,
-    match: [/^[A-Z]{2}-\d{3,4}$/, 'User code must be in format XX-123']
+    match: [/^[A-Z]{2,6}-\d{3,4}$/, 'User code must be in format CLEAN-XXXX']
   },
   userId: {
     type: Schema.Types.ObjectId,
@@ -253,7 +253,7 @@ const packageSchema = new Schema<IPackage>({
   },
   status: {
     type: String,
-    enum: ['received', 'in_transit', 'out_for_delivery', 'delivered', 'pending', 'customs', 'returned'],
+    enum: ['received', 'in_transit', 'out_for_delivery', 'delivered', 'pending', 'customs', 'returned', 'at_warehouse', 'processing', 'ready_for_pickup'],
     default: 'received'
   },
   

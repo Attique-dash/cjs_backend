@@ -37,16 +37,26 @@ export const searchPackages = async (req: PackageRequest, res: Response): Promis
       filter.status = { $in: statuses };
     }
 
-    // Search query
-    if (req.query.q) {
-      const searchRegex = new RegExp(req.query.q, 'i');
-      filter.$or = [
-        { trackingNumber: searchRegex },
-        { description: searchRegex },
-        { shipper: searchRegex },
-        { 'recipient.name': searchRegex },
-        { 'recipient.email': searchRegex }
-      ];
+    // Check if searching by exact tracking number
+    const searchQuery = req.query.q as string;
+    let isTrackingNumberSearch = false;
+    
+    if (searchQuery) {
+      // Check if it looks like a tracking number (alphanumeric with reasonable length)
+      if (/^[A-Z0-9]{8,25}$/i.test(searchQuery.trim())) {
+        isTrackingNumberSearch = true;
+        filter.trackingNumber = searchQuery.trim().toUpperCase();
+      } else {
+        // General search across multiple fields
+        const searchRegex = new RegExp(searchQuery, 'i');
+        filter.$or = [
+          { trackingNumber: searchRegex },
+          { description: searchRegex },
+          { shipper: searchRegex },
+          { 'recipient.name': searchRegex },
+          { 'recipient.email': searchRegex }
+        ];
+      }
     }
 
     const packages = await Package.find(filter)
@@ -54,6 +64,20 @@ export const searchPackages = async (req: PackageRequest, res: Response): Promis
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
+
+    const total = await Package.countDocuments(filter);
+
+    // If tracking number search and no results, show specific error
+    if (isTrackingNumberSearch && packages.length === 0) {
+      errorResponse(res, `No package found with tracking number: ${searchQuery.trim().toUpperCase()}. Please check the tracking number and try again.`, 404);
+      return;
+    }
+
+    // If general search and no results, show generic message
+    if (searchQuery && packages.length === 0) {
+      errorResponse(res, `No packages found matching "${searchQuery}". Try different search terms or check the tracking number.`, 404);
+      return;
+    }
 
     // Transform packages to match API response format
     const transformedPackages = packages.map(pkg => {
@@ -98,7 +122,6 @@ export const searchPackages = async (req: PackageRequest, res: Response): Promis
       };
     });
 
-    const total = await Package.countDocuments(filter);
     const pages = Math.ceil(total / limit);
 
     successResponse(res, {
@@ -169,30 +192,64 @@ export const addPackage = async (req: PackageRequest, res: Response): Promise<vo
       return;
     }
 
-    // Find user by userCode
-    const user = await User.findOne({ userCode: userCode.toUpperCase() });
-    if (!user) {
-      errorResponse(res, 'User not found with provided userCode', 400);
+    // Define allowed shippers
+    const allowedShippers = [
+      'amazon', 'ebay', 'shein', 'forever21', 'fashion nova', 'old navy',
+      'Amazon', 'eBay', 'SHEIN', 'Forever21', 'Fashion Nova', 'Old Navy'
+    ];
+
+    // Validate shipper
+    if (shipper && !allowedShippers.includes(shipper)) {
+      errorResponse(res, `Invalid shipper. Allowed shippers: ${allowedShippers.join(', ')}`, 400);
       return;
     }
 
+    // Set default shipper to Amazon if not provided
+    const finalShipper = shipper || 'Amazon';
+
+    // Find user by userCode
+    const user = await User.findOne({ userCode: userCode.toUpperCase() });
+    if (!user) {
+      // Get list of existing customers for better error message
+      const existingCustomers = await User.find({ role: 'customer' }).select('userCode firstName lastName email').limit(5);
+      const customerList = existingCustomers.map(c => `${c.userCode} (${c.firstName} ${c.lastName} - ${c.email})`).join(', ');
+      
+      errorResponse(res, `User not found with provided userCode: ${userCode}. Existing customers: ${customerList || 'None'}`, 400);
+      return;
+    }
+
+    // Validate that user is a customer
+    if (user.role !== 'customer') {
+      errorResponse(res, `User ${userCode} is not a customer. User role: ${user.role}`, 400);
+      return;
+    }
+
+    // Generate tracking number if not provided (strong string with numbers)
+    const finalTrackingNumber = trackingNumber || `TRK${Date.now()}${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
     const packageData = {
-      trackingNumber,
+      trackingNumber: finalTrackingNumber,
       userCode: userCode.toUpperCase(),
       userId: user._id,
       weight: weight || 0,
-      shipper: shipper || '',
+      shipper: finalShipper,
       description: description || '',
       itemDescription: itemDescription || '',
       serviceMode,
       status,
       dimensions: dimensions || { length: 0, width: 0, height: 0, unit: 'cm' },
-      senderName: senderName || '',
+      senderName: senderName || finalShipper,
       senderEmail: senderEmail || '',
       senderPhone: senderPhone || '',
       senderAddress: senderAddress || '',
       senderCountry: senderCountry || '',
-      recipient: recipient || {},
+      recipient: recipient || {
+        name: `${user.firstName} ${user.lastName}`,
+        email: user.email,
+        phone: user.phone || '',
+        shippingId: user.userCode,
+        address: user.address?.street || ''
+      },
       totalAmount: itemValue || 0,
       specialInstructions: specialInstructions || '',
       isFragile: isFragile || false,
@@ -225,16 +282,36 @@ export const addPackage = async (req: PackageRequest, res: Response): Promise<vo
 // Update Package (API SPEC)
 export const updatePackage = async (req: PackageRequest, res: Response): Promise<void> => {
   try {
+    const packageId = req.params.id;
     const updateData = req.body;
     
+    // First, get the current package data
+    const currentPackage = await Package.findById(packageId)
+      .populate('userId', 'firstName lastName email phone mailboxNumber');
+
+    if (!currentPackage) {
+      errorResponse(res, 'Package not found', 404);
+      return;
+    }
+
+    // If no update data provided, just return current package
+    if (Object.keys(updateData).length === 0) {
+      successResponse(res, {
+        package: currentPackage,
+        message: 'Current package data (no updates provided)'
+      });
+      return;
+    }
+
+    // Apply updates
     const updatedPackage = await Package.findByIdAndUpdate(
-      req.params.id,
+      packageId,
       updateData,
       { new: true, runValidators: true }
     ).populate('userId', 'firstName lastName email phone mailboxNumber');
 
     if (!updatedPackage) {
-      errorResponse(res, 'Package not found', 404);
+      errorResponse(res, 'Failed to update package', 500);
       return;
     }
 
@@ -242,7 +319,9 @@ export const updatePackage = async (req: PackageRequest, res: Response): Promise
     await TasokoService.sendPackageUpdated(updatedPackage);
 
     successResponse(res, {
-      package: updatedPackage
+      package: updatedPackage,
+      previousData: currentPackage,
+      message: 'Package updated successfully'
     });
   } catch (error) {
     logger.error('Error updating package:', error);
@@ -273,22 +352,32 @@ export const deletePackage = async (req: AuthRequest, res: Response): Promise<vo
 // Update Package Status (API SPEC)
 export const updatePackageStatus = async (req: PackageRequest, res: Response): Promise<void> => {
   try {
-    const { status, notes, location } = req.body;
+    const { status, notes, location, description, estimatedDelivery } = req.body;
 
     if (!status) {
       errorResponse(res, 'Status is required', 400);
       return;
     }
 
+    // Convert human-readable status to database format
+    let normalizedStatus = status.toLowerCase().replace(/\s+/g, '_');
+    const validStatuses = ['received', 'in_transit', 'out_for_delivery', 'delivered', 'pending', 'customs', 'returned', 'at_warehouse', 'processing', 'ready_for_pickup'];
+    
+    if (!validStatuses.includes(normalizedStatus)) {
+      errorResponse(res, `Invalid status: "${status}". Valid statuses: ${validStatuses.join(', ')}`, 400);
+      return;
+    }
+
     const historyEntry = {
-      status,
+      status: normalizedStatus,
       at: new Date(),
-      note: notes || ''
+      note: notes || description || ''
     };
 
     const updateData: any = { 
-      status,
-      ...(location && { warehouseLocation: location })
+      status: normalizedStatus,
+      ...(location && { warehouseLocation: location }),
+      ...(estimatedDelivery && { actualDelivery: new Date(estimatedDelivery) })
     };
 
     const updatedPackage = await Package.findByIdAndUpdate(
@@ -306,7 +395,8 @@ export const updatePackageStatus = async (req: PackageRequest, res: Response): P
     }
 
     successResponse(res, {
-      package: updatedPackage
+      package: updatedPackage,
+      message: `Package status updated to: ${normalizedStatus.replace(/_/g, ' ')}`
     });
   } catch (error) {
     logger.error('Error updating package status:', error);

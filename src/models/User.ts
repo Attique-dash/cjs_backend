@@ -63,7 +63,7 @@ const userSchema = new Schema<IUser>({
     unique: true,
     uppercase: true,
     trim: true,
-    match: [/^[A-Z]{2}-\d{3,4}$/, 'User code must be in format XX-123']
+    match: [/^[A-Z]{2,6}-\d{3,4}$/, 'User code must be in format CLEAN-XXXX']
   },
   firstName: {
     type: String,
@@ -106,7 +106,7 @@ const userSchema = new Schema<IUser>({
     city: { type: String, required: false },
     state: { type: String, required: false },
     zipCode: { type: String, required: false },
-    country: { type: String, required: false, default: 'USA' }
+    country: { type: String, required: false }
   },
   mailboxNumber: {
     type: String,

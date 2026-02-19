@@ -46,11 +46,11 @@ const options = {
         // User Schema
         User: {
           type: 'object',
-          required: ['firstName', 'lastName', 'email', 'passwordHash'],
+          required: ['firstName', 'lastName', 'email', 'password'],
           properties: {
             userCode: { 
               type: 'string', 
-              description: 'User code in format CLEAN-XXXX',
+              description: 'User code in format CLEAN-XXXX (same as mailbox number)',
               example: 'CLEAN-0001'
             },
             firstName: { 
@@ -69,7 +69,7 @@ const options = {
               description: 'User email',
               example: 'john.doe@example.com'
             },
-            passwordHash: { 
+            password: { 
               type: 'string', 
               minLength: 8, 
               description: 'User password (will be hashed)',
@@ -83,12 +83,12 @@ const options = {
             role: { 
               type: 'string', 
               enum: ['admin', 'customer', 'warehouse'], 
-              description: 'User role',
+              description: 'User role (admin users are created via seeding only)',
               example: 'customer'
             },
             mailboxNumber: {
               type: 'string',
-              description: 'Customer mailbox number',
+              description: 'Customer mailbox number (same as userCode)',
               example: 'CLEAN-0001'
             },
             address: {
@@ -181,6 +181,43 @@ const options = {
             phone: { 
               type: 'string',
               example: '+1234567890'
+            },
+            role: {
+              type: 'string',
+              enum: ['customer', 'warehouse'],
+              description: 'User role (admin registration not allowed)',
+              example: 'customer'
+            },
+            address: {
+              type: 'object',
+              description: 'User address (optional)',
+              properties: {
+                street: {
+                  type: 'string',
+                  description: 'Street address',
+                  example: '123 Main St'
+                },
+                city: {
+                  type: 'string',
+                  description: 'City',
+                  example: 'New York'
+                },
+                state: {
+                  type: 'string',
+                  description: 'State/Province',
+                  example: 'NY'
+                },
+                zipCode: {
+                  type: 'string',
+                  description: 'ZIP/Postal code',
+                  example: '10001'
+                },
+                country: {
+                  type: 'string',
+                  description: 'Country',
+                  example: 'USA'
+                }
+              }
             }
           }
         },
@@ -275,6 +312,60 @@ const options = {
           }
         },
         
+        // Warehouse Schema
+        Warehouse: {
+          type: 'object',
+          required: ['name', 'code', 'address'],
+          properties: {
+            name: { 
+              type: 'string', 
+              description: 'Warehouse name',
+              example: 'Main Warehouse'
+            },
+            code: { 
+              type: 'string', 
+              description: 'Warehouse code',
+              example: 'WH-001'
+            },
+            address: {
+              type: 'object',
+              description: 'Warehouse address',
+              properties: {
+                street: {
+                  type: 'string',
+                  example: '123 Storage Lane'
+                },
+                city: {
+                  type: 'string',
+                  example: 'Newark'
+                },
+                state: {
+                  type: 'string',
+                  example: 'NJ'
+                },
+                zipCode: {
+                  type: 'string',
+                  example: '07102'
+                },
+                country: {
+                  type: 'string',
+                  example: 'USA'
+                }
+              }
+            },
+            isActive: { 
+              type: 'boolean', 
+              description: 'Warehouse active status',
+              example: true
+            },
+            capacity: { 
+              type: 'number', 
+              description: 'Warehouse capacity',
+              example: 10000
+            }
+          }
+        },
+        
         // Error Response Schema
         ErrorResponse: {
           type: 'object',
@@ -304,6 +395,10 @@ const options = {
       {
         name: 'Authentication',
         description: 'User authentication endpoints'
+      },
+      {
+        name: 'Admin',
+        description: 'Admin-only management endpoints'
       },
       {
         name: 'Warehouse',

@@ -13,6 +13,7 @@
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "seed": "ts-node scripts/seed.ts",
+    "seed-admin": "ts-node scripts/seed-admin.ts",
     "create-api-key": "ts-node scripts/createApiKey.ts",
     "migrate": "ts-node scripts/migrate.ts"
   },

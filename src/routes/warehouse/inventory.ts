@@ -36,37 +36,6 @@ const router = Router();
  *                       price:
  *                         type: number
  */
-// Get inventory (mock data for testing)
-router.get('/', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Inventory endpoint working',
-    data: [
-      {
-        id: 1,
-        product: 'Laptop',
-        quantity: 50,
-        price: 999.99,
-        sku: 'LAP-001'
-      },
-      {
-        id: 2,
-        product: 'Phone',
-        quantity: 100,
-        price: 699.99,
-        sku: 'PHN-002'
-      },
-      {
-        id: 3,
-        product: 'Tablet',
-        quantity: 25,
-        price: 399.99,
-        sku: 'TAB-003'
-      }
-    ]
-  });
-});
-
 // All inventory routes require authentication
 router.use(authenticate);
 

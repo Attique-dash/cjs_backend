@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { login, customerLogin, register } from '../controllers/authController';
+import { login, register } from '../controllers/authController';
 
 const router = Router();
 
@@ -15,14 +15,20 @@ const router = Router();
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/User'
+ *             $ref: '#/components/schemas/Register'
  *           example:
  *             firstName: "John"
  *             lastName: "Doe"
  *             email: "john.doe@example.com"
- *             passwordHash: "SecurePassword123!"
+ *             password: "SecurePassword123!"
  *             phone: "+1234567890"
  *             role: "customer"
+ *             address:
+ *               street: "123 Main St"
+ *               city: "New York"
+ *               state: "NY"
+ *               zipCode: "10001"
+ *               country: "USA"
  *     responses:
  *       201:
  *         description: User registered successfully
@@ -34,9 +40,13 @@ const router = Router();
  *               success: true
  *               message: "User registered successfully. Please check your email for verification."
  *               data:
- *                 userCode: "US-12345"
+ *                 userCode: "CS-001"
  *                 email: "john.doe@example.com"
  *                 accountStatus: "pending"
+ *                 role:
+ *                   type: string
+ *                   enum: [customer, warehouse]
+ *                   example: customer
  *       400:
  *         description: Bad request - Invalid input data
  *         content:
@@ -59,8 +69,8 @@ router.post('/register', register);
  * @swagger
  * /api/auth/login:
  *   post:
- *     summary: Login user (warehouse staff)
- *     description: Authenticates warehouse staff users and returns a JWT token for accessing protected endpoints.
+ *     summary: Login user (all roles)
+ *     description: Authenticates all user types (admin, warehouse staff, customers) and returns a JWT token for accessing protected endpoints.
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -69,8 +79,8 @@ router.post('/register', register);
  *           schema:
  *             $ref: '#/components/schemas/Login'
  *           example:
- *             email: "admin@warehouse.com"
- *             password: "AdminPassword123!"
+ *             email: "user@example.com"
+ *             password: "Password123!"
  *     responses:
  *       200:
  *         description: Login successful
@@ -85,8 +95,9 @@ router.post('/register', register);
  *                 token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
  *                 user:
  *                   id: "64a1b2c3d4e5f6789012345"
- *                   email: "admin@warehouse.com"
- *                   role: "admin"
+ *                   email: "user@example.com"
+ *                   role: "customer"
+ *                   userCode: "CLEAN-0001"
  *                   accountStatus: "active"
  *                 expiresIn: "24h"
  *       401:
@@ -104,60 +115,8 @@ router.post('/register', register);
  *               success: false
  *               error: "Account is not active. Please contact administrator."
  */
-// Warehouse Staff Login
+// Universal Login - Handles all user roles
 router.post('/login', login);
 
-/**
- * @swagger
- * /api/auth/customer/login:
- *   post:
- *     summary: Login customer
- *     description: Authenticates customer users and returns a JWT token for accessing customer-specific endpoints.
- *     tags: [Authentication]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Login'
- *           example:
- *             email: "customer@example.com"
- *             password: "CustomerPassword123!"
- *     responses:
- *       200:
- *         description: Login successful
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ApiResponse'
- *             example:
- *               success: true
- *               message: "Login successful"
- *               data:
- *                 token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
- *                 user:
- *                   id: "64a1b2c3d4e5f6789012346"
- *                   email: "customer@example.com"
- *                   role: "customer"
- *                   accountStatus: "active"
- *                   userCode: "CS-12345"
- *                 expiresIn: "24h"
- *       401:
- *         description: Invalid credentials
- *         content:
- *           application/json:
- *             example:
- *               success: false
- *               error: "Invalid email or password"
- *       403:
- *         description: Account not verified or active
- *         content:
- *           application/json:
- *             example:
- *               success: false
- *               error: "Please verify your email address before logging in"
- */
-// Customer Login
-router.post('/customer/login', customerLogin);
 
 export default router;

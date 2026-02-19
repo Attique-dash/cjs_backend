@@ -88,29 +88,8 @@ const router = Router();
  *       403:
  *         description: Forbidden - Insufficient permissions
  */
-// Get all packages
-router.get('/', combinedAuth, (req, res) => {
-  res.json({
-    success: true,
-    message: 'Packages endpoint working',
-    data: [
-      {
-        id: 1,
-        trackingNumber: 'TRK001',
-        status: 'In Transit',
-        weight: 2.5,
-        destination: '123 Main St, New York'
-      },
-      {
-        id: 2,
-        trackingNumber: 'TRK002', 
-        status: 'Delivered',
-        weight: 1.8,
-        destination: '456 Oak Ave, Los Angeles'
-      }
-    ]
-  });
-});
+// Get all packages - use search endpoint with no filters
+router.get('/', combinedAuth, packageController.searchPackages);
 
 // All routes use combined authentication (JWT or API Key)
 
