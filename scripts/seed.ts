@@ -93,90 +93,93 @@ const seedData = async () => {
     ]);
     console.log(`Created ${customers.length} customer users`);
 
-    // Create warehouses
+    // Create warehouses with KCD Logistics Corp addresses
     const warehouses = await Promise.all([
       Warehouse.create({
-        name: 'Main Distribution Center',
-        code: 'MDC',
-        address: '123 Logistics Blvd',
-        city: 'New York',
-        state: 'NY',
-        zipCode: '10001',
+        name: 'KCD Logistics Corp - Main',
+        code: 'KCD',
+        address: '3200 NW 112th Ave',
+        city: 'Doral',
+        state: 'Florida',
+        zipCode: '33172',
         country: 'USA',
         isActive: true,
         isDefault: true,
         companyAbbreviation: 'CLEAN',
         airAddress: {
-          name: 'Clean J Shipping Air Facility',
-          street: '123 Airport Road',
-          city: 'Miami',
-          state: 'FL',
-          zipCode: '33101',
+          name: 'KCD Logistics Corp',
+          street: '3200 NW 112th Ave',
+          city: 'Doral',
+          state: 'Florida',
+          zipCode: '33172',
           country: 'USA',
           phone: '+1-305-555-0100',
-          email: 'air@clean-shipping.com'
+          email: 'air@kcdlogistics.com',
+          instructions: 'Standard Air Address - Use KCDE-[MAILBOX#] format for recipient line'
         },
         seaAddress: {
-          name: 'Clean J Shipping Sea Terminal',
-          street: '456 Harbor Drive',
-          city: 'Los Angeles',
-          state: 'CA',
-          zipCode: '90001',
+          name: 'KCD Logistics Corp',
+          street: '3200 NW 112th Ave',
+          city: 'Doral',
+          state: 'Florida',
+          zipCode: '33172',
           country: 'USA',
-          phone: '+1-310-555-0200',
-          email: 'sea@clean-shipping.com'
+          phone: '+1-305-555-0200',
+          email: 'sea@kcdlogistics.com',
+          instructions: 'Standard Sea Address - Use KCDX-[MAILBOX#] format for recipient line'
         },
         chinaAddress: {
-          name: 'Clean J Shipping China Office',
-          street: '789 Beijing Road',
-          city: 'Shanghai',
-          state: 'Shanghai',
-          zipCode: '200000',
+          name: 'KCD Logistics Corp - China Office',
+          street: 'Baoshan No.2 Industrial Zone',
+          city: 'Shenzhen',
+          state: 'Guangdong Province',
+          zipCode: '518000',
           country: 'China',
-          phone: '+86-21-555-0300',
-          email: 'china@clean-shipping.com'
+          phone: '+86-755-555-0300',
+          email: 'china@kcdlogistics.com',
+          instructions: 'China Address - Use FirstName LastName / [MAILBOX#] format. Approx 2 Months sail time. Charges does not include duty.'
         }
       }),
       Warehouse.create({
-        name: 'West Coast Hub',
-        code: 'WCH',
-        address: '456 Pacific Ave',
-        city: 'Los Angeles',
-        state: 'CA',
-        zipCode: '90001',
+        name: 'KCD Logistics Corp - Backup',
+        code: 'KCDB',
+        address: '3200 NW 112th Ave',
+        city: 'Doral',
+        state: 'Florida',
+        zipCode: '33172',
         country: 'USA',
         isActive: true,
         isDefault: false,
         companyAbbreviation: 'CLEAN',
         airAddress: {
-          name: 'CLEAN West Coast Air Facility',
-          street: '321 LAX Boulevard',
-          city: 'Los Angeles',
-          state: 'CA',
-          zipCode: '90045',
+          name: 'KCD Logistics Corp - Backup',
+          street: '3200 NW 112th Ave',
+          city: 'Doral',
+          state: 'Florida',
+          zipCode: '33172',
           country: 'USA',
-          phone: '+1-310-555-0400',
-          email: 'west-air@clean-shipping.com'
+          phone: '+1-305-555-0400',
+          email: 'backup-air@kcdlogistics.com'
         },
         seaAddress: {
-          name: 'CLEAN West Coast Sea Terminal',
-          street: '656 Long Beach Pier',
-          city: 'Long Beach',
-          state: 'CA',
-          zipCode: '90802',
+          name: 'KCD Logistics Corp - Backup',
+          street: '3200 NW 112th Ave',
+          city: 'Doral',
+          state: 'Florida',
+          zipCode: '33172',
           country: 'USA',
-          phone: '+1-562-555-0500',
-          email: 'west-sea@clean-shipping.com'
+          phone: '+1-305-555-0500',
+          email: 'backup-sea@kcdlogistics.com'
         },
         chinaAddress: {
-          name: 'CLEAN West Coast China Office',
-          street: '999 Guangzhou Avenue',
-          city: 'Guangzhou',
-          state: 'Guangdong',
-          zipCode: '510000',
+          name: 'KCD Logistics Corp - China Backup',
+          street: 'Baoshan No.2 Industrial Zone',
+          city: 'Shenzhen',
+          state: 'Guangdong Province',
+          zipCode: '518000',
           country: 'China',
-          phone: '+86-20-555-0600',
-          email: 'west-china@clean-shipping.com'
+          phone: '+86-755-555-0600',
+          email: 'backup-china@kcdlogistics.com'
         }
       })
     ]);
@@ -253,8 +256,8 @@ const seedData = async () => {
     const apiKeys = await Promise.all([
       ApiKey.create({
         key: generateApiKey(),
-        name: 'Main Distribution Center API',
-        description: 'API key for Main Distribution Center operations',
+        name: 'KCD Logistics API',
+        description: 'API key for KCD Logistics Corp operations',
         warehouseId: warehouses[0]._id,
         permissions: ['packages:read', 'packages:write', 'inventory:read', 'inventory:write'],
         isActive: true,
@@ -267,8 +270,8 @@ const seedData = async () => {
       }),
       ApiKey.create({
         key: generateApiKey(),
-        name: 'West Coast Hub API',
-        description: 'API key for West Coast Hub operations',
+        name: 'KCD Backup API',
+        description: 'API key for KCD Logistics Corp backup operations',
         warehouseId: warehouses[1]._id,
         permissions: ['packages:read', 'packages:write', 'inventory:read'],
         isActive: true,
@@ -283,15 +286,30 @@ const seedData = async () => {
     console.log(`Created ${apiKeys.length} API keys`);
 
     console.log('\n=== Database Seeding Complete ===');
-    console.log('\nLogin Credentials:');
+    console.log('\n✅ KCD LOGISTICS CORP ADDRESSES CONFIGURED:');
+    console.log('\n📍 Air Address (KCDE):');
+    console.log('   3200 NW 112th Ave');
+    console.log('   KCDE-[MAILBOX#]');
+    console.log('   Doral, Florida 33172');
+    console.log('\n🚢 Sea Address (KCDX):');
+    console.log('   3200 NW 112th Ave');
+    console.log('   KCDX-[MAILBOX#]');
+    console.log('   Doral, Florida 33172');
+    console.log('\n🇨🇳 China Address:');
+    console.log('   FirstName LastName / [MAILBOX#]');
+    console.log('   China, Guangdong Province, Shenzhen');
+    console.log('   Baoshan No.2 Industrial Zone');
+    console.log('   (Approx 2 Months sail time)');
+    
+    console.log('\n🔐 Login Credentials:');
     console.log('Admin: admin@warehouse.com / admin123');
     console.log('Staff: john@warehouse.com / staff123');
     console.log('Staff: jane@warehouse.com / staff123');
-    console.log('Customer: alice@customer.com / customer123');
-    console.log('Customer: bob@customer.com / customer123');
-    console.log('Customer: charlie@customer.com / customer123');
+    console.log('Customer: alice@customer.com / customer123 (CLEAN-0001)');
+    console.log('Customer: bob@customer.com / customer123 (CLEAN-0002)');
+    console.log('Customer: charlie@customer.com / customer123 (CLEAN-0003)');
     
-    console.log('\nAPI Keys:');
+    console.log('\n🔑 API Keys:');
     apiKeys.forEach((apiKey, index) => {
       console.log(`${warehouses[index].name}: ${apiKey.key}`);
     });
