@@ -1,5 +1,4 @@
 import swaggerJsdoc from 'swagger-jsdoc';
-import swaggerUi from 'swagger-ui-express';
 
 const options = {
   definition: {
@@ -241,30 +240,4 @@ const options = {
 
 const specs = swaggerJsdoc(options);
 
-// Swagger UI options — NO customHtml, NO customfavIcon with broken paths
-// Using CDN assets via the api/docs.js serverless function instead
-const swaggerUiOptions = {
-  explorer: true,
-  swaggerOptions: {
-    persistAuthorization: true,
-    displayRequestDuration: true,
-    filter: true,
-    tryItOutEnabled: true,
-    defaultModelsExpandDepth: 3,
-    defaultModelExpandDepth: 3,
-    docExpansion: 'list',
-    operationsSorter: 'alpha',
-    tagsSorter: 'alpha',
-    supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
-    validatorUrl: null,
-  },
-  customCss: `
-    .swagger-ui .topbar { background-color: #2c3e50; }
-    .swagger-ui .info .title { color: #2c3e50; }
-    .swagger-ui .btn.authorize { background-color: #27ae60; border-color: #27ae60; }
-    .swagger-ui .btn.execute { background-color: #3498db; border-color: #3498db; }
-  `,
-  customSiteTitle: 'Warehouse API Documentation',
-};
-
-export { swaggerUi, specs, swaggerUiOptions };
+export { specs };

@@ -11,6 +11,12 @@
       "maxDuration": 30
     }
   },
+  "rewrites": [
+    { "source": "/docs", "destination": "/api/docs" },
+    { "source": "/docs/(.*)", "destination": "/api/docs" },
+    { "source": "/api-docs", "destination": "/api/api-docs" },
+    { "source": "/(.*)", "destination": "/api/index" }
+  ],
   "headers": [
     {
       "source": "/docs/(.*)",

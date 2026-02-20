@@ -5,27 +5,12 @@ import rateLimit from 'express-rate-limit';
 import { errorHandler } from './middleware/errorHandler';
 import { logger } from './utils/logger';
 import routes from './routes';
-import { swaggerUi, specs, swaggerUiOptions } from './config/swagger';
+import { specs } from './config/swagger';
 
 const app: Application = express();
 
-// Security middleware with CSP configuration for Swagger UI
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://unpkg.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdnjs.cloudflare.com", "https://unpkg.com"],
-      imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https://pack.kcdlogistics.com", "https://cleanjshipping.vercel.app"],
-      fontSrc: ["'self'", "data:", "https://cdnjs.cloudflare.com"],
-      objectSrc: ["'none'"],
-      mediaSrc: ["'self'"],
-      frameSrc: ["'none'"],
-    },
-  },
-  crossOriginEmbedderPolicy: false,
-}));
+// Security middleware
+app.use(helmet());
 
 // CORS configuration - supports multiple origins separated by commas
 const corsOrigins = process.env.CORS_ORIGIN 
@@ -72,16 +57,10 @@ app.get('/health', (req: Request, res: Response) => {
   });
 });
 
-// Swagger API Documentation - Main endpoint
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerUiOptions));
-
-// Alternative Swagger endpoints
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerUiOptions));
-app.use('/swagger', swaggerUi.serve, swaggerUi.setup(specs, swaggerUiOptions));
-
-// Swagger JSON spec endpoint for debugging
-app.get('/docs.json', (req: Request, res: Response) => {
+// Swagger JSON spec endpoint
+app.get('/api-docs', (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.send(specs);
 });
 
