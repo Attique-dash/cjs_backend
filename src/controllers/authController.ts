@@ -5,6 +5,7 @@ import { successResponse, errorResponse } from '../utils/helpers';
 import { config } from '../config/env';
 import { logger } from '../utils/logger';
 import { generateMailboxCode } from '../utils/mailboxCodeGenerator';
+import { EmailService } from '../services/emailService';
 
 interface AuthRequest {
   body: {
@@ -228,6 +229,21 @@ export const register = async (req: RegisterRequest, res: Response): Promise<voi
       accountStatus: 'pending', // Requires email verification
       emailVerified: false
     });
+
+    // Send welcome email with shipping information
+    try {
+      await EmailService.sendWelcomeWithShippingInfo(
+        newUser.email,
+        newUser.firstName,
+        newUser.userCode,
+        newUser.address,
+        cleanCode // Using cleanCode as courier code for now
+      );
+      logger.info(`Welcome email sent to: ${newUser.email}`);
+    } catch (emailError) {
+      logger.error('Failed to send welcome email:', emailError);
+      // Continue with registration even if email fails
+    }
 
     // Remove password from response
     const userResponse = newUser.getPublicProfile();

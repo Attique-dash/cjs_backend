@@ -14,11 +14,17 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdnjs.cloudflare.com"],
       imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https://pack.kcdlogistics.com", "https://cleanjshipping.vercel.app"],
+      fontSrc: ["'self'", "data:", "https://cdnjs.cloudflare.com"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
     },
   },
+  crossOriginEmbedderPolicy: false,
 }));
 
 // CORS configuration
@@ -68,6 +74,12 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerUiOptions));
 // Alternative Swagger endpoints
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerUiOptions));
 app.use('/swagger', swaggerUi.serve, swaggerUi.setup(specs, swaggerUiOptions));
+
+// Swagger JSON spec endpoint for debugging
+app.get('/docs.json', (req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(specs);
+});
 
 // Redirect root to docs
 app.get('/', (req: Request, res: Response) => {

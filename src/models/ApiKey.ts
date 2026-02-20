@@ -45,8 +45,7 @@ const apiKeySchema = new Schema<IApiKey>({
     type: String,
     required: [true, 'API key is required'],
     unique: true,
-    trim: true,
-    match: [/^wh_[a-zA-Z0-9]{32}$/, 'API key must follow the format: wh_ followed by 32 alphanumeric characters']
+    trim: true
   },
   name: {
     type: String,

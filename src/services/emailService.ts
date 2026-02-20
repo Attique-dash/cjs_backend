@@ -92,6 +92,47 @@ export class EmailService {
     }
   }
 
+  static async sendWelcomeWithShippingInfo(to: string, firstName: string, userCode: string, address?: any, courierCode?: string): Promise<boolean> {
+    try {
+      const subject = 'Welcome to Our Shipping Service - Your Account Details';
+      const html = `
+        <h2>Welcome, ${firstName}!</h2>
+        <p>Thank you for joining our shipping service. Your account has been successfully created.</p>
+        
+        <h3>Your Account Details:</h3>
+        <ul>
+          <li><strong>User Code:</strong> ${userCode}</li>
+          <li><strong>Email:</strong> ${to}</li>
+          ${address ? `
+          <li><strong>Shipping Address:</strong><br>
+            ${address.street}<br>
+            ${address.city}, ${address.state} ${address.zipCode}<br>
+            ${address.country}
+          </li>` : ''}
+          ${courierCode ? `<li><strong>Courier Code:</strong> ${courierCode}</li>` : ''}
+        </ul>
+        
+        <h3>Getting Started:</h3>
+        <p>With your new account, you can:</p>
+        <ul>
+          <li>Track your packages in real-time</li>
+          <li>Manage multiple shipping addresses</li>
+          <li>Receive delivery notifications</li>
+          <li>View your shipping history</li>
+          <li>Create and manage shipments</li>
+        </ul>
+        
+        <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+        <p>Welcome aboard!</p>
+      `;
+
+      return await this.sendEmail(to, subject, html);
+    } catch (error) {
+      logger.error('Error sending welcome email with shipping info:', error);
+      return false;
+    }
+  }
+
   static async sendPasswordResetEmail(to: string, resetToken: string): Promise<boolean> {
     try {
       const subject = 'Password Reset Request';

@@ -444,7 +444,15 @@ const swaggerUiOptions = {
     defaultModelExpandDepth: 3,
     docExpansion: 'list', // 'list' | 'full' | 'none'
     operationsSorter: 'alpha',
-    tagsSorter: 'alpha'
+    tagsSorter: 'alpha',
+    // Custom configurations for Vercel compatibility
+    supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
+    onComplete: function() {
+      console.log("Swagger UI loaded");
+    },
+    jsonEditor: false,
+    defaultModelRendering: 'example',
+    showRequestHeaders: false
   },
   customCss: `
     .swagger-ui .topbar { 

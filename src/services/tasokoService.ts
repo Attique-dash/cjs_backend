@@ -20,7 +20,7 @@ export class TasokoService {
       const payload = this.formatPackagePayload(packageData);
       
       const response = await axios.post(
-        `${this.baseUrl}/addpackage.endpoint.com/subdir`, // Update with actual URL
+        `${this.baseUrl}/api/packages/add`,
         [payload], // Array format as per spec
         {
           headers: {
@@ -53,7 +53,7 @@ export class TasokoService {
       const payload = this.formatPackagePayload(packageData);
       
       const response = await axios.post(
-        `${this.baseUrl}/editpackage.endpoint.com/subdir`,
+        `${this.baseUrl}/api/packages/edit`,
         [payload],
         {
           headers: {
@@ -86,7 +86,7 @@ export class TasokoService {
       const payload = this.formatPackagePayload(packageData);
       
       const response = await axios.post(
-        `${this.baseUrl}/deletepackage.endpoint.com/subdir`,
+        `${this.baseUrl}/api/packages/delete`,
         [payload],
         {
           headers: {
