@@ -23,8 +23,12 @@ const options = {
         description: 'Development server'
       },
       {
-        url: 'https://your-production-url.com',
-        description: 'Production server'
+        url: 'https://cleanjshipping.vercel.app',
+        description: 'Production server (Vercel)'
+      },
+      {
+        url: 'https://cleanjshipping-p79g5utyy-muhammad-attiques-projects.vercel.app',
+        description: 'Preview deployment (Vercel)'
       }
     ],
     components: {
