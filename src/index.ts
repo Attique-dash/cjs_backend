@@ -46,4 +46,10 @@ const startServer = async () => {
   }
 };
 
-startServer();
+// Export app for Vercel serverless deployment
+export default app;
+
+// Start server only when not in Vercel environment
+if (process.env.NODE_ENV !== 'production' || process.env.VERCEL !== '1') {
+  startServer();
+}
