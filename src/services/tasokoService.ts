@@ -7,13 +7,39 @@ export class TasokoService {
   private static apiToken = process.env.TASOKO_API_TOKEN || '';
 
   /**
+   * Check if Tasoko service is properly configured
+   */
+  static isConfigured(): boolean {
+    return !!(this.baseUrl && this.apiToken);
+  }
+
+  /**
+   * Get configuration status for logging
+   */
+  static getConfigStatus(): { baseUrl: boolean; apiToken: boolean; fullyConfigured: boolean } {
+    return {
+      baseUrl: !!this.baseUrl,
+      apiToken: !!this.apiToken,
+      fullyConfigured: this.isConfigured()
+    };
+  }
+
+  /**
    * Send package data to Tasoko after creation
    * Endpoint: Add Package (PDF page 3)
    */
   static async sendPackageCreated(packageData: IPackage): Promise<boolean> {
     try {
-      if (!this.baseUrl || !this.apiToken) {
-        logger.warn('Tasoko API not configured, skipping webhook');
+      if (!this.isConfigured()) {
+        const config = this.getConfigStatus();
+        logger.warn('Tasoko API not configured, skipping webhook', {
+          trackingNumber: packageData.trackingNumber,
+          configStatus: config,
+          missingVars: [
+            !config.baseUrl ? 'TASOKO_API_URL' : null,
+            !config.apiToken ? 'TASOKO_API_TOKEN' : null
+          ].filter(Boolean)
+        });
         return false;
       }
 
@@ -46,7 +72,16 @@ export class TasokoService {
    */
   static async sendPackageUpdated(packageData: IPackage): Promise<boolean> {
     try {
-      if (!this.baseUrl || !this.apiToken) {
+      if (!this.isConfigured()) {
+        const config = this.getConfigStatus();
+        logger.warn('Tasoko API not configured, skipping package update', {
+          trackingNumber: packageData.trackingNumber,
+          configStatus: config,
+          missingVars: [
+            !config.baseUrl ? 'TASOKO_API_URL' : null,
+            !config.apiToken ? 'TASOKO_API_TOKEN' : null
+          ].filter(Boolean)
+        });
         return false;
       }
 
@@ -79,7 +114,16 @@ export class TasokoService {
    */
   static async sendPackageDeleted(packageData: IPackage): Promise<boolean> {
     try {
-      if (!this.baseUrl || !this.apiToken) {
+      if (!this.isConfigured()) {
+        const config = this.getConfigStatus();
+        logger.warn('Tasoko API not configured, skipping package deletion', {
+          trackingNumber: packageData.trackingNumber,
+          configStatus: config,
+          missingVars: [
+            !config.baseUrl ? 'TASOKO_API_URL' : null,
+            !config.apiToken ? 'TASOKO_API_TOKEN' : null
+          ].filter(Boolean)
+        });
         return false;
       }
 

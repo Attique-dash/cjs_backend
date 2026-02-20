@@ -1,5 +1,7 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 const options = {
   definition: {
@@ -471,7 +473,9 @@ const swaggerUiOptions = {
     }
   `,
   customSiteTitle: 'Warehouse API Documentation',
-  customfavIcon: '/favicon.ico'
+  customfavIcon: '/favicon.ico',
+  // Use custom HTML template with CDN resources
+  customHtml: readFileSync(join(__dirname, 'swagger-template.html'), 'utf-8')
 };
 
 export { swaggerUi, specs, swaggerUiOptions };

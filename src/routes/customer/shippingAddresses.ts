@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authenticate } from '../../middleware/auth';
 import { asyncHandler } from '../../middleware/errorHandler';
-import * as shippingAddressesController from '../../controllers/customer/ shippingAddressesController';
+import * as shippingAddressesController from '../../controllers/customer/shippingAddressesController';
 
 const router = Router();
 

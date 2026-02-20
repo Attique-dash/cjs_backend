@@ -50,6 +50,6 @@ const startServer = async () => {
 export default app;
 
 // Start server only when not in Vercel environment
-if (process.env.NODE_ENV !== 'production' || process.env.VERCEL !== '1') {
+if (process.env.VERCEL !== '1') {
   startServer();
 }
