@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
-import { User } from '../models/User';
+import { User, IUser } from '../models/User';
 import { Package } from '../models/Package';
 import { Inventory } from '../models/Inventory';
 import { successResponse, errorResponse, getPaginationData } from '../utils/helpers';
@@ -445,7 +445,7 @@ export const addWarehouseStaff = async (req: AdminRequest, res: Response): Promi
         createdAt: newStaff.createdAt
       },
       message: 'Warehouse staff created successfully'
-    }, 201);
+    }, 'Warehouse staff created successfully', 201);
   } catch (error) {
     logger.error('Error creating warehouse staff:', error);
     errorResponse(res, 'Failed to create warehouse staff');
@@ -578,7 +578,7 @@ export const deleteUser = async (req: AdminRequest, res: Response): Promise<void
       return;
     }
 
-    const user = await User.findOneAndDelete({ userCode });
+    const user = await User.findOneAndDelete({ userCode }) as unknown as IUser | null;
 
     if (!user) {
       errorResponse(res, 'User not found', 404);
