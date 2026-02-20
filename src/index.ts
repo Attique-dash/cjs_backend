@@ -14,9 +14,14 @@ process.on('uncaughtException', (error: Error) => {
 // Connect to database and start server
 const startServer = async () => {
   try {
-    // Connect to MongoDB
-    await connectDatabase();
-    logger.info('MongoDB connected successfully');
+    // Only connect to MongoDB if not in Vercel serverless environment
+    if (process.env.VERCEL !== '1') {
+      // Connect to MongoDB
+      await connectDatabase();
+      logger.info('MongoDB connected successfully');
+    } else {
+      logger.info('Skipping MongoDB connection in Vercel serverless environment');
+    }
 
     // Start Express server
     const server = app.listen(PORT, () => {
