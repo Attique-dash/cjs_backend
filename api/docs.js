@@ -10,7 +10,10 @@ module.exports = async (req, res) => {
 
     // Determine the correct API docs URL based on environment
     const host = req.headers.host || 'localhost:5000';
-    const protocol = host.includes('localhost') ? 'http' : 'https';
+    const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1');
+    const protocol = isLocalhost ? 'http' : 'https';
+    
+    // Use the actual host from the request — works for both local and Vercel
     const apiDocsUrl = `${protocol}://${host}/api-docs`;
 
     const html = `<!DOCTYPE html>
@@ -58,7 +61,16 @@ module.exports = async (req, res) => {
                 docExpansion: 'list',
                 operationsSorter: 'alpha',
                 tagsSorter: 'alpha',
-                supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch']
+                supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
+                // Override the server URL so "Try it out" uses the current host
+                requestInterceptor: function(request) {
+                    // Replace localhost URLs with the current host
+                    if (request.url && request.url.includes('localhost')) {
+                        const currentOrigin = window.location.origin;
+                        request.url = request.url.replace(/https?:\\/\\/localhost:\\d+/, currentOrigin);
+                    }
+                    return request;
+                }
             });
         };
     </script>

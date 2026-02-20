@@ -10,6 +10,7 @@ JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 # Server Configuration
 NODE_ENV=production
 VERCEL=1
+BASE_URL=https://cleanjshipping.vercel.app
 
 # CORS (comma-separated origins)
 # For local development:
