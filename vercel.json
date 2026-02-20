@@ -3,14 +3,14 @@
   "functions": {
     "api/index.js": {
       "maxDuration": 30
+    },
+    "api/docs.js": {
+      "maxDuration": 30
+    },
+    "api/api-docs.js": {
+      "maxDuration": 30
     }
   },
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "api/index.js"
-    }
-  ],
   "headers": [
     {
       "source": "/docs/(.*)",
