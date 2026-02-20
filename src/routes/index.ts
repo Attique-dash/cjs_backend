@@ -4,6 +4,7 @@ import warehouseRoutes from './warehouse';
 import customerRoutes from './customer';
 import adminRoutes from './admin';
 import kcdWebhookRoutes from './webhooks/kcd';
+import { ensureDatabaseConnection } from '../middleware/databaseConnection';
 
 const router = Router();
 
@@ -40,11 +41,11 @@ router.get('/health', (req, res) => {
   });
 });
 
-// Mount route modules
-router.use('/auth', authRoutes);
-router.use('/warehouse', warehouseRoutes);
-router.use('/customer', customerRoutes);
-router.use('/admin', adminRoutes);
-router.use('/webhooks/kcd', kcdWebhookRoutes);
+// Apply database connection middleware to all routes except health
+router.use('/auth', ensureDatabaseConnection, authRoutes);
+router.use('/warehouse', ensureDatabaseConnection, warehouseRoutes);
+router.use('/customer', ensureDatabaseConnection, customerRoutes);
+router.use('/admin', ensureDatabaseConnection, adminRoutes);
+router.use('/webhooks/kcd', ensureDatabaseConnection, kcdWebhookRoutes);
 
 export default router;

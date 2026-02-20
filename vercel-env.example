@@ -1,20 +1,18 @@
 # Vercel Environment Variables Example
 # Copy these to your Vercel project environment variables
 
-# Database
+# Database (REQUIRED)
 MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/warehouse?retryWrites=true&w=majority
 
-# JWT
+# JWT (REQUIRED)
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 
-# Server Configuration
+# Server Configuration (REQUIRED)
 NODE_ENV=production
 VERCEL=1
 BASE_URL=https://cleanjshipping.vercel.app
 
 # CORS (comma-separated origins)
-# For local development:
-CORS_ORIGIN=http://localhost:3000,http://localhost:5000,http://127.0.0.1:3000,http://127.0.0.1:5000
 # For production (Vercel):
 CORS_ORIGIN=https://cleanjshipping.vercel.app
 
