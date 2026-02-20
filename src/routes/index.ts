@@ -3,6 +3,7 @@ import authRoutes from './auth';
 import warehouseRoutes from './warehouse';
 import customerRoutes from './customer';
 import adminRoutes from './admin';
+import kcdWebhookRoutes from './webhooks/kcd';
 
 const router = Router();
 
@@ -44,5 +45,6 @@ router.use('/auth', authRoutes);
 router.use('/warehouse', warehouseRoutes);
 router.use('/customer', customerRoutes);
 router.use('/admin', adminRoutes);
+router.use('/webhooks/kcd', kcdWebhookRoutes);
 
 export default router;

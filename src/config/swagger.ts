@@ -24,10 +24,6 @@ const options = {
       {
         url: 'https://cleanjshipping.vercel.app',
         description: 'Production server (Vercel)'
-      },
-      {
-        url: 'https://cleanjshipping-p79g5utyy-muhammad-attiques-projects.vercel.app',
-        description: 'Preview deployment (Vercel)'
       }
     ],
     components: {
@@ -46,76 +42,20 @@ const options = {
         }
       },
       schemas: {
-        // User Schema
         User: {
           type: 'object',
           required: ['firstName', 'lastName', 'email', 'password'],
           properties: {
-            userCode: { 
-              type: 'string', 
-              description: 'User code in format CLEAN-XXXX (same as mailbox number)',
-              example: 'CLEAN-0001'
-            },
-            firstName: { 
-              type: 'string', 
-              description: 'User first name',
-              example: 'John'
-            },
-            lastName: { 
-              type: 'string', 
-              description: 'User last name',
-              example: 'Doe'
-            },
-            email: { 
-              type: 'string', 
-              format: 'email', 
-              description: 'User email',
-              example: 'john.doe@example.com'
-            },
-            password: { 
-              type: 'string', 
-              minLength: 8, 
-              description: 'User password (will be hashed)',
-              example: 'password123'
-            },
-            phone: { 
-              type: 'string', 
-              description: 'User phone number',
-              example: '+1234567890'
-            },
-            role: { 
-              type: 'string', 
-              enum: ['admin', 'customer', 'warehouse'], 
-              description: 'User role (admin users are created via seeding only)',
-              example: 'customer'
-            },
-            mailboxNumber: {
-              type: 'string',
-              description: 'Customer mailbox number (same as userCode)',
-              example: 'CLEAN-0001'
-            },
-            address: {
-              type: 'object',
-              description: 'Customer address',
-              properties: {
-                street: { type: 'string', example: '123 Main St' },
-                city: { type: 'string', example: 'New York' },
-                state: { type: 'string', example: 'NY' },
-                zipCode: { type: 'string', example: '10001' },
-                country: { type: 'string', example: 'USA' }
-              }
-            },
-            accountStatus: { 
-              type: 'string', 
-              enum: ['pending', 'active', 'inactive'], 
-              description: 'Account status',
-              example: 'active'
-            },
-            emailVerified: { 
-              type: 'boolean', 
-              description: 'Email verification status',
-              example: true
-            }
+            userCode: { type: 'string', example: 'CLEAN-0001' },
+            firstName: { type: 'string', example: 'John' },
+            lastName: { type: 'string', example: 'Doe' },
+            email: { type: 'string', format: 'email', example: 'john.doe@example.com' },
+            password: { type: 'string', minLength: 8, example: 'password123' },
+            phone: { type: 'string', example: '+1234567890' },
+            role: { type: 'string', enum: ['admin', 'customer', 'warehouse'], example: 'customer' },
+            mailboxNumber: { type: 'string', example: 'CLEAN-0001' },
+            accountStatus: { type: 'string', enum: ['pending', 'active', 'inactive'], example: 'active' },
+            emailVerified: { type: 'boolean', example: true }
           }
         },
         Login: {
@@ -135,47 +75,17 @@ const options = {
             email: { type: 'string', format: 'email', example: 'john@example.com' },
             password: { type: 'string', minLength: 8, example: 'password123' },
             phone: { type: 'string', example: '+1234567890' },
-            role: {
-              type: 'string',
-              enum: ['customer', 'warehouse'],
-              description: 'User role (admin registration not allowed)',
-              example: 'customer'
-            },
-            address: {
-              type: 'object',
-              properties: {
-                street: { type: 'string', example: '123 Main St' },
-                city: { type: 'string', example: 'New York' },
-                state: { type: 'string', example: 'NY' },
-                zipCode: { type: 'string', example: '10001' },
-                country: { type: 'string', example: 'USA' }
-              }
-            }
+            role: { type: 'string', enum: ['customer', 'warehouse'], example: 'customer' }
           }
         },
         Package: {
           type: 'object',
-          required: ['trackingNumber', 'userCode', 'userId', 'weight'],
           properties: {
             trackingNumber: { type: 'string', example: 'TRK123456789' },
             userCode: { type: 'string', example: 'CLEAN-0001' },
-            userId: { type: 'string', example: '507f1f77bcf86cd799439011' },
             weight: { type: 'number', example: 5.5 },
-            dimensions: {
-              type: 'object',
-              properties: {
-                length: { type: 'number', example: 10 },
-                width: { type: 'number', example: 8 },
-                height: { type: 'number', example: 5 },
-                unit: { type: 'string', enum: ['cm', 'in'], example: 'cm' }
-              }
-            },
             serviceMode: { type: 'string', enum: ['air', 'ocean', 'local'], example: 'air' },
-            status: { 
-              type: 'string', 
-              enum: ['received', 'in_transit', 'out_for_delivery', 'delivered', 'pending', 'customs', 'returned'],
-              example: 'received'
-            },
+            status: { type: 'string', enum: ['received', 'in_transit', 'out_for_delivery', 'delivered', 'pending', 'customs', 'returned'], example: 'received' },
             shipper: { type: 'string', example: 'DHL' },
             description: { type: 'string', example: 'Electronics package' }
           }
@@ -186,28 +96,7 @@ const options = {
             success: { type: 'boolean', example: true },
             message: { type: 'string', example: 'Operation successful' },
             data: { type: 'object' },
-            error: { type: 'string' },
             timestamp: { type: 'string', format: 'date-time' }
-          }
-        },
-        Warehouse: {
-          type: 'object',
-          required: ['name', 'code', 'address'],
-          properties: {
-            name: { type: 'string', example: 'Main Warehouse' },
-            code: { type: 'string', example: 'WH-001' },
-            address: {
-              type: 'object',
-              properties: {
-                street: { type: 'string', example: '123 Storage Lane' },
-                city: { type: 'string', example: 'Newark' },
-                state: { type: 'string', example: 'NJ' },
-                zipCode: { type: 'string', example: '07102' },
-                country: { type: 'string', example: 'USA' }
-              }
-            },
-            isActive: { type: 'boolean', example: true },
-            capacity: { type: 'number', example: 10000 }
           }
         },
         ErrorResponse: {
@@ -226,16 +115,730 @@ const options = {
       { name: 'Admin', description: 'Admin-only management endpoints' },
       { name: 'Warehouse', description: 'Warehouse management endpoints' },
       { name: 'Customer', description: 'Customer-facing endpoints' },
-      { name: 'Packages', description: 'Package management' },
       { name: 'Health', description: 'API health check' }
-    ]
+    ],
+    paths: {
+      // ─── HEALTH ───────────────────────────────────────────────────────────
+      '/health': {
+        get: {
+          summary: 'Server health check',
+          tags: ['Health'],
+          security: [],
+          responses: {
+            200: {
+              description: 'Server is running',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } }
+            }
+          }
+        }
+      },
+      '/api/health': {
+        get: {
+          summary: 'API health check',
+          tags: ['Health'],
+          security: [],
+          responses: {
+            200: {
+              description: 'API is running',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } }
+            }
+          }
+        }
+      },
+
+      // ─── AUTHENTICATION ───────────────────────────────────────────────────
+      '/api/auth/register': {
+        post: {
+          summary: 'Register a new user',
+          tags: ['Authentication'],
+          security: [],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Register' },
+                example: {
+                  firstName: 'John', lastName: 'Doe',
+                  email: 'john@example.com', password: 'Password123!',
+                  phone: '+1234567890', role: 'customer'
+                }
+              }
+            }
+          },
+          responses: {
+            201: { description: 'User registered successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            400: { description: 'Bad request', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            409: { description: 'Email already registered', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/auth/login': {
+        post: {
+          summary: 'Login (all roles)',
+          tags: ['Authentication'],
+          security: [],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Login' },
+                example: { email: 'user@example.com', password: 'Password123!' }
+              }
+            }
+          },
+          responses: {
+            200: {
+              description: 'Login successful',
+              content: {
+                'application/json': {
+                  example: {
+                    success: true, message: 'Login successful',
+                    data: { token: 'eyJhbGci...', user: { id: '...', email: 'user@example.com', role: 'customer', userCode: 'CLEAN-0001' } }
+                  }
+                }
+              }
+            },
+            401: { description: 'Invalid credentials', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+
+      // ─── ADMIN ────────────────────────────────────────────────────────────
+      '/api/admin/customers': {
+        get: {
+          summary: 'Get all customers',
+          tags: ['Admin'],
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { in: 'query', name: 'page', schema: { type: 'integer', default: 1 } },
+            { in: 'query', name: 'limit', schema: { type: 'integer', default: 20 } },
+            { in: 'query', name: 'q', schema: { type: 'string' }, description: 'Search by name, email or user code' }
+          ],
+          responses: {
+            200: { description: 'Customers retrieved successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            403: { description: 'Forbidden', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/admin/staff': {
+        get: {
+          summary: 'Get all warehouse staff',
+          tags: ['Admin'],
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { in: 'query', name: 'page', schema: { type: 'integer', default: 1 } },
+            { in: 'query', name: 'limit', schema: { type: 'integer', default: 20 } },
+            { in: 'query', name: 'q', schema: { type: 'string' } }
+          ],
+          responses: {
+            200: { description: 'Staff retrieved successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        },
+        post: {
+          summary: 'Add new warehouse staff',
+          tags: ['Admin'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['firstName', 'lastName', 'email', 'password'],
+                  properties: {
+                    firstName: { type: 'string', example: 'Jane' },
+                    lastName: { type: 'string', example: 'Smith' },
+                    email: { type: 'string', format: 'email', example: 'jane@warehouse.com' },
+                    password: { type: 'string', example: 'SecurePass123!' },
+                    phone: { type: 'string', example: '+1234567890' },
+                    permissions: { type: 'array', items: { type: 'string' }, example: ['inventory_management'] }
+                  }
+                }
+              }
+            }
+          },
+          responses: {
+            201: { description: 'Staff created successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            409: { description: 'Email already exists', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/admin/packages': {
+        get: {
+          summary: 'Get all packages',
+          tags: ['Admin'],
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { in: 'query', name: 'page', schema: { type: 'integer', default: 1 } },
+            { in: 'query', name: 'limit', schema: { type: 'integer', default: 20 } },
+            { in: 'query', name: 'status', schema: { type: 'string', enum: ['received', 'in_transit', 'delivered', 'pending', 'customs', 'returned'] } },
+            { in: 'query', name: 'q', schema: { type: 'string' } }
+          ],
+          responses: {
+            200: { description: 'Packages retrieved successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/admin/inventory': {
+        get: {
+          summary: 'Get all inventory',
+          tags: ['Admin'],
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { in: 'query', name: 'page', schema: { type: 'integer', default: 1 } },
+            { in: 'query', name: 'limit', schema: { type: 'integer', default: 20 } },
+            { in: 'query', name: 'category', schema: { type: 'string' } }
+          ],
+          responses: {
+            200: { description: 'Inventory retrieved successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/admin/stats': {
+        get: {
+          summary: 'Get system statistics',
+          tags: ['Admin'],
+          security: [{ bearerAuth: [] }],
+          responses: {
+            200: {
+              description: 'Statistics retrieved successfully',
+              content: {
+                'application/json': {
+                  example: {
+                    success: true,
+                    data: {
+                      users: { total: 150, customers: 130, staff: 20 },
+                      packages: { total: 500, pending: 45, delivered: 400 },
+                      inventory: { total: 300, lowStock: 12 }
+                    }
+                  }
+                }
+              }
+            },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/admin/users/{userCode}/role': {
+        put: {
+          summary: 'Change user role',
+          tags: ['Admin'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'userCode', required: true, schema: { type: 'string' }, example: 'CLEAN-0001' }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object', required: ['role'],
+                  properties: { role: { type: 'string', enum: ['admin', 'customer', 'warehouse'] } }
+                },
+                example: { role: 'warehouse' }
+              }
+            }
+          },
+          responses: {
+            200: { description: 'Role updated successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            404: { description: 'User not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/admin/users/{userCode}/status': {
+        put: {
+          summary: 'Update user account status',
+          tags: ['Admin'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'userCode', required: true, schema: { type: 'string' }, example: 'CLEAN-0001' }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                example: { accountStatus: 'active', emailVerified: true }
+              }
+            }
+          },
+          responses: {
+            200: { description: 'Status updated successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            404: { description: 'User not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/admin/users/{userCode}': {
+        delete: {
+          summary: 'Delete user',
+          tags: ['Admin'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'userCode', required: true, schema: { type: 'string' }, example: 'CLEAN-0001' }],
+          responses: {
+            200: { description: 'User deleted successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            404: { description: 'User not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/admin/shipping-addresses': {
+        get: {
+          summary: 'Get all shipping addresses',
+          tags: ['Admin'],
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { in: 'query', name: 'page', schema: { type: 'integer', default: 1 } },
+            { in: 'query', name: 'type', schema: { type: 'string', enum: ['air', 'sea', 'china', 'standard'] } }
+          ],
+          responses: {
+            200: { description: 'Shipping addresses retrieved successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+          }
+        }
+      },
+      '/api/admin/shipping-address/{type}': {
+        put: {
+          summary: 'Update shipping address by type',
+          tags: ['Admin'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'type', required: true, schema: { type: 'string', enum: ['air', 'sea', 'china', 'standard'] } }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                example: { address: { street: '456 Oak Ave', city: 'Los Angeles', state: 'CA', zipCode: '90001', country: 'USA' } }
+              }
+            }
+          },
+          responses: {
+            200: { description: 'Address updated successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+          }
+        }
+      },
+
+      // ─── WAREHOUSE PACKAGES ───────────────────────────────────────────────
+      '/api/warehouse/packages': {
+        get: {
+          summary: 'Get all packages',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { in: 'query', name: 'page', schema: { type: 'integer', default: 1 } },
+            { in: 'query', name: 'limit', schema: { type: 'integer', default: 20 } },
+            { in: 'query', name: 'status', schema: { type: 'string', enum: ['received', 'in_transit', 'delivered', 'pending'] } },
+            { in: 'query', name: 'userCode', schema: { type: 'string' } }
+          ],
+          responses: {
+            200: { description: 'Packages retrieved successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/warehouse/packages/search': {
+        get: {
+          summary: 'Search packages',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { in: 'query', name: 'q', schema: { type: 'string' }, description: 'Search by tracking number, name, etc.' },
+            { in: 'query', name: 'userCode', schema: { type: 'string' } },
+            { in: 'query', name: 'statuses', schema: { type: 'string' }, description: 'Comma-separated statuses' },
+            { in: 'query', name: 'page', schema: { type: 'integer', default: 1 } },
+            { in: 'query', name: 'limit', schema: { type: 'integer', default: 50 } }
+          ],
+          responses: {
+            200: { description: 'Search results', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+          }
+        }
+      },
+      '/api/warehouse/packages/add': {
+        post: {
+          summary: 'Add new package',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Package' },
+                example: {
+                  trackingNumber: 'TRK123456789',
+                  userCode: 'CLEAN-0001',
+                  weight: 2.5,
+                  serviceMode: 'air',
+                  shipper: 'Amazon',
+                  description: 'Electronics'
+                }
+              }
+            }
+          },
+          responses: {
+            201: { description: 'Package created successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            400: { description: 'Invalid data', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            409: { description: 'Tracking number already exists', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/warehouse/packages/bulk-upload': {
+        post: {
+          summary: 'Bulk upload packages',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                example: {
+                  packages: [
+                    { trackingNumber: 'TRK001', userCode: 'CLEAN-0001', weight: 1.5, serviceMode: 'air' }
+                  ]
+                }
+              }
+            }
+          },
+          responses: {
+            200: { description: 'Bulk upload result', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+          }
+        }
+      },
+      '/api/warehouse/packages/{id}': {
+        get: {
+          summary: 'Get package by ID',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
+          responses: {
+            200: { description: 'Package details', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        },
+        put: {
+          summary: 'Update package',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
+          requestBody: {
+            required: true,
+            content: { 'application/json': { example: { weight: 3.0, warehouseLocation: 'New York, NY' } } }
+          },
+          responses: {
+            200: { description: 'Package updated', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        },
+        delete: {
+          summary: 'Delete package',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
+          responses: {
+            200: { description: 'Package deleted', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/warehouse/packages/{id}/status': {
+        post: {
+          summary: 'Update package status',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                example: { status: 'out_for_delivery', location: 'New York, NY', description: 'Out for delivery' }
+              }
+            }
+          },
+          responses: {
+            200: { description: 'Status updated', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+
+      // ─── WAREHOUSE CUSTOMERS ──────────────────────────────────────────────
+      '/api/warehouse/customers': {
+        get: {
+          summary: 'Get all customers',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { in: 'query', name: 'q', schema: { type: 'string' } },
+            { in: 'query', name: 'userCode', schema: { type: 'string' } }
+          ],
+          responses: {
+            200: { description: 'Customers list', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+          }
+        },
+        delete: {
+          summary: 'Delete customer',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: { 'application/json': { example: { user_code: 'CLEAN-0001' } } }
+          },
+          responses: {
+            200: { description: 'Customer deleted', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            404: { description: 'Customer not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/warehouse/customers/{userCode}': {
+        get: {
+          summary: 'Get customer by user code',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'userCode', required: true, schema: { type: 'string' }, example: 'CLEAN-0001' }],
+          responses: {
+            200: { description: 'Customer details', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            404: { description: 'Customer not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+
+      // ─── WAREHOUSE INVENTORY ──────────────────────────────────────────────
+      '/api/warehouse/inventory': {
+        get: {
+          summary: 'Get inventory list',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { in: 'query', name: 'page', schema: { type: 'integer', default: 1 } },
+            { in: 'query', name: 'limit', schema: { type: 'integer', default: 20 } },
+            { in: 'query', name: 'category', schema: { type: 'string' } }
+          ],
+          responses: {
+            200: { description: 'Inventory list', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+          }
+        },
+        post: {
+          summary: 'Create inventory item',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                example: { name: 'Item A', sku: 'SKU-001', category: 'Electronics', quantity: 100, unitPrice: 29.99, minStockLevel: 10, maxStockLevel: 500 }
+              }
+            }
+          },
+          responses: {
+            201: { description: 'Item created', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+          }
+        }
+      },
+      '/api/warehouse/inventory/{id}': {
+        get: {
+          summary: 'Get inventory item',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
+          responses: {
+            200: { description: 'Item details', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+          }
+        },
+        put: {
+          summary: 'Update inventory item',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
+          requestBody: { required: true, content: { 'application/json': { example: { quantity: 150 } } } },
+          responses: {
+            200: { description: 'Item updated', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+          }
+        },
+        delete: {
+          summary: 'Delete inventory item',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
+          responses: {
+            200: { description: 'Item deleted', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+          }
+        }
+      },
+
+      // ─── WAREHOUSE ANALYTICS ─────────────────────────────────────────────
+      '/api/warehouse/analytics/dashboard': {
+        get: {
+          summary: 'Get dashboard statistics',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          responses: {
+            200: { description: 'Dashboard stats', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+          }
+        }
+      },
+      '/api/warehouse/analytics/packages': {
+        get: {
+          summary: 'Get package analytics',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { in: 'query', name: 'startDate', schema: { type: 'string', format: 'date' } },
+            { in: 'query', name: 'endDate', schema: { type: 'string', format: 'date' } }
+          ],
+          responses: {
+            200: { description: 'Package analytics', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+          }
+        }
+      },
+      '/api/warehouse/analytics/revenue': {
+        get: {
+          summary: 'Get revenue analytics',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          responses: {
+            200: { description: 'Revenue analytics', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+          }
+        }
+      },
+
+      // ─── WAREHOUSE SETTINGS ───────────────────────────────────────────────
+      '/api/warehouse/settings/shipping-addresses': {
+        get: {
+          summary: 'Get shipping address config',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          responses: {
+            200: { description: 'Shipping address config', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+          }
+        },
+        put: {
+          summary: 'Update shipping addresses',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                example: {
+                  airAddress: { name: 'Air Freight Co', street: '3200 NW 112th Ave', city: 'Doral', state: 'FL', zipCode: '33172', country: 'USA' }
+                }
+              }
+            }
+          },
+          responses: {
+            200: { description: 'Addresses updated', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+          }
+        }
+      },
+
+      // ─── WAREHOUSE REPORTS ────────────────────────────────────────────────
+      '/api/warehouse/reports/packages': {
+        get: {
+          summary: 'Generate package report',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { in: 'query', name: 'startDate', schema: { type: 'string', format: 'date' } },
+            { in: 'query', name: 'endDate', schema: { type: 'string', format: 'date' } }
+          ],
+          responses: {
+            200: { description: 'Package report', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+          }
+        }
+      },
+      '/api/warehouse/reports/inventory': {
+        get: {
+          summary: 'Generate inventory report',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          responses: {
+            200: { description: 'Inventory report', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+          }
+        }
+      },
+
+      // ─── CUSTOMER ─────────────────────────────────────────────────────────
+      '/api/customer/packages': {
+        get: {
+          summary: "Get customer's packages",
+          tags: ['Customer'],
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { in: 'query', name: 'page', schema: { type: 'integer', default: 1 } },
+            { in: 'query', name: 'limit', schema: { type: 'integer', default: 10 } },
+            { in: 'query', name: 'status', schema: { type: 'string', enum: ['received', 'in_transit', 'delivered', 'pending'] } }
+          ],
+          responses: {
+            200: { description: 'Customer packages', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/customer/packages/{id}': {
+        get: {
+          summary: 'Get package by ID',
+          tags: ['Customer'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
+          responses: {
+            200: { description: 'Package details', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/customer/packages/tracking/{trackingNumber}': {
+        get: {
+          summary: 'Track package by tracking number',
+          tags: ['Customer'],
+          security: [],
+          parameters: [{ in: 'path', name: 'trackingNumber', required: true, schema: { type: 'string' }, example: 'TRK123456789' }],
+          responses: {
+            200: { description: 'Tracking info', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            404: { description: 'Not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/customer/profile': {
+        get: {
+          summary: 'Get customer profile',
+          tags: ['Customer'],
+          security: [{ bearerAuth: [] }],
+          responses: {
+            200: { description: 'Profile data', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+          }
+        },
+        put: {
+          summary: 'Update customer profile',
+          tags: ['Customer'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: { 'application/json': { example: { firstName: 'John', lastName: 'Smith', phone: '+1234567890' } } }
+          },
+          responses: {
+            200: { description: 'Profile updated', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+          }
+        }
+      },
+      '/api/customer/shipping-addresses': {
+        get: {
+          summary: 'Get warehouse shipping addresses',
+          description: 'Returns Air, Sea, and China warehouse addresses for this customer',
+          tags: ['Customer'],
+          security: [{ bearerAuth: [] }],
+          responses: {
+            200: { description: 'Shipping addresses', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+          }
+        }
+      },
+      '/api/customer/shipping-addresses/{type}': {
+        get: {
+          summary: 'Get shipping address by type',
+          tags: ['Customer'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'type', required: true, schema: { type: 'string', enum: ['air', 'sea', 'china'] } }],
+          responses: {
+            200: { description: 'Shipping address', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+          }
+        }
+      }
+    }
   },
-  apis: [
-    './src/routes/*.ts',
-    './src/routes/**/*.ts',
-    './src/controllers/*.ts',
-    './src/controllers/**/*.ts'
-  ]
+  apis: [] // No JSDoc scanning needed - all paths defined above
 };
 
 const specs = swaggerJsdoc(options);

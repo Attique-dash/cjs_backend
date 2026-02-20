@@ -3,6 +3,7 @@ import { authenticate, authorize } from '../middleware/auth';
 import { validateMongoId, validatePagination } from '../utils/validators';
 import { asyncHandler } from '../middleware/errorHandler';
 import * as adminController from '../controllers/adminController';
+import apiKeyRoutes from './admin/apiKeys';
 
 const router = Router();
 
@@ -593,5 +594,8 @@ router.put('/shipping-address/:type',
   authorize('admin'), 
   asyncHandler(adminController.updateShippingAddressByType)
 );
+
+// Mount API key management routes
+router.use('/api-keys', apiKeyRoutes);
 
 export default router;
