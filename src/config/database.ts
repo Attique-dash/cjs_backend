@@ -18,7 +18,6 @@ export const connectDatabase = async (): Promise<void> => {
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
       bufferCommands: false, // Disable mongoose buffering
-      bufferMaxEntries: 0, // Disable mongoose buffering
     };
 
     const connection = await mongoose.connect(MONGODB_URI, options);
