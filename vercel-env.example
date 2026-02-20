@@ -12,7 +12,10 @@ NODE_ENV=production
 VERCEL=1
 
 # CORS (comma-separated origins)
-CORS_ORIGIN=https://yourdomain.com,https://www.yourdomain.com
+# For local development:
+CORS_ORIGIN=http://localhost:3000,http://localhost:5000,http://127.0.0.1:3000,http://127.0.0.1:5000
+# For production (Vercel):
+CORS_ORIGIN=https://cleanjshipping.vercel.app
 
 # Rate Limiting
 RATE_LIMIT_WINDOW_MS=900000
