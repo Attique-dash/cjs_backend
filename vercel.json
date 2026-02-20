@@ -5,24 +5,6 @@
       "maxDuration": 30
     }
   },
-  "routes": [
-    {
-      "src": "/docs/(.*)",
-      "dest": "dist/index.js"
-    },
-    {
-      "src": "/api-docs/(.*)",
-      "dest": "dist/index.js"
-    },
-    {
-      "src": "/swagger/(.*)",
-      "dest": "dist/index.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "dist/index.js"
-    }
-  ],
   "headers": [
     {
       "source": "/docs/(.*)",
