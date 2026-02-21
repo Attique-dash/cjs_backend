@@ -23,9 +23,16 @@ export class apiKeyController {
     try {
       const { name, permissions, description, expiresAt, warehouseId } = req.body;
 
-      if (!warehouseId) {
-        errorResponse(res, 'warehouseId is required', 400);
-        return;
+      // Auto-resolve warehouse if not provided
+      let resolvedWarehouseId = warehouseId;
+      if (!resolvedWarehouseId) {
+        const { Warehouse } = await import('../../models/Warehouse');
+        const warehouse = await Warehouse.findOne({ isActive: true }).sort({ isDefault: -1 });
+        if (!warehouse) {
+          errorResponse(res, 'No active warehouse found. Please create a warehouse first.', 400);
+          return;
+        }
+        resolvedWarehouseId = warehouse._id.toString();
       }
 
       // Generate API key with kcd_ prefix and proper length
@@ -38,7 +45,7 @@ export class apiKeyController {
         description: description || 'API key for KCD Logistics packing system',
         isActive: true,
         expiresAt: expiresAt ? new Date(expiresAt) : null,
-        warehouseId: new mongoose.Types.ObjectId(warehouseId),
+        warehouseId: new mongoose.Types.ObjectId(resolvedWarehouseId),
         createdBy: req.user?.id || new mongoose.Types.ObjectId()
       });
 
@@ -65,7 +72,7 @@ export class apiKeyController {
           endpoints: {
             getCustomers:   `${base}/api/warehouse/customers`,
             addPackage:     `${base}/api/warehouse/packages/add`,
-            updatePackage:  `${base}/api/warehouse/packages`,
+            updatePackage:  `${base}/api/warehouse/packages/:id`,
             deletePackage:  `${base}/api/webhooks/kcd/package-deleted`,
             updateManifest: `${base}/api/webhooks/kcd/manifest-created`,
           },
@@ -204,7 +211,7 @@ export class apiKeyController {
             : '❌ Generate a key first via POST /api/admin/api-keys/kcd',
           getCustomers:   `${base}/api/warehouse/customers`,
           addPackage:     `${base}/api/warehouse/packages/add`,
-          updatePackage:  `${base}/api/warehouse/packages`,
+          updatePackage:  `${base}/api/warehouse/packages/:id`,
           deletePackage:  `${base}/api/webhooks/kcd/package-deleted`,
           updateManifest: `${base}/api/webhooks/kcd/manifest-created`,
         },

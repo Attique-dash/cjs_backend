@@ -1,61 +1,49 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiKey } from '../models/ApiKey';
-import { errorResponse } from '../utils/helpers';
 import { logger } from '../utils/logger';
 
-// KCD Webhook Authentication Middleware
+/**
+ * KCD Webhook Authentication Middleware
+ * KCD sends the API key in the X-API-Key header on every webhook call.
+ * This validates that key before allowing access to webhook endpoints.
+ */
 export const validateKCDWebhook = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    // Get API key from header
-    const apiKey = req.header('X-API-Key') || req.header('Authorization')?.replace('Bearer ', '');
-    
+    const apiKey = req.headers['x-api-key'] as string;
+
     if (!apiKey) {
-      errorResponse(res, 'API key required for KCD webhook access', 401);
+      res.status(401).json({
+        success: false,
+        message: 'Missing X-API-Key header. KCD must send the API key with every request.'
+      });
       return;
     }
 
-    // Find API key in database
-    const keyDoc = await ApiKey.findOne({ 
-      key: apiKey,
-      isActive: true,
-      permissions: { $in: ['kcd_webhook', 'webhook', 'all'] }
-    });
+    const keyRecord = await ApiKey.findOne({ key: apiKey, isActive: true });
 
-    if (!keyDoc) {
-      logger.warn(`Invalid KCD webhook API key attempt: ${apiKey.substring(0, 8)}...`);
-      errorResponse(res, 'Invalid or inactive API key', 401);
+    if (!keyRecord) {
+      res.status(401).json({
+        success: false,
+        message: 'Invalid or inactive API key'
+      });
       return;
     }
 
-    // Update last used timestamp
-    keyDoc.lastUsed = new Date();
-    await keyDoc.save();
+    // Check expiry
+    if (keyRecord.expiresAt && keyRecord.expiresAt < new Date()) {
+      res.status(401).json({ success: false, message: 'API key has expired' });
+      return;
+    }
 
-    // Add webhook context to request
-    req.webhookContext = {
-      source: 'kcd',
-      apiKeyId: keyDoc._id,
-      validatedAt: new Date()
-    };
+    // Track usage
+    keyRecord.usageCount = (keyRecord.usageCount || 0) + 1;
+    keyRecord.lastUsed = new Date();
+    await keyRecord.save();
 
-    logger.info(`KCD webhook authenticated successfully: ${keyDoc.name}`);
-
+    (req as any).apiKey = keyRecord;
     next();
   } catch (error) {
-    logger.error('KCD webhook authentication error:', error);
-    errorResponse(res, 'Webhook authentication failed', 500);
+    logger.error('KCD webhook auth error:', error);
+    res.status(500).json({ success: false, message: 'Authentication error' });
   }
 };
-
-// Extend Request interface to include webhook context
-declare global {
-  namespace Express {
-    interface Request {
-      webhookContext?: {
-        source: string;
-        apiKeyId: any;
-        validatedAt: Date;
-      };
-    }
-  }
-}

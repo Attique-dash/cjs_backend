@@ -2,6 +2,7 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import swaggerUi from 'swagger-ui-express';
 import { errorHandler } from './middleware/errorHandler';
 import { logger } from './utils/logger';
 import routes from './routes';
@@ -91,6 +92,13 @@ app.get('/api-docs', (req: Request, res: Response) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.send(specs);
 });
+
+// Swagger UI endpoint
+app.use('/docs', swaggerUi.serve);
+app.get('/docs', swaggerUi.setup(specs, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Warehouse Management API Documentation'
+}));
 
 // Redirect root to docs
 app.get('/', (req: Request, res: Response) => {

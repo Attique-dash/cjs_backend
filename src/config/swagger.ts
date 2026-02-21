@@ -122,6 +122,7 @@ const options = {
     tags: [
       { name: 'Authentication', description: 'User authentication endpoints' },
       { name: 'Admin', description: 'Admin-only management endpoints' },
+      { name: 'Admin API Keys', description: 'API key management for KCD integration' },
       { name: 'Warehouse', description: 'Warehouse management endpoints' },
       { name: 'Customer', description: 'Customer-facing endpoints' },
       { name: 'Health', description: 'API health check' }
@@ -842,6 +843,147 @@ const options = {
           parameters: [{ in: 'path', name: 'type', required: true, schema: { type: 'string', enum: ['air', 'sea', 'china'] } }],
           responses: {
             200: { description: 'Shipping address', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+          }
+        }
+      },
+
+      // ─── ADMIN API KEYS ─────────────────────────────────────────────────
+      '/api/admin/api-keys/kcd': {
+        post: {
+          summary: 'Create KCD API Key',
+          description: 'Create a new API key for KCD Logistics webhook integration. WarehouseId is auto-resolved if not provided.',
+          tags: ['Admin API Keys'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: false,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string', default: 'KCD Logistics Webhook' },
+                    permissions: { type: 'array', items: { type: 'string' }, default: ['kcd_webhook', 'webhook'] },
+                    description: { type: 'string', default: 'API key for KCD Logistics packing system' },
+                    warehouseId: { type: 'string', description: 'Warehouse ID (optional - auto-resolved if not provided)' }
+                  }
+                }
+              }
+            }
+          },
+          responses: {
+            201: { 
+              description: 'API key created successfully',
+              content: {
+                'application/json': {
+                  example: {
+                    success: true,
+                    message: '✅ KCD API key generated. Copy the key NOW — it will NOT be shown again.',
+                    data: {
+                      id: '64a7b8c9d1e2f3g4h5i6j7k8',
+                      key: 'kcd_abcdef1234567890abcdef1234567890abcdef1234567890',
+                      name: 'KCD Logistics Webhook',
+                      kcdPortalFields: {
+                        apiAccessToken: 'kcd_abcdef1234567890abcdef1234567890abcdef1234567890',
+                        getCustomers: 'http://localhost:5000/api/warehouse/customers',
+                        addPackage: 'http://localhost:5000/api/warehouse/packages/add',
+                        updatePackage: 'http://localhost:5000/api/warehouse/packages/:id',
+                        deletePackage: 'http://localhost:5000/api/webhooks/kcd/package-deleted',
+                        updateManifest: 'http://localhost:5000/api/webhooks/kcd/manifest-created'
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/admin/api-keys': {
+        get: {
+          summary: 'List All API Keys',
+          description: 'Retrieve all API keys (without exposing the actual keys)',
+          tags: ['Admin API Keys'],
+          security: [{ bearerAuth: [] }],
+          responses: {
+            200: { description: 'API keys retrieved successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/admin/api-keys/{keyId}/deactivate': {
+        put: {
+          summary: 'Deactivate API Key',
+          description: 'Deactivate an API key to revoke access',
+          tags: ['Admin API Keys'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'keyId', required: true, schema: { type: 'string' } }],
+          responses: {
+            200: { description: 'API key deactivated successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            404: { description: 'API key not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/admin/api-keys/{keyId}/activate': {
+        put: {
+          summary: 'Activate API Key',
+          description: 'Reactivate a previously deactivated API key',
+          tags: ['Admin API Keys'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'keyId', required: true, schema: { type: 'string' } }],
+          responses: {
+            200: { description: 'API key activated successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            404: { description: 'API key not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/admin/api-keys/{keyId}': {
+        delete: {
+          summary: 'Delete API Key',
+          description: 'Permanently delete an API key',
+          tags: ['Admin API Keys'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'keyId', required: true, schema: { type: 'string' } }],
+          responses: {
+            200: { description: 'API key deleted successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            404: { description: 'API key not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/admin/api-keys/kcd-info': {
+        get: {
+          summary: 'Get KCD portal connection info',
+          description: 'Returns all URLs to paste into KCD portal Courier System API tab',
+          tags: ['Admin API Keys'],
+          security: [{ bearerAuth: [] }],
+          responses: {
+            200: { 
+              description: 'Connection info with all endpoint URLs',
+              content: {
+                'application/json': {
+                  example: {
+                    success: true,
+                    data: {
+                      hasActiveKey: true,
+                      activeKeyCount: 1,
+                      instruction: '✅ Active key exists. Regenerate via POST /api/admin/api-keys/kcd if you need the value.',
+                      kcdPortalFields: {
+                        apiAccessToken: '✅ Key exists — regenerate via POST /api/admin/api-keys/kcd to get the value',
+                        getCustomers: 'http://localhost:5000/api/warehouse/customers',
+                        addPackage: 'http://localhost:5000/api/warehouse/packages/add',
+                        updatePackage: 'http://localhost:5000/api/warehouse/packages/:id',
+                        deletePackage: 'http://localhost:5000/api/webhooks/kcd/package-deleted',
+                        updateManifest: 'http://localhost:5000/api/webhooks/kcd/manifest-created'
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
           }
         }
       }

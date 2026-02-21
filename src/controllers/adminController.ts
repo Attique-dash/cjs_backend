@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth';
 import { User, IUser } from '../models/User';
 import { Package } from '../models/Package';
 import { Inventory } from '../models/Inventory';
+import { Warehouse } from '../models/Warehouse';
 import { ApiKey } from '../models/ApiKey';
 import { successResponse, errorResponse, getPaginationData } from '../utils/helpers';
 import { PAGINATION } from '../utils/constants';
@@ -686,9 +687,18 @@ export const generateKCDApiKey = async (req: AdminRequest, res: Response): Promi
       warehouseId,
     } = req.body;
 
-    if (!warehouseId) {
-      res.status(400).json({ success: false, message: 'warehouseId is required' });
-      return;
+    // Auto-resolve warehouse if not provided
+    let resolvedWarehouseId = warehouseId;
+    if (!resolvedWarehouseId) {
+      const warehouse = await Warehouse.findOne({ isActive: true }).sort({ isDefault: -1 });
+      if (!warehouse) {
+        res.status(400).json({
+          success: false,
+          message: 'No active warehouse found. Please create a warehouse first.'
+        });
+        return;
+      }
+      resolvedWarehouseId = warehouse._id;
     }
 
     // Generate a cryptographically secure random key
@@ -702,7 +712,7 @@ export const generateKCDApiKey = async (req: AdminRequest, res: Response): Promi
       permissions,
       isActive:    true,
       usageCount:  0,
-      warehouseId,
+      warehouseId: resolvedWarehouseId,
       createdBy:   adminUser._id,
     });
 

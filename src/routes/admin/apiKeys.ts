@@ -49,6 +49,10 @@ router.use(authorize('admin'));
  *                 type: string
  *                 format: date-time
  *                 description: API key expiration date (optional)
+ *             required:
+ *               - name
+ *               - permissions
+ *               - description
  *     responses:
  *       201:
  *         description: API key created successfully
