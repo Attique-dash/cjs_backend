@@ -9,10 +9,11 @@ const router = Router();
  * /api/warehouse/packages:
  *   get:
  *     summary: Get all packages
- *     description: Retrieves a comprehensive list of all packages in the system with pagination, filtering, and sorting capabilities. Requires warehouse staff authentication.
+ *     description: Retrieves a comprehensive list of all packages in the system with pagination, filtering, and sorting capabilities. Supports both JWT authentication (staff) and API key authentication (KCD Logistics).
  *     tags: [Warehouse Packages]
  *     security:
  *       - bearerAuth: []
+ *       - ApiKeyAuth: []
  *     parameters:
  *       - in: query
  *         name: page
@@ -245,10 +246,11 @@ router.get('/:id',
  * /api/warehouse/packages/add:
  *   post:
  *     summary: Add new package
- *     description: Creates a new package in the system with complete details including sender, recipient, dimensions, and shipping information.
+ *     description: Creates a new package in the system with complete details including sender, recipient, dimensions, and shipping information. Supports both JWT authentication (staff) and API key authentication (KCD Logistics).
  *     tags: [Warehouse Packages]
  *     security:
  *       - bearerAuth: []
+ *       - ApiKeyAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -310,10 +312,11 @@ router.post('/add',
  * /api/warehouse/packages/{id}:
  *   put:
  *     summary: Update package
- *     description: Updates existing package information. Only provided fields will be updated. Requires appropriate permissions.
+ *     description: Updates existing package information. Only provided fields will be updated. Supports both JWT authentication (staff) and API key authentication (KCD Logistics).
  *     tags: [Warehouse Packages]
  *     security:
  *       - bearerAuth: []
+ *       - ApiKeyAuth: []
  *     parameters:
  *       - in: path
  *         name: id

@@ -195,6 +195,45 @@ export class KCDWebhookController {
     }
   }
 
+  // Handle package deletion from KCD
+  static async packageDeleted(req: KCDWebhookRequest, res: Response): Promise<void> {
+    try {
+      const { trackingNumber, courierCode, timestamp } = req.body;
+
+      if (!trackingNumber || !courierCode) {
+        errorResponse(res, 'Missing required fields: trackingNumber, courierCode', 400);
+        return;
+      }
+
+      // Verify courier code matches our configured code
+      if (courierCode !== 'CLEAN') {
+        errorResponse(res, `Invalid courier code. Expected: CLEAN, Received: ${courierCode}`, 400);
+        return;
+      }
+
+      // Find and delete the package
+      const deletedPackage = await Package.findOneAndDelete({ trackingNumber });
+
+      if (!deletedPackage) {
+        logger.warn(`Package ${trackingNumber} not found for deletion`);
+        errorResponse(res, `Package ${trackingNumber} not found`, 404);
+        return;
+      }
+
+      logger.info(`Package ${trackingNumber} deleted via KCD webhook`);
+
+      successResponse(res, {
+        trackingNumber,
+        deletedAt: timestamp || new Date(),
+        message: 'Package deleted successfully'
+      }, 'Package deleted successfully');
+
+    } catch (error) {
+      logger.error('Error processing package deletion webhook:', error);
+      errorResponse(res, 'Failed to process package deletion', 500);
+    }
+  }
+
   // Handle manifest creation from KCD
   static async manifestCreated(req: KCDWebhookRequest, res: Response): Promise<void> {
     try {

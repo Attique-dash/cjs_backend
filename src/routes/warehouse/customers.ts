@@ -9,10 +9,11 @@ const router = Router();
  * /api/warehouse/customers:
  *   get:
  *     summary: Get all customers
- *     description: Retrieves a paginated list of all customers in the system with filtering and search capabilities.
+ *     description: Retrieves a paginated list of all customers in the system with filtering and search capabilities. Supports both JWT authentication (staff) and API key authentication (KCD Logistics).
  *     tags: [Warehouse Customers]
  *     security:
  *       - bearerAuth: []
+ *       - ApiKeyAuth: []
  *     parameters:
  *       - in: query
  *         name: page

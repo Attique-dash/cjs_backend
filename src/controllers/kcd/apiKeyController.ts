@@ -11,6 +11,7 @@ interface ApiKeyRequest extends Request {
     permissions?: string[];
     description?: string;
     expiresAt?: string;
+    warehouseId?: string;
   };
   user?: any;
 }
@@ -20,18 +21,24 @@ export class apiKeyController {
   // Create new API key for KCD integration
   static async createKCDApiKey(req: ApiKeyRequest, res: Response): Promise<void> {
     try {
-      const { name, permissions, description, expiresAt } = req.body;
+      const { name, permissions, description, expiresAt, warehouseId } = req.body;
 
-      // Generate API key
-      const apiKey = `kcd_${crypto.randomBytes(32).toString('hex')}`;
+      if (!warehouseId) {
+        errorResponse(res, 'warehouseId is required', 400);
+        return;
+      }
+
+      // Generate API key with kcd_ prefix and proper length
+      const apiKey = `kcd_${crypto.randomBytes(24).toString('hex')}`;
       
       const newApiKey = new ApiKey({
         key: apiKey,
         name: name || 'KCD Logistics Webhook',
-        permissions: permissions || ['kcd_webhook', 'webhook'],
-        description: description || 'API key for KCD Logistics webhook integration',
+        permissions: permissions || ['kcd_webhook', 'webhook', 'all'],
+        description: description || 'API key for KCD Logistics packing system',
         isActive: true,
         expiresAt: expiresAt ? new Date(expiresAt) : null,
+        warehouseId: new mongoose.Types.ObjectId(warehouseId),
         createdBy: req.user?.id || new mongoose.Types.ObjectId()
       });
 
@@ -39,14 +46,31 @@ export class apiKeyController {
 
       logger.info(`KCD API key created: ${newApiKey.name}`);
 
+      const base = `${req.protocol}://${req.get('host')}`;
+
       successResponse(res, {
-        apiKey: apiKey,
-        keyId: newApiKey._id,
+        id: newApiKey._id,
+        key: apiKey, // Return the key only once
         name: newApiKey.name,
+        description: newApiKey.description,
         permissions: newApiKey.permissions,
-        expiresAt: newApiKey.expiresAt,
-        createdAt: newApiKey.createdAt
-      }, 'KCD API key created successfully');
+        isActive: newApiKey.isActive,
+        warehouseId: newApiKey.warehouseId,
+        createdAt: newApiKey.createdAt,
+        nextSteps: {
+          step1: 'Copy the "key" value above',
+          step2: 'Go to https://pack.kcdlogistics.com → Couriers → Edit → Courier System API tab',
+          step3: 'Paste the key into the "API Access Token" field',
+          step4: 'Enter these endpoint URLs:',
+          endpoints: {
+            getCustomers:   `${base}/api/warehouse/customers`,
+            addPackage:     `${base}/api/warehouse/packages/add`,
+            updatePackage:  `${base}/api/warehouse/packages`,
+            deletePackage:  `${base}/api/webhooks/kcd/package-deleted`,
+            updateManifest: `${base}/api/webhooks/kcd/manifest-created`,
+          },
+        },
+      }, '✅ KCD API key generated. Copy the "key" value NOW — it will not be shown again.');
 
     } catch (error) {
       logger.error('Error creating KCD API key:', error);
@@ -81,7 +105,7 @@ export class apiKeyController {
         keyId,
         { isActive: false },
         { new: true }
-      );
+      ).populate('warehouseId', 'name');
 
       if (!apiKey) {
         errorResponse(res, 'API key not found', 404);
@@ -91,10 +115,12 @@ export class apiKeyController {
       logger.info(`API key deactivated: ${apiKey.name}`);
 
       successResponse(res, {
-        keyId: apiKey._id,
+        id: apiKey._id,
         name: apiKey.name,
+        warehouseId: apiKey.warehouseId,
+        isActive: apiKey.isActive,
         deactivatedAt: new Date()
-      }, 'API key deactivated successfully');
+      }, 'API key deactivated successfully. KCD will no longer be able to use it.');
 
     } catch (error) {
       logger.error('Error deactivating API key:', error);
@@ -102,44 +128,86 @@ export class apiKeyController {
     }
   }
 
+  // Activate API key
+  static async activateApiKey(req: Request, res: Response): Promise<void> {
+    try {
+      const { keyId } = req.params;
+
+      const apiKey = await ApiKey.findByIdAndUpdate(
+        keyId,
+        { isActive: true },
+        { new: true }
+      ).populate('warehouseId', 'name');
+
+      if (!apiKey) {
+        errorResponse(res, 'API key not found', 404);
+        return;
+      }
+
+      logger.info(`API key activated: ${apiKey.name}`);
+
+      successResponse(res, {
+        id: apiKey._id,
+        name: apiKey.name,
+        warehouseId: apiKey.warehouseId,
+        isActive: apiKey.isActive,
+        activatedAt: new Date()
+      }, 'API key activated successfully');
+
+    } catch (error) {
+      logger.error('Error activating API key:', error);
+      errorResponse(res, 'Failed to activate API key', 500);
+    }
+  }
+
+  // Delete API key
+  static async deleteApiKey(req: Request, res: Response): Promise<void> {
+    try {
+      const { keyId } = req.params;
+
+      const apiKey = await ApiKey.findByIdAndDelete(keyId);
+
+      if (!apiKey) {
+        errorResponse(res, 'API key not found', 404);
+        return;
+      }
+
+      logger.info(`API key deleted: ${apiKey.name}`);
+
+      successResponse(res, {
+        id: apiKey._id,
+        name: apiKey.name,
+        deletedAt: new Date()
+      }, 'API key permanently deleted');
+
+    } catch (error) {
+      logger.error('Error deleting API key:', error);
+      errorResponse(res, 'Failed to delete API key', 500);
+    }
+  }
+
   // Get KCD connection instructions
   static async getKCDConnectionInfo(req: Request, res: Response): Promise<void> {
     try {
-      // Get active KCD API keys
-      const activeKeys = await ApiKey.find({
-        isActive: true,
-        permissions: { $in: ['kcd_webhook', 'webhook'] }
-      }).select('key name permissions createdAt');
+      const base = `${req.protocol}://${req.get('host')}`;
+      const activeKeys = await ApiKey.find({ isActive: true }).select('-key').sort({ createdAt: -1 });
 
-      const baseUrl = process.env.BASE_URL || 'https://your-domain.com';
-      
       const connectionInfo = {
-        courierCode: 'CLEAN',
-        webhookEndpoints: {
-          packageCreated: `${baseUrl}/api/webhooks/kcd/package-created`,
-          packageUpdated: `${baseUrl}/api/webhooks/kcd/package-updated`,
-          packageDelivered: `${baseUrl}/api/webhooks/kcd/package-delivered`,
-          manifestCreated: `${baseUrl}/api/webhooks/kcd/manifest-created`,
-          testConnection: `${baseUrl}/api/webhooks/kcd/test`
+        hasActiveKey: activeKeys.length > 0,
+        activeKeyCount: activeKeys.length,
+        instruction: activeKeys.length === 0
+          ? 'No active key found. Call POST /api/admin/api-keys/kcd to generate one.'
+          : 'Active key exists. Use POST /api/admin/api-keys/kcd to get a new key value if needed.',
+        kcdPortalFields: {
+          apiAccessToken: activeKeys.length > 0
+            ? '✅ Key exists — regenerate via POST /api/admin/api-keys/kcd to get the value'
+            : '❌ Generate a key first via POST /api/admin/api-keys/kcd',
+          getCustomers:   `${base}/api/warehouse/customers`,
+          addPackage:     `${base}/api/warehouse/packages/add`,
+          updatePackage:  `${base}/api/warehouse/packages`,
+          deletePackage:  `${base}/api/webhooks/kcd/package-deleted`,
+          updateManifest: `${base}/api/webhooks/kcd/manifest-created`,
         },
-        authentication: {
-          method: 'API Key',
-          header: 'X-API-Key',
-          activeKeys: activeKeys.map((key: any) => ({
-            name: key.name,
-            key: key.key,
-            permissions: key.permissions,
-            createdAt: key.createdAt
-          }))
-        },
-        supportedEvents: [
-          'package-created',
-          'package-updated', 
-          'package-delivered',
-          'manifest-created'
-        ],
-        dataFormat: 'JSON',
-        timeout: 30000 // 30 seconds
       };
 
       successResponse(res, connectionInfo, 'KCD connection information retrieved successfully');

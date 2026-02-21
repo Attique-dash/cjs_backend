@@ -1,8 +1,20 @@
 import { Router } from 'express';
-import { combinedAuth } from '../../middleware/combinedAuth';
-import { apiKeyController } from '../../controllers/kcd/apiKeyController';
+import { authenticate, authorize } from '../../middleware/auth';
+import { asyncHandler } from '../../middleware/errorHandler';
+import {
+  generateKCDApiKey,
+  listApiKeys,
+  deactivateApiKey,
+  activateApiKey,
+  deleteApiKey,
+  getKCDConnectionInfo,
+} from '../../controllers/admin/kcdApiKeyController';
 
 const router = Router();
+
+// All routes here require admin authentication
+router.use(authenticate);
+router.use(authorize('admin'));
 
 /**
  * @swagger
@@ -43,9 +55,8 @@ const router = Router();
  *       401:
  *         description: Unauthorized
  */
-router.post('/api-keys/kcd', 
-  combinedAuth, 
-  apiKeyController.createKCDApiKey
+router.post('/kcd', 
+  asyncHandler(generateKCDApiKey)
 );
 
 /**
@@ -63,9 +74,8 @@ router.post('/api-keys/kcd',
  *       401:
  *         description: Unauthorized
  */
-router.get('/api-keys', 
-  combinedAuth, 
-  apiKeyController.listApiKeys
+router.get('/', 
+  asyncHandler(listApiKeys)
 );
 
 /**
@@ -92,29 +102,81 @@ router.get('/api-keys',
  *       401:
  *         description: Unauthorized
  */
-router.put('/api-keys/:keyId/deactivate', 
-  combinedAuth, 
-  apiKeyController.deactivateApiKey
+router.put('/:keyId/deactivate', 
+  asyncHandler(deactivateApiKey)
 );
 
 /**
  * @swagger
- * /api/admin/kcd-connection-info:
+ * /api/admin/api-keys/{keyId}/activate:
+ *   put:
+ *     summary: Activate API Key
+ *     description: Reactivate a previously deactivated API key
+ *     tags: [Admin API Keys]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: keyId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: API key ID
+ *     responses:
+ *       200:
+ *         description: API key activated successfully
+ *       404:
+ *         description: API key not found
+ *       401:
+ *         description: Unauthorized
+ */
+router.put('/:keyId/activate', 
+  asyncHandler(activateApiKey)
+);
+
+/**
+ * @swagger
+ * /api/admin/api-keys/{keyId}:
+ *   delete:
+ *     summary: Delete API Key
+ *     description: Permanently delete an API key
+ *     tags: [Admin API Keys]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: keyId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: API key ID
+ *     responses:
+ *       200:
+ *         description: API key deleted successfully
+ *       404:
+ *         description: API key not found
+ *       401:
+ *         description: Unauthorized
+ */
+router.delete('/:keyId', 
+  asyncHandler(deleteApiKey)
+);
+
+/**
+ * @swagger
+ * /api/admin/api-keys/kcd-info:
  *   get:
- *     summary: Get KCD Connection Information
- *     description: Get all necessary information for connecting KCD Logistics to our backend
- *     tags: [Admin KCD Integration]
+ *     summary: Get KCD portal connection info
+ *     description: Returns all URLs to paste into the KCD portal Courier System API tab
+ *     tags: [Admin API Keys]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Connection information retrieved successfully
- *       401:
- *         description: Unauthorized
+ *         description: Connection info with all endpoint URLs
  */
-router.get('/kcd-connection-info', 
-  combinedAuth, 
-  apiKeyController.getKCDConnectionInfo
+router.get('/kcd-info', 
+  asyncHandler(getKCDConnectionInfo)
 );
 
 export default router;

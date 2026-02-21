@@ -56,6 +56,14 @@ export const authorize = (...roles: string[]) => {
   };
 };
 
+export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction): void => {
+  if (!req.user || req.user.role !== 'admin') {
+    errorResponse(res, 'Admin access required', 403);
+    return;
+  }
+  next();
+};
+
 export const optionalAuth = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');

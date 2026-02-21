@@ -152,6 +152,46 @@ router.post('/package-delivered',
 
 /**
  * @swagger
+ * /api/webhooks/kcd/package-deleted:
+ *   post:
+ *     summary: KCD Logistics - Package Deleted Webhook
+ *     description: Webhook endpoint for KCD Logistics to notify when a package is deleted in their system
+ *     tags: [KCD Webhooks]
+ *     security:
+ *       - ApiKeyAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [trackingNumber, courierCode]
+ *             properties:
+ *               trackingNumber:
+ *                 type: string
+ *                 description: KCD tracking number
+ *               courierCode:
+ *                 type: string
+ *                 description: Courier code (CLEAN)
+ *               timestamp:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Event timestamp
+ *     responses:
+ *       200:
+ *         description: Webhook processed successfully
+ *       401:
+ *         description: Invalid API key
+ *       400:
+ *         description: Invalid webhook data
+ */
+router.post('/package-deleted', 
+  validateKCDWebhook,
+  KCDWebhookController.packageDeleted
+);
+
+/**
+ * @swagger
  * /api/webhooks/kcd/manifest-created:
  *   post:
  *     summary: KCD Logistics - Manifest Created Webhook
