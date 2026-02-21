@@ -114,15 +114,15 @@ class KCDEndpointTester {
       'Authorization': `Bearer ${this.adminToken}`
     });
 
-    if (result.success && result.data?.data?.key) {
-      this.kcdApiKey = result.data.data.key;
+    if (result.success && result.data?.data?.apiKey) {
+      this.kcdApiKey = result.data.data.apiKey;
       console.log(`🎫 KCD API key generated: ${this.kcdApiKey?.substring(0, 20)}...`);
       
-      // Log the KCD portal fields
-      if (result.data.data.kcdPortalFields) {
-        console.log('\n📋 KCD Portal Fields:');
-        Object.entries(result.data.data.kcdPortalFields).forEach(([key, value]) => {
-          console.log(`  ${key}: ${value}`);
+      // Log the KCD portal configuration
+      if (result.data.data.nextSteps) {
+        console.log('\n📋 Next Steps:');
+        result.data.data.nextSteps.forEach((step: string, index: number) => {
+          console.log(`  ${step}`);
         });
       }
     }
@@ -138,7 +138,7 @@ class KCDEndpointTester {
       return;
     }
 
-    const result = await this.makeRequest('GET', '/admin/api-keys/kcd-info', undefined, {
+    const result = await this.makeRequest('GET', '/admin/api-keys/info', undefined, {
       'Authorization': `Bearer ${this.adminToken}`
     });
 

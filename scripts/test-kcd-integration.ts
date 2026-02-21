@@ -51,7 +51,7 @@ class KCDIntegrationTester {
       
       this.client.defaults.headers.common['Authorization'] = `Bearer ${this.adminToken}`;
       
-      const response = await this.client.post('/api/admin/kcd-api-keys/generate', {
+      const response = await this.client.post('/api/admin/api-keys/kcd', {
         courierCode: 'CLEAN',
         expiresIn: 365,
         description: 'Test KCD Integration API Key'
@@ -190,7 +190,7 @@ class KCDIntegrationTester {
       this.client.defaults.headers.common['Authorization'] = `Bearer ${this.adminToken}`;
       
       // List API keys
-      const listResponse = await this.client.get('/api/admin/kcd-api-keys');
+      const listResponse = await this.client.get('/api/admin/api-keys/list');
       if (listResponse.data.success) {
         console.log('✅ List API keys successful');
         console.log(`   Total keys: ${listResponse.data.data.total}`);
@@ -198,13 +198,13 @@ class KCDIntegrationTester {
       }
 
       // Get connection info
-      const infoResponse = await this.client.get('/api/admin/kcd-api-keys/info');
+      const infoResponse = await this.client.get('/api/admin/api-keys/info');
       if (infoResponse.data.success) {
         console.log('✅ Get connection info successful');
         console.log(`   Has active key: ${infoResponse.data.data.hasActiveKey}`);
-        console.log(`   Get customers URL: ${infoResponse.data.data.kcdPortalFields.getCustomers}`);
-        console.log(`   Add package URL: ${infoResponse.data.data.kcdPortalFields.addPackage}`);
-        console.log(`   Update package URL: ${infoResponse.data.data.kcdPortalFields.updatePackage}`);
+        console.log(`   Get customers URL: ${infoResponse.data.data.kcdPortalConfiguration.endpoints.getCustomers}`);
+        console.log(`   Add package URL: ${infoResponse.data.data.kcdPortalConfiguration.endpoints.addPackage}`);
+        console.log(`   Update package URL: ${infoResponse.data.data.kcdPortalConfiguration.endpoints.updatePackage}`);
       }
     } catch (error: any) {
       console.error('❌ API keys management test failed:', error.response?.data || error.message);
