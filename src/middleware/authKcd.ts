@@ -71,7 +71,10 @@ export const authKcdApiKey = async (
       });
       res.status(401).json({
         success: false,
-        message: 'Missing or invalid authorization header. Use Bearer <token> or X-API-Key header'
+        message: 'Missing or invalid authorization header. Please provide a valid KCD API key.',
+        error: 'Missing API key',
+        hint: 'Include either: Authorization: Bearer <your-api-key> OR X-API-Key: <your-api-key>',
+        timestamp: new Date().toISOString()
       });
       return;
     }
