@@ -1,13 +1,14 @@
 import { Router } from 'express';
-import { authenticate } from '../../middleware/auth';
+import { authenticate, authorize } from '../../middleware/auth';
 import { validateMongoId, validatePagination } from '../../utils/validators';
 import { asyncHandler } from '../../middleware/errorHandler';
 import * as packageController from '../../controllers/customer/packageController';
 
 const router = Router();
 
-// All package routes require authentication
+// All package routes require authentication AND customer role
 router.use(authenticate);
+router.use(authorize('customer'));
 
 /**
  * @swagger

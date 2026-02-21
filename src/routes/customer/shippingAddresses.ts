@@ -1,12 +1,13 @@
 import { Router } from 'express';
-import { authenticate } from '../../middleware/auth';
+import { authenticate, authorize } from '../../middleware/auth';
 import { asyncHandler } from '../../middleware/errorHandler';
 import * as shippingAddressesController from '../../controllers/customer/shippingAddressesController';
 
 const router = Router();
 
-// All routes require customer authentication
+// All routes require authentication AND customer role
 router.use(authenticate);
+router.use(authorize('customer'));
 
 /**
  * GET /api/customer/shipping-addresses

@@ -82,61 +82,7 @@ router.get('/',
   asyncHandler(listApiKeys)
 );
 
-/**
- * @swagger
- * /api/admin/api-keys/{keyId}/deactivate:
- *   put:
- *     summary: Deactivate API Key
- *     description: Deactivate an API key to revoke access
- *     tags: [Admin API Keys]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: keyId
- *         required: true
- *         schema:
- *           type: string
- *         description: API key ID
- *     responses:
- *       200:
- *         description: API key deactivated successfully
- *       404:
- *         description: API key not found
- *       401:
- *         description: Unauthorized
- */
-router.put('/:keyId/deactivate', 
-  asyncHandler(deactivateApiKey)
-);
 
-/**
- * @swagger
- * /api/admin/api-keys/{keyId}/activate:
- *   put:
- *     summary: Activate API Key
- *     description: Reactivate a previously deactivated API key
- *     tags: [Admin API Keys]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: keyId
- *         required: true
- *         schema:
- *           type: string
- *         description: API key ID
- *     responses:
- *       200:
- *         description: API key activated successfully
- *       404:
- *         description: API key not found
- *       401:
- *         description: Unauthorized
- */
-router.put('/:keyId/activate', 
-  asyncHandler(activateApiKey)
-);
 
 /**
  * @swagger
@@ -166,21 +112,5 @@ router.delete('/:keyId',
   asyncHandler(deleteApiKey)
 );
 
-/**
- * @swagger
- * /api/admin/api-keys/kcd-info:
- *   get:
- *     summary: Get KCD portal connection info
- *     description: Returns all URLs to paste into the KCD portal Courier System API tab
- *     tags: [Admin API Keys]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Connection info with all endpoint URLs
- */
-router.get('/kcd-info', 
-  asyncHandler(getKCDConnectionInfo)
-);
 
 export default router;

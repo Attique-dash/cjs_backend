@@ -1,8 +1,11 @@
 import { Router } from 'express';
-import { combinedAuth } from '../../middleware/combinedAuth';
+import { authenticateWarehouse } from '../../middleware/warehouseAuth';
 import * as customerController from '../../controllers/warehouse/customerController';
 
 const router = Router();
+
+// All warehouse customer routes require warehouse authentication
+router.use(authenticateWarehouse);
 
 /**
  * @swagger
@@ -84,7 +87,7 @@ const router = Router();
  */
 // Get All Customers (API SPEC)
 router.get('/', 
-  combinedAuth, 
+  authenticateWarehouse, 
   customerController.getCustomers
 );
 
@@ -152,7 +155,7 @@ router.get('/',
  */
 // Get Customer Details by userCode (API SPEC)
 router.get('/:userCode', 
-  combinedAuth, 
+  authenticateWarehouse, 
   customerController.getCustomerByUserCode
 );
 
@@ -210,7 +213,7 @@ router.get('/:userCode',
  */
 // Delete Customer (API SPEC)
 router.delete('/', 
-  combinedAuth, 
+  authenticateWarehouse, 
   customerController.deleteCustomer
 );
 

@@ -4,7 +4,6 @@ import { validateMongoId, validatePagination } from '../utils/validators';
 import { asyncHandler } from '../middleware/errorHandler';
 import * as adminController from '../controllers/adminController';
 import apiKeyRoutes from './admin/apiKeys';
-import kcdApiKeyRoutes from './admin/kcdApiKeys';
 
 const router = Router();
 
@@ -598,6 +597,5 @@ router.put('/shipping-address/:type',
 
 // Mount API key management routes
 router.use('/api-keys', apiKeyRoutes);
-router.use('/kcd-api-keys', kcdApiKeyRoutes);
 
 export default router;

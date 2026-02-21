@@ -1,10 +1,13 @@
 import { Router } from 'express';
-import { combinedAuth } from '../../middleware/combinedAuth';
+import { authenticateWarehouse, authorizeWarehouse } from '../../middleware/warehouseAuth';
 import * as packageController from '../../controllers/warehouse/packageController';
 import { validateAddPackage, validateUpdatePackage, validateUpdatePackageStatus } from '../../validators/packageValidators';
 import { validateObjectId } from '../../middleware/validation';
 
 const router = Router();
+
+// All warehouse package routes require warehouse authentication
+router.use(authenticateWarehouse);
 
 /**
  * @swagger
@@ -92,7 +95,7 @@ const router = Router();
  *         description: Forbidden - Insufficient permissions
  */
 // Get all packages - use search endpoint with no filters
-router.get('/', combinedAuth, packageController.searchPackages);
+router.get('/', authenticateWarehouse, packageController.searchPackages);
 
 // All routes use combined authentication (JWT or API Key)
 
@@ -180,7 +183,7 @@ router.get('/', combinedAuth, packageController.searchPackages);
  */
 // Search/List Packages (Paginated + Filtered) - API SPEC
 router.get('/search', 
-  combinedAuth, 
+  authenticateWarehouse, 
   packageController.searchPackages
 );
 
@@ -239,7 +242,7 @@ router.get('/search',
  *         description: Unauthorized
  */
 router.get('/:id', 
-  combinedAuth, 
+  authenticateWarehouse, 
   validateObjectId('id'),
   packageController.getPackageById
 );
@@ -306,7 +309,7 @@ router.get('/:id',
  *         description: Unauthorized
  */
 router.post('/add', 
-  combinedAuth, 
+  authenticateWarehouse, 
   validateAddPackage,
   packageController.addPackage
 );
@@ -382,7 +385,7 @@ router.post('/add',
  *         description: Invalid update data
  */
 router.put('/:id', 
-  combinedAuth, 
+  authenticateWarehouse, 
   validateObjectId('id'),
   validateUpdatePackage,
   packageController.updatePackage
@@ -419,7 +422,7 @@ router.put('/:id',
  *         description: Insufficient permissions to delete package
  */
 router.delete('/:id', 
-  combinedAuth, 
+  authenticateWarehouse, 
   validateObjectId('id'),
   packageController.deletePackage
 );
@@ -489,7 +492,7 @@ router.delete('/:id',
  *         description: Invalid status transition
  */
 router.post('/:id/status', 
-  combinedAuth, 
+  authenticateWarehouse, 
   validateObjectId('id'),
   validateUpdatePackageStatus,
   packageController.updatePackageStatus
@@ -553,7 +556,7 @@ router.post('/:id/status',
  *         description: File too large
  */
 router.post('/bulk-upload', 
-  combinedAuth, 
+  authenticateWarehouse, 
   packageController.bulkUploadPackages
 );
 

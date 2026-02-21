@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { Types } from 'mongoose';
 import { authKcdApiKey, AuthenticatedKcdRequest } from '../middleware/authKcd';
 import { 
   addPackageValidation, 
@@ -21,7 +22,7 @@ router.get('/customers',
   handleValidationErrors,
   async (req: AuthenticatedKcdRequest, res: Response): Promise<void> => {
     try {
-      const { courierCode, limit = 50, offset = 0 } = req.body;
+      const { courierCode, limit = 50, offset = 0 } = req.query as any;
       const authenticatedCourierCode = req.courierCode;
 
       // Build query
@@ -29,13 +30,13 @@ router.get('/customers',
       
       // Filter by courier code if provided
       if (courierCode) {
-        query['shippingAddresses'] = { $elemMatch: { type: courierCode.toLowerCase() } };
+        query['shippingAddresses'] = { $elemMatch: { type: String(courierCode).toLowerCase() } };
       }
 
       const customers = await User.find(query)
         .select('userCode firstName lastName email phone address mailboxNumber shippingAddresses')
-        .limit(limit)
-        .skip(offset)
+        .limit(Number(limit))
+        .skip(Number(offset))
         .sort({ createdAt: -1 });
 
       const total = await User.countDocuments(query);
@@ -58,7 +59,7 @@ router.get('/customers',
             total,
             limit,
             offset,
-            hasMore: offset + limit < total
+            hasMore: Number(offset) + Number(limit) < total
           }
         }
       });
@@ -304,6 +305,288 @@ router.get('/packages/:trackingNumber',
       res.status(500).json({
         success: false,
         message: 'Failed to get package',
+        error: error.message
+      });
+    }
+  }
+);
+
+// ─────────────────────────────────────────────────────────────
+// DELETE /api/kcd/packages/:trackingNumber
+// Delete a package
+// ─────────────────────────────────────────────────────────────
+/**
+ * @swagger
+ * /api/kcd/packages/{trackingNumber}:
+ *   delete:
+ *     summary: Delete Package
+ *     description: Delete a package by tracking number (requires KCD API key)
+ *     tags: [KCD API]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: trackingNumber
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Package tracking number
+ *     responses:
+ *       200:
+ *         description: Package deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Package deleted successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     trackingNumber:
+ *                       type: string
+ *                     deletedAt:
+ *                       type: string
+ *                       format: date-time
+ *       401:
+ *         description: Unauthorized - Invalid API key
+ *       403:
+ *         description: Forbidden - Package does not belong to this courier
+ *       404:
+ *         description: Package not found
+ *       500:
+ *         description: Internal server error
+ */
+router.delete('/packages/:trackingNumber',
+  authKcdApiKey,
+  async (req: AuthenticatedKcdRequest, res: Response): Promise<void> => {
+    try {
+      const { trackingNumber } = req.params;
+      const authenticatedCourierCode = req.courierCode;
+
+      // Find the package
+      const packageDoc = await Package.findOne({ trackingNumber });
+      if (!packageDoc) {
+        res.status(404).json({
+          success: false,
+          message: 'Package not found'
+        });
+        return;
+      }
+
+      // Verify the package belongs to the authenticated courier
+      if (packageDoc.courierCode !== authenticatedCourierCode) {
+        res.status(403).json({
+          success: false,
+          message: 'Access denied: Package does not belong to this courier'
+        });
+        return;
+      }
+
+      // Delete the package
+      await Package.findByIdAndDelete(packageDoc._id);
+
+      res.json({
+        success: true,
+        message: 'Package deleted successfully',
+        data: {
+          trackingNumber,
+          deletedAt: new Date()
+        }
+      });
+    } catch (error: any) {
+      console.error('Delete package error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to delete package',
+        error: error.message
+      });
+    }
+  }
+);
+
+// ─────────────────────────────────────────────────────────────
+// PUT /api/kcd/packages/:trackingNumber/manifest
+// Update package manifest
+// ─────────────────────────────────────────────────────────────
+/**
+ * @swagger
+ * /api/kcd/packages/{trackingNumber}/manifest:
+ *   put:
+ *     summary: Update Package Manifest
+ *     description: Update package manifest information (requires KCD API key)
+ *     tags: [KCD API]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: trackingNumber
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Package tracking number
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                 description: List of items in the package
+ *               totalValue:
+ *                 type: number
+ *                 description: Total value of items
+ *               currency:
+ *                 type: string
+ *                 default: "USD"
+ *                 description: Currency code
+ *               weight:
+ *                 type: number
+ *                 description: Package weight
+ *               dimensions:
+ *                 type: object
+ *                 properties:
+ *                   length:
+ *                     type: number
+ *                   width:
+ *                     type: number
+ *                   height:
+ *                     type: number
+ *                   unit:
+ *                     type: string
+ *                 description: Package dimensions
+ *               specialInstructions:
+ *                 type: string
+ *                 description: Special handling instructions
+ *               customsDeclaration:
+ *                 type: object
+ *                 description: Customs declaration information
+ *     responses:
+ *       200:
+ *         description: Package manifest updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Package manifest updated successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     trackingNumber:
+ *                       type: string
+ *                     manifestId:
+ *                       type: string
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
+ *       401:
+ *         description: Unauthorized - Invalid API key
+ *       403:
+ *         description: Forbidden - Package does not belong to this courier
+ *       404:
+ *         description: Package not found
+ *       500:
+ *         description: Internal server error
+ */
+router.put('/packages/:trackingNumber/manifest',
+  authKcdApiKey,
+  async (req: AuthenticatedKcdRequest, res: Response): Promise<void> => {
+    try {
+      const { trackingNumber } = req.params;
+      const {
+        items,
+        totalValue,
+        currency = 'USD',
+        weight,
+        dimensions,
+        specialInstructions,
+        customsDeclaration
+      } = req.body;
+      
+      const authenticatedCourierCode = req.courierCode;
+
+      // Find the package
+      const packageDoc = await Package.findOne({ trackingNumber });
+      if (!packageDoc) {
+        res.status(404).json({
+          success: false,
+          message: 'Package not found'
+        });
+        return;
+      }
+
+      // Verify the package belongs to the authenticated courier
+      if (packageDoc.courierCode !== authenticatedCourierCode) {
+        res.status(403).json({
+          success: false,
+          message: 'Access denied: Package does not belong to this courier'
+        });
+        return;
+      }
+
+      // Update manifest information
+      const updates: any = {
+        manifestId: new Types.ObjectId(), // Generate new manifest ID
+        specialInstructions: specialInstructions || packageDoc.specialInstructions,
+        notes: `Manifest updated: ${JSON.stringify({
+          items: items || [],
+          totalValue: totalValue || 0,
+          currency,
+          updatedAt: new Date(),
+          updatedBy: authenticatedCourierCode
+        })}`
+      };
+
+      if (weight) updates.weight = weight;
+      if (dimensions) updates.dimensions = dimensions;
+      if (specialInstructions) updates.specialInstructions = specialInstructions;
+      if (customsDeclaration) updates.customsDeclaration = customsDeclaration;
+
+      // Add tracking history entry
+      const historyEntry = {
+        timestamp: new Date(),
+        status: packageDoc.status,
+        location: packageDoc.warehouseLocation || 'Unknown',
+        description: 'Package manifest updated'
+      };
+
+      updates.$push = { trackingHistory: historyEntry };
+
+      const updatedPackage = await Package.findByIdAndUpdate(
+        packageDoc._id,
+        updates,
+        { new: true }
+      );
+
+      res.json({
+        success: true,
+        message: 'Package manifest updated successfully',
+        data: {
+          trackingNumber: updatedPackage?.trackingNumber,
+          manifestId: updatedPackage?.manifestId,
+          updatedAt: updatedPackage?.updatedAt
+        }
+      });
+    } catch (error: any) {
+      console.error('Update manifest error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to update package manifest',
         error: error.message
       });
     }

@@ -41,7 +41,13 @@ const options = {
           type: 'http',
           scheme: 'bearer',
           bearerFormat: 'JWT',
-          description: 'Enter your JWT token from login endpoint'
+          description: 'Enter your JWT token from login endpoint (for Customer, Warehouse, Admin roles)'
+        },
+        kcdBearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'Enter your KCD API Bearer token (for KCD endpoints only)'
         },
         apiKeyAuth: {
           type: 'apiKey',
