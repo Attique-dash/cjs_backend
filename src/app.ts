@@ -25,6 +25,9 @@ import { corsOptions } from './config/cors';
 
 app.use(cors(corsOptions));
 
+// Handle OPTIONS preflight requests explicitly
+app.options('*', cors(corsOptions));
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes
@@ -272,8 +275,7 @@ app.get('/auth-manager', (req: Request, res: Response) => {
 // API routes
 app.use('/api', routes);
 
-// Middleware: KCD logging (must be before KCD routes)
-app.use('/api/kcd', logKcdApiCall);
+// Note: KCD logging middleware is applied in the route handler itself
 
 // 404 handler
 app.use('*', (req: Request, res: Response) => {

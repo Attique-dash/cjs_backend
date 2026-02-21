@@ -25,19 +25,42 @@ export const authKcdApiKey = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const authHeader = req.headers.authorization;
-    const apiKeyHeader = req.headers['x-api-key'];
+    // Handle OPTIONS preflight requests
+    if (req.method === 'OPTIONS') {
+      return next();
+    }
+
+    // Get headers (case-insensitive)
+    const authHeader = req.headers.authorization || req.headers.Authorization;
+    const apiKeyHeader = req.headers['x-api-key'] || req.headers['X-API-Key'] || req.headers['X-Api-Key'];
     
     // Allow both Bearer token and X-API-Key header for flexibility
-    let apiKey = null;
+    let apiKey: string | null = null;
     
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      apiKey = authHeader.substring(7); // Remove 'Bearer ' prefix
+    if (authHeader) {
+      // Handle Bearer token (case-insensitive)
+      const bearerMatch = authHeader.match(/^Bearer\s+(.+)$/i);
+      if (bearerMatch) {
+        apiKey = bearerMatch[1].trim();
+      } else {
+        // If no Bearer prefix, treat the whole header as the key
+        apiKey = authHeader.trim();
+      }
     } else if (apiKeyHeader) {
-      apiKey = apiKeyHeader;
+      apiKey = typeof apiKeyHeader === 'string' ? apiKeyHeader.trim() : String(apiKeyHeader).trim();
     }
     
-    if (!apiKey) {
+    if (!apiKey || apiKey.length === 0) {
+      console.error('KCD API Authentication failed: No API key provided', {
+        method: req.method,
+        path: req.path,
+        headers: {
+          hasAuth: !!authHeader,
+          hasApiKey: !!apiKeyHeader,
+          authHeader: authHeader ? '***' : undefined,
+          apiKeyHeader: apiKeyHeader ? '***' : undefined
+        }
+      });
       res.status(401).json({
         success: false,
         message: 'Missing or invalid authorization header. Use Bearer <token> or X-API-Key header'
@@ -47,34 +70,60 @@ export const authKcdApiKey = async (
 
     // Find API key in database
     const kcdKey = await KcdApiKey.findOne({
-      apiKey,
-      isActive: true,
-      expiresAt: { $gt: new Date() }
+      apiKey: apiKey.trim(),
+      isActive: true
     }).populate('createdBy');
 
     if (!kcdKey) {
+      console.error('KCD API Authentication failed: API key not found', {
+        method: req.method,
+        path: req.path,
+        apiKeyPrefix: apiKey.substring(0, 10) + '...'
+      });
       res.status(401).json({
         success: false,
-        message: 'Invalid or expired API key'
+        message: 'Invalid or inactive API key. Please verify your API key is correct and active.'
+      });
+      return;
+    }
+
+    // Check if key has expired
+    if (kcdKey.expiresAt && kcdKey.expiresAt < new Date()) {
+      console.error('KCD API Authentication failed: API key expired', {
+        method: req.method,
+        path: req.path,
+        expiresAt: kcdKey.expiresAt,
+        courierCode: kcdKey.courierCode
+      });
+      res.status(401).json({
+        success: false,
+        message: 'API key has expired. Please generate a new API key.'
       });
       return;
     }
 
     // Update usage statistics
     kcdKey.lastUsed = new Date();
-    kcdKey.usageCount += 1;
+    kcdKey.usageCount = (kcdKey.usageCount || 0) + 1;
     await kcdKey.save();
 
     // Attach API key info to request
     req.kcdApiKey = kcdKey;
     req.courierCode = kcdKey.courierCode;
 
+    console.log('KCD API Authentication successful', {
+      method: req.method,
+      path: req.path,
+      courierCode: kcdKey.courierCode,
+      usageCount: kcdKey.usageCount
+    });
+
     next();
   } catch (error) {
     console.error('KCD Authentication error:', error);
     res.status(500).json({
       success: false,
-      message: 'Authentication error'
+      message: 'Authentication error. Please try again later.'
     });
   }
 };

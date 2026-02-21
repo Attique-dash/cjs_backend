@@ -47,7 +47,13 @@ const options = {
           type: 'http',
           scheme: 'bearer',
           bearerFormat: 'JWT',
-          description: 'Enter your KCD API Bearer token (for KCD endpoints only)'
+          description: 'Enter your KCD API Bearer token (for KCD endpoints only). You can also use X-API-Key header instead.'
+        },
+        kcdApiKeyAuth: {
+          type: 'apiKey',
+          in: 'header',
+          name: 'X-API-Key',
+          description: 'KCD API Key for courier integration (alternative to Bearer token)'
         },
         apiKeyAuth: {
           type: 'apiKey',
@@ -999,9 +1005,12 @@ const options = {
       '/api/kcd/customers': {
         get: {
           summary: 'Get Customers for KCD Courier',
-          description: 'Retrieve customers for authenticated courier. Requires KCD API key.',
+          description: 'Retrieve customers for authenticated courier. Requires KCD API key. Use either Authorization: Bearer <token> or X-API-Key header.',
           tags: ['KCD API'],
-          security: [{ kcdBearerAuth: [] }],
+          security: [
+            { kcdBearerAuth: [] },
+            { kcdApiKeyAuth: [] }
+          ],
           parameters: [
             { in: 'query', name: 'courierCode', schema: { type: 'string' }, description: 'Filter by courier code (optional)' },
             { in: 'query', name: 'limit', schema: { type: 'integer', default: 50 }, description: 'Number of results to return' },
