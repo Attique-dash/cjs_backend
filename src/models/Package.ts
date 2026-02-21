@@ -25,6 +25,22 @@ export interface IPackage extends Document {
   userCode: string;
   userId: mongoose.Types.ObjectId;
   
+  // KCD Integration fields
+  courierCode?: string;
+  customerId?: mongoose.Types.ObjectId;
+  customerCode?: string;
+  source?: 'web' | 'kcd-packing-system' | 'api';
+  warehouseAddress?: string;
+  location?: string;
+  estimatedDelivery?: Date;
+  processedAt?: Date;
+  timeline?: Array<{
+    status: string;
+    timestamp: Date;
+    location: string;
+    description: string;
+  }>;
+  
   // Package details
   weight: number;
   dimensions?: { length: number; width: number; height: number; unit: string };
@@ -216,6 +232,67 @@ const packageSchema = new Schema<IPackage>({
     ref: 'User',
     required: [true, 'User ID is required']
   },
+  
+  // KCD Integration fields
+  courierCode: {
+    type: String,
+    trim: true,
+    uppercase: true,
+    index: true
+  },
+  customerId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Customer',
+    index: true
+  },
+  customerCode: {
+    type: String,
+    trim: true,
+    uppercase: true,
+    index: true
+  },
+  source: {
+    type: String,
+    enum: ['web', 'kcd-packing-system', 'api'],
+    default: 'web',
+    index: true
+  },
+  warehouseAddress: {
+    type: String,
+    trim: true,
+    maxlength: [500, 'Warehouse address cannot exceed 500 characters']
+  },
+  location: {
+    type: String,
+    trim: true,
+    maxlength: [200, 'Location cannot exceed 200 characters']
+  },
+  estimatedDelivery: {
+    type: Date
+  },
+  processedAt: {
+    type: Date,
+    index: true
+  },
+  timeline: [{
+    status: {
+      type: String,
+      required: true
+    },
+    timestamp: {
+      type: Date,
+      required: true,
+      default: Date.now
+    },
+    location: {
+      type: String,
+      required: true
+    },
+    description: {
+      type: String,
+      trim: true
+    }
+  }],
   
   // Package details
   weight: {
@@ -522,10 +599,19 @@ packageSchema.index({ dateReceived: -1 });
 packageSchema.index({ manifestId: 1 });
 packageSchema.index({ createdAt: -1 });
 
+// KCD-specific indexes
+packageSchema.index({ courierCode: 1 });
+packageSchema.index({ customerId: 1 });
+packageSchema.index({ customerCode: 1 });
+packageSchema.index({ source: 1 });
+packageSchema.index({ processedAt: -1 });
+
 // Compound indexes for common queries
 packageSchema.index({ status: 1, createdAt: -1 });
 packageSchema.index({ userId: 1, status: 1 });
 packageSchema.index({ userCode: 1, status: 1 });
+packageSchema.index({ courierCode: 1, status: 1 });
+packageSchema.index({ source: 1, createdAt: -1 });
 
 export const Package = mongoose.model<IPackage>('Package', packageSchema);
 

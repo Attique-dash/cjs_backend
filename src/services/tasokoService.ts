@@ -57,11 +57,21 @@ export class TasokoService {
         }
       );
 
+      // ✅ ADD THIS - Validate response
+      if (!response || response.status !== 200) {
+        logger.error(`Tasoko API returned status ${response?.status}`);
+        return false;
+      }
+
       logger.info(`Package sent to Tasoko: ${packageData.trackingNumber}`);
-      return response.status === 200;
+      return true;
 
     } catch (error: any) {
-      logger.error('Failed to send package to Tasoko:', error.message);
+      logger.error('Failed to send package to Tasoko:', {
+        message: error.message,
+        trackingNumber: packageData.trackingNumber,
+        status: error.response?.status
+      });
       return false;
     }
   }
@@ -99,11 +109,21 @@ export class TasokoService {
         }
       );
 
+      // ✅ ADD THIS - Validate response
+      if (!response || response.status !== 200) {
+        logger.error(`Tasoko API returned status ${response?.status}`);
+        return false;
+      }
+
       logger.info(`Package update sent to Tasoko: ${packageData.trackingNumber}`);
-      return response.status === 200;
+      return true;
 
     } catch (error: any) {
-      logger.error('Failed to send update to Tasoko:', error.message);
+      logger.error('Failed to send update to Tasoko:', {
+        message: error.message,
+        trackingNumber: packageData.trackingNumber,
+        status: error.response?.status
+      });
       return false;
     }
   }
@@ -141,11 +161,21 @@ export class TasokoService {
         }
       );
 
+      // Validate response
+      if (!response || response.status !== 200) {
+        logger.error(`Tasoko API returned status ${response?.status}`);
+        return false;
+      }
+
       logger.info(`Package deletion sent to Tasoko: ${packageData.trackingNumber}`);
-      return response.status === 200;
+      return true;
 
     } catch (error: any) {
-      logger.error('Failed to send deletion to Tasoko:', error.message);
+      logger.error('Failed to send deletion to Tasoko:', {
+        message: error.message,
+        trackingNumber: packageData.trackingNumber,
+        status: error.response?.status
+      });
       return false;
     }
   }

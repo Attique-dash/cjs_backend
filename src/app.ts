@@ -7,23 +7,22 @@ import { errorHandler } from './middleware/errorHandler';
 import { logger } from './utils/logger';
 import routes from './routes';
 import { specs } from './config/swagger';
+import { xssProtection, mongoSanitize } from './middleware/security';
+import { logKcdApiCall } from './middleware/authKcd';
 
 const app: Application = express();
 
 // Security middleware
 app.use(helmet());
 
-// CORS configuration - supports multiple origins separated by commas
-const corsOrigins = process.env.CORS_ORIGIN 
-  ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
-  : ['http://localhost:3000'];
+// Input sanitization middleware
+app.use(xssProtection);
+app.use(mongoSanitize);
 
-app.use(cors({
-  origin: corsOrigins,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key']
-}));
+// CORS configuration
+import { corsOptions } from './config/cors';
+
+app.use(cors(corsOptions));
 
 // Rate limiting
 const limiter = rateLimit({
@@ -36,15 +35,37 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.use('/api/', limiter);
+// Apply only to API, not auth
+app.use('/api/warehouse', limiter);
+app.use('/api/admin', limiter);
+app.use('/api/customer', limiter);
+
+// Use stricter limiter for auth
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // limit each IP to 10 auth requests per windowMs
+  skipSuccessfulRequests: true, // Don't count successful requests
+  message: {
+    error: 'Too many authentication attempts, please try again later.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/auth', authLimiter);
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Request logging
+// Request logging for security
 app.use((req: Request, res: Response, next: NextFunction) => {
-  logger.info(`${req.method} ${req.path} - ${req.ip}`);
+  logger.info(`${req.method} ${req.path}`, {
+    ip: req.ip,
+    userId: (req as any).user?._id,
+    auth: req.headers.authorization ? 'JWT' : (req.headers['x-api-key'] ? 'API_KEY' : 'NONE'),
+    userAgent: req.get('User-Agent'),
+    timestamp: new Date().toISOString()
+  });
   next();
 });
 
@@ -107,6 +128,9 @@ app.get('/', (req: Request, res: Response) => {
 
 // API routes
 app.use('/api', routes);
+
+// Middleware: KCD logging (must be before KCD routes)
+app.use('/api/kcd', logKcdApiCall);
 
 // 404 handler
 app.use('*', (req: Request, res: Response) => {

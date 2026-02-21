@@ -46,9 +46,10 @@ export const getPaginationData = (page: number, limit: number, total: number) =>
 // Generate tracking number
 export const generateTrackingNumber = (): string => {
   const prefix = 'TRK';
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substr(2, 5).toUpperCase();
-  return `${prefix}${timestamp}${random}`.toUpperCase();
+  const timestamp = Date.now().toString(36).substring(0, 8); // Ensure 8 chars
+  const random = Math.random().toString(36).substr(2, 9).toUpperCase(); // 9 chars
+  // Result: TRK + 8 + 9 = 20 chars ✅
+  return `${prefix}${timestamp}${random}`.slice(0, 20).toUpperCase();
 };
 
 // Calculate package volume

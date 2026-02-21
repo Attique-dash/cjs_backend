@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { AuthRequest } from '../../middleware/auth';
-import { User } from '../../models/User';
+import { User, IUser } from '../../models/User';
 import { Warehouse } from '../../models/Warehouse';
 import { successResponse, errorResponse, getPaginationData } from '../../utils/helpers';
 import { PAGINATION, USER_ROLES } from '../../utils/constants';
@@ -57,7 +57,7 @@ export const getStaff = async (req: AuthRequest, res: Response): Promise<void> =
 
 export const getStaffById = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const staff = await User.findOne({
+    const staff: IUser | null = await User.findOne({
       _id: req.params.id,
       role: { $in: [USER_ROLES.ADMIN, USER_ROLES.WAREHOUSE_STAFF] }
     })
@@ -148,7 +148,7 @@ export const updateStaff = async (req: AuthRequest, res: Response): Promise<void
 
     const { name, phone, role, assignedWarehouse, permissions, isActive } = req.body;
 
-    const staff = await User.findOne({
+    const staff: IUser | null = await User.findOne({
       _id: req.params.id,
       role: { $in: [USER_ROLES.ADMIN, USER_ROLES.WAREHOUSE_STAFF] }
     });
@@ -210,7 +210,7 @@ export const deleteStaff = async (req: AuthRequest, res: Response): Promise<void
       return;
     }
 
-    const staff = await User.findOne({
+    const staff: IUser | null = await User.findOne({
       _id: req.params.id,
       role: { $in: [USER_ROLES.ADMIN, USER_ROLES.WAREHOUSE_STAFF] }
     });
@@ -249,7 +249,7 @@ export const resetStaffPassword = async (req: AuthRequest, res: Response): Promi
   try {
     const { newPassword } = req.body;
 
-    const staff = await User.findOne({
+    const staff: IUser | null = await User.findOne({
       _id: req.params.id,
       role: { $in: [USER_ROLES.ADMIN, USER_ROLES.WAREHOUSE_STAFF] }
     });
@@ -282,7 +282,7 @@ export const toggleStaffStatus = async (req: AuthRequest, res: Response): Promis
       return;
     }
 
-    const staff = await User.findOne({
+    const staff: IUser | null = await User.findOne({
       _id: req.params.id,
       role: { $in: [USER_ROLES.ADMIN, USER_ROLES.WAREHOUSE_STAFF] }
     });

@@ -25,6 +25,14 @@ export interface IUser extends Document {
   lastLogin?: Date;
   createdAt: Date;
   updatedAt: Date;
+  
+  // KCD Integration fields
+  courierCode?: string;
+  mailboxCode?: string;
+  customerAddress?: string;
+  customerCity?: string;
+  customerCountry?: string;
+  
   // Staff management fields
   assignedWarehouse?: mongoose.Types.ObjectId;
   permissions?: string[];
@@ -129,6 +137,38 @@ const userSchema = new Schema<IUser>({
     type: Date,
     default: null
   },
+  
+  // KCD Integration fields
+  courierCode: {
+    type: String,
+    trim: true,
+    uppercase: true,
+    index: true
+  },
+  mailboxCode: {
+    type: String,
+    trim: true,
+    uppercase: true,
+    unique: true,
+    sparse: true,
+    index: true
+  },
+  customerAddress: {
+    type: String,
+    trim: true,
+    maxlength: [500, 'Customer address cannot exceed 500 characters']
+  },
+  customerCity: {
+    type: String,
+    trim: true,
+    maxlength: [100, 'Customer city cannot exceed 100 characters']
+  },
+  customerCountry: {
+    type: String,
+    trim: true,
+    maxlength: [100, 'Customer country cannot exceed 100 characters']
+  },
+  
   // Staff management fields
   assignedWarehouse: {
     type: Schema.Types.ObjectId,
@@ -235,7 +275,13 @@ const userSchema = new Schema<IUser>({
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {
+  // Only hash if passwordHash is modified and not already hashed
   if (!this.isModified('passwordHash')) return next();
+  
+  // Check if password is already hashed (bcrypt hashes are typically 60 chars long)
+  if (this.passwordHash && this.passwordHash.length === 60 && this.passwordHash.startsWith('$2')) {
+    return next();
+  }
   
   try {
     const salt = await bcrypt.genSalt(12);
@@ -279,5 +325,11 @@ userSchema.index({ createdAt: -1 });
 userSchema.index({ assignedWarehouse: 1 });
 userSchema.index({ 'shippingAddresses.isDefault': 1 });
 userSchema.index({ createdBy: 1 });
+
+// KCD-specific indexes
+userSchema.index({ courierCode: 1 });
+userSchema.index({ mailboxCode: 1 });
+userSchema.index({ customerCity: 1 });
+userSchema.index({ customerCountry: 1 });
 
 export const User = mongoose.model<IUser>('User', userSchema);

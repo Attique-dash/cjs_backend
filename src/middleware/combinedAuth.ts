@@ -4,6 +4,7 @@ import { User } from '../models/User';
 import { ApiKey } from '../models/ApiKey';
 import { config } from '../config/env';
 import { logger } from '../utils/logger';
+import { errorResponse } from '../utils/helpers';
 
 /**
  * Combined authentication middleware
@@ -17,16 +18,10 @@ export const combinedAuth = async (req: Request, res: Response, next: NextFuncti
 
     // --- Try API Key first (KCD path) ---
     if (apiKeyHeader) {
-      const apiKey = await ApiKey.findOne({ key: apiKeyHeader, isActive: true });
+      const apiKey = await ApiKey.findOne({ key: apiKeyHeader });
 
-      if (!apiKey) {
-        res.status(401).json({ success: false, message: 'Invalid or inactive API key' });
-        return;
-      }
-
-      // Check expiry
-      if (apiKey.expiresAt && apiKey.expiresAt < new Date()) {
-        res.status(401).json({ success: false, message: 'API key has expired' });
+      if (!apiKey || !apiKey.canUse()) {
+        errorResponse(res, 'Invalid, inactive, or expired API key', 401);
         return;
       }
 
@@ -48,7 +43,7 @@ export const combinedAuth = async (req: Request, res: Response, next: NextFuncti
       const user = await User.findById(decoded.userId).select('-passwordHash');
 
       if (!user || user.accountStatus !== 'active') {
-        res.status(401).json({ success: false, message: 'User not found or inactive' });
+        errorResponse(res, 'User not found or inactive', 401);
         return;
       }
 
@@ -56,12 +51,9 @@ export const combinedAuth = async (req: Request, res: Response, next: NextFuncti
       return next();
     }
 
-    res.status(401).json({
-      success: false,
-      message: 'Authentication required. Provide a Bearer token or X-API-Key header.'
-    });
+    errorResponse(res, 'Authentication required. Provide a Bearer token or X-API-Key header.', 401);
   } catch (error) {
     logger.error('combinedAuth error:', error);
-    res.status(401).json({ success: false, message: 'Authentication failed' });
+    errorResponse(res, 'Authentication failed', 401);
   }
 };

@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiKey } from '../models/ApiKey';
+import { errorResponse } from '../utils/helpers';
+import { logger } from '../utils/logger';
 
 // ─────────────────────────────────────────────────────────────
 // validateApiKey middleware
@@ -64,7 +66,7 @@ export const validateApiKey = async (
     next();
   } catch (error) {
     console.error('validateApiKey error:', error);
-    res.status(500).json({ success: false, message: 'API key validation failed' });
+    errorResponse(res, 'API key validation failed', 500);
   }
 };
 

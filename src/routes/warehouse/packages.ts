@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { combinedAuth } from '../../middleware/combinedAuth';
 import * as packageController from '../../controllers/warehouse/packageController';
+import { validateAddPackage, validateUpdatePackage, validateUpdatePackageStatus } from '../../validators/packageValidators';
+import { validateObjectId } from '../../middleware/validation';
 
 const router = Router();
 
@@ -238,6 +240,7 @@ router.get('/search',
  */
 router.get('/:id', 
   combinedAuth, 
+  validateObjectId('id'),
   packageController.getPackageById
 );
 
@@ -304,6 +307,7 @@ router.get('/:id',
  */
 router.post('/add', 
   combinedAuth, 
+  validateAddPackage,
   packageController.addPackage
 );
 
@@ -379,6 +383,8 @@ router.post('/add',
  */
 router.put('/:id', 
   combinedAuth, 
+  validateObjectId('id'),
+  validateUpdatePackage,
   packageController.updatePackage
 );
 
@@ -414,6 +420,7 @@ router.put('/:id',
  */
 router.delete('/:id', 
   combinedAuth, 
+  validateObjectId('id'),
   packageController.deletePackage
 );
 
@@ -483,6 +490,8 @@ router.delete('/:id',
  */
 router.post('/:id/status', 
   combinedAuth, 
+  validateObjectId('id'),
+  validateUpdatePackageStatus,
   packageController.updatePackageStatus
 );
 

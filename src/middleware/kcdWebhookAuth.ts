@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiKey } from '../models/ApiKey';
 import { logger } from '../utils/logger';
+import { errorResponse } from '../utils/helpers';
 
 /**
  * KCD Webhook Authentication Middleware
@@ -12,26 +13,20 @@ export const validateKCDWebhook = async (req: Request, res: Response, next: Next
     const apiKey = req.headers['x-api-key'] as string;
 
     if (!apiKey) {
-      res.status(401).json({
-        success: false,
-        message: 'Missing X-API-Key header. KCD must send the API key with every request.'
-      });
+      errorResponse(res, 'Missing X-API-Key header. KCD must send the API key with every request.', 401);
       return;
     }
 
     const keyRecord = await ApiKey.findOne({ key: apiKey, isActive: true });
 
     if (!keyRecord) {
-      res.status(401).json({
-        success: false,
-        message: 'Invalid or inactive API key'
-      });
+      errorResponse(res, 'Invalid or inactive API key', 401);
       return;
     }
 
     // Check expiry
     if (keyRecord.expiresAt && keyRecord.expiresAt < new Date()) {
-      res.status(401).json({ success: false, message: 'API key has expired' });
+      errorResponse(res, 'API key has expired', 401);
       return;
     }
 
@@ -44,6 +39,6 @@ export const validateKCDWebhook = async (req: Request, res: Response, next: Next
     next();
   } catch (error) {
     logger.error('KCD webhook auth error:', error);
-    res.status(500).json({ success: false, message: 'Authentication error' });
+    errorResponse(res, 'Authentication error', 500);
   }
 };

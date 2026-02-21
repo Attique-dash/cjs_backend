@@ -210,11 +210,7 @@ export const addPackage = async (req: PackageRequest, res: Response): Promise<vo
     // Find user by userCode
     const user = await User.findOne({ userCode: userCode.toUpperCase() });
     if (!user) {
-      // Get list of existing customers for better error message
-      const existingCustomers = await User.find({ role: 'customer' }).select('userCode firstName lastName email').limit(5);
-      const customerList = existingCustomers.map(c => `${c.userCode} (${c.firstName} ${c.lastName} - ${c.email})`).join(', ');
-      
-      errorResponse(res, `User not found with provided userCode: ${userCode}. Existing customers: ${customerList || 'None'}`, 400);
+      errorResponse(res, `User not found with provided userCode: ${userCode}. Please verify the user code or contact support.`, 400);
       return;
     }
 
