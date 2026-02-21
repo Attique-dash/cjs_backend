@@ -30,9 +30,17 @@ export const authKcdApiKey = async (
       return next();
     }
 
-    // Get headers (case-insensitive)
-    const authHeader = req.headers.authorization || req.headers.Authorization;
-    const apiKeyHeader = req.headers['x-api-key'] || req.headers['X-API-Key'] || req.headers['X-Api-Key'];
+    // Get headers (case-insensitive) - normalize to string
+    const authHeaderRaw = req.headers.authorization || req.headers.Authorization;
+    const apiKeyHeaderRaw = req.headers['x-api-key'] || req.headers['X-API-Key'] || req.headers['X-Api-Key'];
+    
+    // Convert headers to string (handle array case by taking first element)
+    const authHeader = authHeaderRaw 
+      ? (Array.isArray(authHeaderRaw) ? authHeaderRaw[0] : authHeaderRaw)
+      : null;
+    const apiKeyHeader = apiKeyHeaderRaw
+      ? (Array.isArray(apiKeyHeaderRaw) ? apiKeyHeaderRaw[0] : apiKeyHeaderRaw)
+      : null;
     
     // Allow both Bearer token and X-API-Key header for flexibility
     let apiKey: string | null = null;
@@ -47,7 +55,7 @@ export const authKcdApiKey = async (
         apiKey = authHeader.trim();
       }
     } else if (apiKeyHeader) {
-      apiKey = typeof apiKeyHeader === 'string' ? apiKeyHeader.trim() : String(apiKeyHeader).trim();
+      apiKey = apiKeyHeader.trim();
     }
     
     if (!apiKey || apiKey.length === 0) {
