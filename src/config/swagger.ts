@@ -1042,8 +1042,7 @@ const options = {
             401: { description: 'Unauthorized - Invalid or missing API key', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
           }
         }
-      }
-    },
+      },
     '/api/admin/api-keys': {
       get: {
         summary: 'List All API Keys',
@@ -1132,7 +1131,7 @@ const options = {
         }
       }
     }
-  },
+  },  // Close paths object
   apis: [] // No JSDoc scanning needed - all paths defined above
 };
 
