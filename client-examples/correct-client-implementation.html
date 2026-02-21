@@ -51,7 +51,7 @@
                     method: method,
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-API-Key': this.apiToken  // ✅ CORRECT: Send token in header
+                        'Authorization': `Bearer ${this.apiToken}`  // ✅ CORRECT: Use Bearer token format
                     }
                 };
 

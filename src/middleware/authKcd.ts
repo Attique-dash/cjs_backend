@@ -26,16 +26,24 @@ export const authKcdApiKey = async (
 ): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
+    const apiKeyHeader = req.headers['x-api-key'];
     
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // Allow both Bearer token and X-API-Key header for flexibility
+    let apiKey = null;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      apiKey = authHeader.substring(7); // Remove 'Bearer ' prefix
+    } else if (apiKeyHeader) {
+      apiKey = apiKeyHeader;
+    }
+    
+    if (!apiKey) {
       res.status(401).json({
         success: false,
-        message: 'Missing or invalid authorization header'
+        message: 'Missing or invalid authorization header. Use Bearer <token> or X-API-Key header'
       });
       return;
     }
-
-    const apiKey = authHeader.substring(7); // Remove 'Bearer ' prefix
 
     // Find API key in database
     const kcdKey = await KcdApiKey.findOne({
