@@ -3,9 +3,11 @@ import { AuthRequest } from '../middleware/auth';
 import { User, IUser } from '../models/User';
 import { Package } from '../models/Package';
 import { Inventory } from '../models/Inventory';
+import { ApiKey } from '../models/ApiKey';
 import { successResponse, errorResponse, getPaginationData } from '../utils/helpers';
 import { PAGINATION } from '../utils/constants';
 import { logger } from '../utils/logger';
+import crypto from 'crypto';
 
 interface AdminRequest extends AuthRequest {
   query: {
@@ -35,6 +37,9 @@ interface AdminRequest extends AuthRequest {
     phone?: string;
     assignedWarehouse?: string;
     permissions?: string[];
+    name?: string;
+    description?: string;
+    warehouseId?: string;
   };
 }
 
@@ -662,5 +667,64 @@ export const updateShippingAddressByType = async (req: AdminRequest, res: Respon
   } catch (error) {
     logger.error('Error updating shipping address by type:', error);
     errorResponse(res, 'Failed to update shipping addresses');
+  }
+};
+
+// Generate KCD API key for KCD Logistics integration
+export const generateKCDApiKey = async (req: AdminRequest, res: Response): Promise<void> => {
+  try {
+    const adminUser = req.user;
+    if (!adminUser) {
+      res.status(401).json({ success: false, message: 'Not authenticated' });
+      return;
+    }
+
+    const {
+      name        = 'KCD Logistics Webhook',
+      permissions = ['kcd_webhook', 'webhook', 'all'],
+      description = 'API key for KCD Logistics packing system',
+      warehouseId,
+    } = req.body;
+
+    if (!warehouseId) {
+      res.status(400).json({ success: false, message: 'warehouseId is required' });
+      return;
+    }
+
+    // Generate a cryptographically secure random key
+    const rawKey = `kcd_${crypto.randomBytes(24).toString('hex')}`;
+
+    // Save to database
+    const apiKey = await ApiKey.create({
+      key:         rawKey,
+      name,
+      description,
+      permissions,
+      isActive:    true,
+      usageCount:  0,
+      warehouseId,
+      createdBy:   adminUser._id,
+    });
+
+    // Return the raw key NOW — this is the ONLY time we return it
+    res.status(201).json({
+      success: true,
+      data: {
+        key:         rawKey,            // ← COPY THIS INTO KCD PORTAL
+        name:        apiKey.name,
+        description: apiKey.description,
+        permissions: apiKey.permissions,
+        isActive:    apiKey.isActive,
+        warehouseId: apiKey.warehouseId,
+        createdAt:   apiKey.createdAt,
+      },
+    });
+  } catch (error: any) {
+    console.error('generateKCDApiKey error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate API key',
+      error: error.message,
+    });
   }
 };

@@ -15,7 +15,12 @@
    ```
    POST /api/admin/api-keys/kcd
    Headers: Authorization: Bearer <admin_jwt_token>
-   Body: { "warehouseId": "507f1f77bcf86cd799439011" }
+   Body: { 
+     "name": "KCD Logistics Webhook",
+     "permissions": ["kcd_webhook", "webhook", "all"],
+     "description": "API key for KCD Logistics packing system",
+     "warehouseId": "507f1f77bcf86cd799439011"
+   }
    ```
 
 2. **Response returns key** (shown only once):
@@ -23,22 +28,38 @@
    {
      "success": true,
      "data": {
-       "key": "kcd_abc123def456...",
-       "nextSteps": {
-         "step1": "Copy the 'key' value above",
-         "step2": "Go to https://pack.kcdlogistics.com → Couriers → Edit → Courier System API tab",
-         "step3": "Paste the key into the 'API Access Token' field"
-       }
+       "key": "kcd_alb2c3d4e5f67890abcdef...",
+       "name": "KCD Logistics Webhook",
+       "permissions": ["kcd_webhook", "webhook", "all"],
+       "description": "API key for KCD Logistics packing system",
+       "warehouseId": "507f1f77bcf86cd799439011",
+       "isActive": true,
+       "createdAt": "2024-01-15T10:30:00Z"
      }
    }
    ```
 
 3. **KCD sends requests** with header:
    ```
-   X-API-Key: kcd_abc123def456...
+   X-API-Key: kcd_alb2c3d4e5f67890abcdef...
    ```
 
 ## 🚀 KCD Accessible Endpoints
+
+### ✅ **Generate API Key for KCD** (NEW - Added to Admin Routes)
+```
+POST /api/admin/api-keys/kcd
+Headers: Authorization: Bearer <admin_jwt_token>
+Body: {
+  "name": "KCD Logistics Webhook",
+  "permissions": ["kcd_webhook", "webhook", "all"],
+  "description": "API key for KCD Logistics packing system",
+  "warehouseId": "507f1f77bcf86cd799439011"
+}
+```
+- **Purpose**: Generate permanent API key for KCD Logistics
+- **Authentication**: JWT Bearer token (admin only)
+- **Response**: API key shown only once
 
 ### ✅ **Get Customer List**
 ```
@@ -113,7 +134,7 @@ All endpoints are properly documented in Swagger with:
 ## 🎯 **Implementation Status**
 
 ✅ **Completed Features:**
-- API key generation (admin only)
+- API key generation (admin only) - **NEW in main admin routes**
 - X-API-Key validation middleware
 - Combined authentication (JWT + API Key)
 - All required KCD endpoints
@@ -136,5 +157,16 @@ The system now exactly matches the requirements shown in the image:
 - Has access to all specified operations
 - Proper integration with existing user roles
 - Complete audit trail and security
+- **Admin API key generation** available in main admin section
 
 **Flow**: Admin generates key → KCD copies key → KCD uses X-API-Key header → System validates → Access granted
+
+### 📋 **Exact Implementation Match**
+
+✅ **Image Requirements Met:**
+- [x] Generate API Key for KCD endpoint in admin section
+- [x] Proper request/response format as shown in image
+- [x] X-API-Key authentication for KCD operations
+- [x] All KCD operations accessible
+- [x] Combined authentication system
+- [x] Complete Swagger documentation
