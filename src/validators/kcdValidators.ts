@@ -1,4 +1,4 @@
-import { body, validationResult } from 'express-validator';
+import { body, query, validationResult } from 'express-validator';
 
 // Validation for generating API key
 export const generateApiKeyValidation = [
@@ -38,8 +38,8 @@ export const addPackageValidation = [
   body('customerCode')
     .notEmpty()
     .withMessage('Customer code is required')
-    .matches(/^[A-Z]{2,6}-\d{3,4}$/)
-    .withMessage('Customer code must be in format CLEAN-XXXX'),
+    .matches(/^[A-Z]{2,6}-\d{3,5}$/)
+    .withMessage('Customer code must be in format CLEAN-XXXX (3-5 digits)'),
   
   body('weight')
     .isFloat({ min: 0 })
@@ -118,19 +118,19 @@ export const updatePackageValidation = [
     .withMessage('Notes cannot exceed 2000 characters')
 ];
 
-// Validation for getting customers
+// Validation for getting customers (GET request - use query, not body)
 export const getCustomersValidation = [
-  body('courierCode')
+  query('courierCode')
     .optional()
     .isLength({ min: 2, max: 20 })
     .withMessage('Courier code must be 2-20 characters'),
   
-  body('limit')
+  query('limit')
     .optional()
     .isInt({ min: 1, max: 100 })
     .withMessage('Limit must be between 1 and 100'),
   
-  body('offset')
+  query('offset')
     .optional()
     .isInt({ min: 0 })
     .withMessage('Offset must be a non-negative integer')

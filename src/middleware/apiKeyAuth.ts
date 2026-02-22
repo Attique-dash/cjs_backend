@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { ApiKey } from '../models/ApiKey';
 import { errorResponse } from '../utils/helpers';
 import { logger } from '../utils/logger';
+import { authenticate } from './auth';
 
 // ─────────────────────────────────────────────────────────────
 // validateApiKey middleware
@@ -90,10 +91,7 @@ export const combinedAuth = async (
 
   // If Authorization Bearer is present → use JWT auth (your staff/admin)
   if (authHeader && authHeader.startsWith('Bearer ')) {
-    // Import and call your existing JWT middleware here
-    // This assumes you have a middleware called authenticate or similar
-    // Replace 'authenticate' with whatever your JWT middleware is named
-    const { authenticate } = await import('./auth');
+    // Use static import instead of dynamic import for better performance
     return authenticate(req, res, next);
   }
 

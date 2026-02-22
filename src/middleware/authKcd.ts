@@ -79,24 +79,49 @@ export const authKcdApiKey = async (
       return;
     }
 
-    // Find API key in database
-    const kcdKey = await KcdApiKey.findOne({
-      apiKey: apiKey.trim(),
-      isActive: true
+    // Find API key in database (first check if it exists at all, then check if active)
+    const trimmedKey = apiKey.trim();
+    const kcdKeyInactive = await KcdApiKey.findOne({
+      apiKey: trimmedKey
     }).populate('createdBy');
 
-    if (!kcdKey) {
-      console.error('KCD API Authentication failed: API key not found', {
+    // If key doesn't exist at all
+    if (!kcdKeyInactive) {
+      console.error('KCD API Authentication failed: API key not found in database', {
         method: req.method,
         path: req.path,
-        apiKeyPrefix: apiKey.substring(0, 10) + '...'
+        apiKeyPrefix: trimmedKey.substring(0, 15) + '...',
+        keyLength: trimmedKey.length
       });
       res.status(401).json({
         success: false,
-        message: 'Invalid or inactive API key. Please verify your API key is correct and active.'
+        message: 'Invalid or inactive API key. Please verify your API key is correct and active.',
+        error: 'API key not found',
+        hint: 'The API key does not exist in the database. Generate a new key via POST /api/admin/api-keys/kcd'
       });
       return;
     }
+
+    // If key exists but is inactive
+    if (!kcdKeyInactive.isActive) {
+      console.error('KCD API Authentication failed: API key is inactive', {
+        method: req.method,
+        path: req.path,
+        apiKeyId: kcdKeyInactive._id,
+        courierCode: kcdKeyInactive.courierCode,
+        deactivatedAt: kcdKeyInactive.deactivatedAt
+      });
+      res.status(401).json({
+        success: false,
+        message: 'Invalid or inactive API key. Please verify your API key is correct and active.',
+        error: 'API key is inactive',
+        hint: 'This API key has been deactivated. Generate a new key via POST /api/admin/api-keys/kcd or reactivate it via PUT /api/admin/api-keys/:keyId/activate'
+      });
+      return;
+    }
+
+    // Key exists and is active, use it
+    const kcdKey = kcdKeyInactive;
 
     // Check if key has expired
     if (kcdKey.expiresAt && kcdKey.expiresAt < new Date()) {

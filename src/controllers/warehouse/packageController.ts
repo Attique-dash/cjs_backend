@@ -192,19 +192,8 @@ export const addPackage = async (req: PackageRequest, res: Response): Promise<vo
       return;
     }
 
-    // Define allowed shippers
-    const allowedShippers = [
-      'amazon', 'ebay', 'shein', 'forever21', 'fashion nova', 'old navy',
-      'Amazon', 'eBay', 'SHEIN', 'Forever21', 'Fashion Nova', 'Old Navy'
-    ];
-
-    // Validate shipper
-    if (shipper && !allowedShippers.includes(shipper)) {
-      errorResponse(res, `Invalid shipper. Allowed shippers: ${allowedShippers.join(', ')}`, 400);
-      return;
-    }
-
     // Set default shipper to Amazon if not provided
+    // No whitelist restriction - allow any shipper name
     const finalShipper = shipper || 'Amazon';
 
     // Find user by userCode
@@ -220,8 +209,16 @@ export const addPackage = async (req: PackageRequest, res: Response): Promise<vo
       return;
     }
 
-    // Generate tracking number if not provided (strong string with numbers)
-    const finalTrackingNumber = trackingNumber || `TRK${Date.now()}${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+    // Generate tracking number if not provided (must match /^[A-Z0-9]{10,20}$/)
+    // Format: TRK + timestamp (13 digits) + random (4 chars) = 20 chars total
+    // Ensure it's always uppercase and within 10-20 character limit
+    const finalTrackingNumber = trackingNumber || (() => {
+      const timestamp = Date.now().toString(); // 13 digits
+      const random = Math.random().toString(36).substring(2, 6).toUpperCase(); // 4 uppercase chars
+      const generated = `TRK${timestamp}${random}`;
+      // Ensure it's exactly 20 chars and uppercase (TRK = 3, timestamp = 13, random = 4)
+      return generated.substring(0, 20).toUpperCase();
+    })();
 
     const packageData = {
       trackingNumber: finalTrackingNumber,
@@ -259,11 +256,16 @@ export const addPackage = async (req: PackageRequest, res: Response): Promise<vo
     const newPackage = await Package.create(packageData);
     await newPackage.populate('userId', 'firstName lastName email phone mailboxNumber');
 
-    // Send to Tasoko
-    await TasokoService.sendPackageCreated(newPackage);
+    // Send to Tasoko - check return value and log errors
+    const tasokoResult = await TasokoService.sendPackageCreated(newPackage);
+    if (!tasokoResult) {
+      logger.warn(`Failed to sync package ${newPackage.trackingNumber} to Tasoko, but package was created successfully`);
+      // Don't fail the request, just log the warning
+    }
 
     successResponse(res, {
-      package: newPackage
+      package: newPackage,
+      tasokoSynced: tasokoResult
     }, 'Package created successfully', 201);
   } catch (error) {
     logger.error('Error adding package:', error);

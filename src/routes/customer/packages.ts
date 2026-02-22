@@ -6,7 +6,58 @@ import * as packageController from '../../controllers/customer/packageController
 
 const router = Router();
 
-// All package routes require authentication AND customer role
+/**
+ * @swagger
+ * /api/customer/packages/tracking/{trackingNumber}:
+ *   get:
+ *     summary: Track package by tracking number
+ *     description: Provides real-time tracking information for a package using its tracking number. This endpoint is publicly accessible and does not require authentication.
+ *     tags: [Customer Packages]
+ *     parameters:
+ *       - in: path
+ *         name: trackingNumber
+ *         required: true
+ *         schema:
+ *           type: string
+ *           pattern: '^[A-Z0-9]{8,20}$'
+ *         description: Package tracking number (8-20 alphanumeric characters)
+ *         example: "TRK123456789"
+ *     responses:
+ *       200:
+ *         description: Package tracking information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *             example:
+ *               success: true
+ *               data:
+ *                 trackingNumber: "TRK123456789"
+ *                 status: "in_transit"
+ *                 currentLocation: "Distribution Center, Newark, NJ"
+ *                 estimatedDelivery: "2024-01-18T16:00:00Z"
+ *                 progress: 65
+ *                 trackingHistory:
+ *                   - timestamp: "2024-01-15T10:30:00Z"
+ *                     status: "received"
+ *                     location: "Origin Facility, Los Angeles, CA"
+ *                     description: "Package received at origin facility"
+ *                   - timestamp: "2024-01-15T14:20:00Z"
+ *                     status: "in_transit"
+ *                     location: "Distribution Center, Newark, NJ"
+ *                     description: "Package in transit to destination"
+ *       404:
+ *         description: Tracking number not found
+ *         content:
+ *           application/json:
+ *             example:
+ *               success: false
+ *               error: "Invalid tracking number"
+ */
+// Public tracking endpoint - must be before auth middleware
+router.get('/tracking/:trackingNumber', asyncHandler(packageController.trackPackage));
+
+// All other package routes require authentication AND customer role
 router.use(authenticate);
 router.use(authorize('customer'));
 
@@ -154,55 +205,6 @@ router.get('/', validatePagination, asyncHandler(packageController.getCustomerPa
  */
 router.get('/:id', validateMongoId, asyncHandler(packageController.getPackageById));
 
-/**
- * @swagger
- * /api/customer/packages/tracking/{trackingNumber}:
- *   get:
- *     summary: Track package by tracking number
- *     description: Provides real-time tracking information for a package using its tracking number. This endpoint is publicly accessible and does not require authentication.
- *     tags: [Customer Packages]
- *     parameters:
- *       - in: path
- *         name: trackingNumber
- *         required: true
- *         schema:
- *           type: string
- *           pattern: '^[A-Z0-9]{8,20}$'
- *         description: Package tracking number (8-20 alphanumeric characters)
- *         example: "TRK123456789"
- *     responses:
- *       200:
- *         description: Package tracking information
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ApiResponse'
- *             example:
- *               success: true
- *               data:
- *                 trackingNumber: "TRK123456789"
- *                 status: "in_transit"
- *                 currentLocation: "Distribution Center, Newark, NJ"
- *                 estimatedDelivery: "2024-01-18T16:00:00Z"
- *                 progress: 65
- *                 trackingHistory:
- *                   - timestamp: "2024-01-15T10:30:00Z"
- *                     status: "received"
- *                     location: "Origin Facility, Los Angeles, CA"
- *                     description: "Package received at origin facility"
- *                   - timestamp: "2024-01-15T14:20:00Z"
- *                     status: "in_transit"
- *                     location: "Distribution Center, Newark, NJ"
- *                     description: "Package in transit to destination"
- *       404:
- *         description: Tracking number not found
- *         content:
- *           application/json:
- *             example:
- *               success: false
- *               error: "Invalid tracking number"
- */
-router.get('/tracking/:trackingNumber', asyncHandler(packageController.trackPackage));
 
 /**
  * @swagger

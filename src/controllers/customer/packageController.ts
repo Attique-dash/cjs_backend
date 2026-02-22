@@ -71,22 +71,21 @@ export const getPackageById = async (req: AuthRequest, res: Response): Promise<v
   }
 };
 
-export const trackPackage = async (req: AuthRequest, res: Response): Promise<void> => {
+export const trackPackage = async (req: Request, res: Response): Promise<void> => {
   try {
-    if (!req.user) {
-      errorResponse(res, 'User not authenticated', 401);
+    // Public endpoint - no authentication required
+    const trackingNumber = req.params.trackingNumber?.toUpperCase();
+
+    if (!trackingNumber) {
+      errorResponse(res, 'Tracking number is required', 400);
       return;
     }
 
     const packageData = await Package.findOne({
-      trackingNumber: req.params.trackingNumber.toUpperCase(),
-      $or: [
-        { userId: req.user._id },
-        { recipientId: req.user._id }
-      ]
+      trackingNumber: trackingNumber
     })
-      .populate('senderId recipientId', 'name email')
-      .select('trackingNumber status trackingHistory estimatedDelivery actualDelivery');
+      .populate('userId', 'firstName lastName email')
+      .select('trackingNumber status trackingHistory estimatedDelivery actualDelivery dateReceived warehouseLocation');
 
     if (!packageData) {
       errorResponse(res, 'Package not found', 404);

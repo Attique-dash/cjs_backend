@@ -14,8 +14,8 @@ export const validateAddPackage = [
   body('userCode')
     .isString()
     .trim()
-    .matches(/^[A-Z]{2,6}-\d{3,4}$/)
-    .withMessage('User code must be in format CLEAN-XXXX'),
+    .matches(/^[A-Z]{2,6}-\d{3,5}$/)
+    .withMessage('User code must be in format CLEAN-XXXX (3-5 digits)'),
   
   body('weight')
     .isFloat({ min: 0.1 })

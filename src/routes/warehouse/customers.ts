@@ -85,9 +85,8 @@ router.use(authenticateWarehouse);
  *       403:
  *         description: Insufficient permissions
  */
-// Get All Customers (API SPEC)
+// Get All Customers (API SPEC) - authenticateWarehouse already applied via router.use()
 router.get('/', 
-  authenticateWarehouse, 
   customerController.getCustomers
 );
 
@@ -153,9 +152,8 @@ router.get('/',
  *       401:
  *         description: Unauthorized
  */
-// Get Customer Details by userCode (API SPEC)
+// Get Customer Details by userCode (API SPEC) - authenticateWarehouse already applied via router.use()
 router.get('/:userCode', 
-  authenticateWarehouse, 
   customerController.getCustomerByUserCode
 );
 
@@ -211,9 +209,8 @@ router.get('/:userCode',
  *       403:
  *         description: Insufficient permissions to delete customers
  */
-// Delete Customer (API SPEC)
+// Delete Customer (API SPEC) - authenticateWarehouse already applied via router.use()
 router.delete('/', 
-  authenticateWarehouse, 
   customerController.deleteCustomer
 );
 

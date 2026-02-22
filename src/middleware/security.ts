@@ -63,13 +63,9 @@ function sanitizeString(str: string): string {
 }
 
 // SQL Injection protection (for MongoDB)
+// Only sanitize keys that start with $ (MongoDB operators), not the values
 export const mongoSanitize = (req: Request, res: Response, next: NextFunction) => {
   const sanitizeMongo = (obj: any): any => {
-    if (typeof obj === 'string') {
-      // Remove MongoDB operators
-      return obj.replace(/\$|{|}/g, '');
-    }
-
     if (Array.isArray(obj)) {
       return obj.map(item => sanitizeMongo(item));
     }
@@ -78,15 +74,18 @@ export const mongoSanitize = (req: Request, res: Response, next: NextFunction) =
       const sanitized: any = {};
       for (const key in obj) {
         if (Object.prototype.hasOwnProperty.call(obj, key)) {
-          // Skip keys that start with $ (MongoDB operators)
+          // Only skip keys that start with $ (MongoDB operators)
+          // Preserve all values including those with $, {, } characters
           if (!key.startsWith('$')) {
             sanitized[key] = sanitizeMongo(obj[key]);
           }
+          // If key starts with $, skip it (potential MongoDB operator injection)
         }
       }
       return sanitized;
     }
 
+    // Preserve string values as-is (don't strip $, {, } from legitimate data)
     return obj;
   };
 

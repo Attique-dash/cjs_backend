@@ -225,7 +225,7 @@ const packageSchema = new Schema<IPackage>({
     required: [true, 'User code is required'],
     trim: true,
     uppercase: true,
-    match: [/^[A-Z]{2,6}-\d{3,4}$/, 'User code must be in format CLEAN-XXXX']
+    match: [/^[A-Z]{2,6}-\d{3,5}$/, 'User code must be in format CLEAN-XXXX (3-5 digits)']
   },
   userId: {
     type: Schema.Types.ObjectId,

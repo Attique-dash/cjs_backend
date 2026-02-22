@@ -71,7 +71,7 @@ const userSchema = new Schema<IUser>({
     unique: true,
     uppercase: true,
     trim: true,
-    match: [/^[A-Z]{2,6}-\d{3,4}$/, 'User code must be in format CLEAN-XXXX']
+    match: [/^[A-Z]{2,6}-\d{3,5}$/, 'User code must be in format CLEAN-XXXX (3-5 digits)']
   },
   firstName: {
     type: String,
