@@ -38,6 +38,18 @@ router.get('/', (req: Request, res: Response) => {
         response: 'Returns the generated API key (shown only once)'
       },
       {
+        method: 'POST',
+        path: '/api/admin/api-keys/generate',
+        description: 'Generate new KCD API key (alias for /kcd)',
+        usage: 'Generate a new API key for KCD Logistics integration',
+        requestBody: {
+          courierCode: 'string (optional, default: "CLEAN")',
+          expiresIn: 'number (optional, default: 365, max: 3650)',
+          description: 'string (optional)'
+        },
+        response: 'Returns the generated API key (shown only once)'
+      },
+      {
         method: 'GET',
         path: '/api/admin/api-keys/list',
         description: 'List all API keys',
@@ -90,6 +102,14 @@ router.get('/', (req: Request, res: Response) => {
  * Generate a new KCD API key
  */
 router.post('/kcd', 
+  asyncHandler(generateKCDApiKey)
+);
+
+/**
+ * POST /api/admin/api-keys/generate
+ * Generate a new KCD API key (alias for /kcd)
+ */
+router.post('/generate', 
   asyncHandler(generateKCDApiKey)
 );
 
