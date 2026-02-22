@@ -1052,6 +1052,327 @@ const options = {
           }
         }
       },
+      '/api/kcd/packages/add': {
+        post: {
+          summary: 'Add Package for KCD Courier',
+          description: 'Add a new package to the warehouse system. Requires KCD API key. Use either Authorization: Bearer <token> or X-API-Key header.',
+          tags: ['KCD API'],
+          security: [
+            { kcdBearerAuth: [] },
+            { kcdApiKeyAuth: [] }
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['trackingNumber', 'customerCode', 'weight'],
+                  properties: {
+                    trackingNumber: { type: 'string', example: 'TRK123456789' },
+                    courierCode: { type: 'string', example: 'CLEAN' },
+                    customerCode: { type: 'string', example: 'CLEAN-0001' },
+                    weight: { type: 'number', example: 2.5 },
+                    status: { type: 'string', enum: ['received', 'in_transit', 'delivered'], default: 'received' },
+                    warehouseAddress: { type: 'string', example: 'Warehouse A' },
+                    processedAt: { type: 'string', format: 'date-time' },
+                    dimensions: {
+                      type: 'object',
+                      properties: {
+                        length: { type: 'number' },
+                        width: { type: 'number' },
+                        height: { type: 'number' },
+                        unit: { type: 'string', default: 'cm' }
+                      }
+                    },
+                    description: { type: 'string', example: 'Electronics package' },
+                    shipper: { type: 'string', example: 'DHL' },
+                    senderName: { type: 'string', example: 'John Sender' },
+                    senderEmail: { type: 'string', format: 'email', example: 'sender@example.com' },
+                    senderPhone: { type: 'string', example: '+1234567890' },
+                    senderAddress: { type: 'string', example: '123 Sender St' },
+                    recipient: {
+                      type: 'object',
+                      properties: {
+                        name: { type: 'string' },
+                        address: { type: 'string' },
+                        phone: { type: 'string' }
+                      }
+                    }
+                  }
+                },
+                example: {
+                  trackingNumber: 'TRK123456789',
+                  customerCode: 'CLEAN-0001',
+                  weight: 2.5,
+                  description: 'Electronics package',
+                  warehouseAddress: 'Warehouse A',
+                  processedAt: '2024-01-15T10:30:00Z'
+                }
+              }
+            }
+          },
+          responses: {
+            201: {
+              description: 'Package added successfully',
+              content: {
+                'application/json': {
+                  example: {
+                    success: true,
+                    message: 'Package added successfully',
+                    data: {
+                      trackingNumber: 'TRK123456789',
+                      status: 'received',
+                      customerCode: 'CLEAN-0001',
+                      createdAt: '2024-01-15T10:30:00Z'
+                    }
+                  }
+                }
+              }
+            },
+            400: { description: 'Bad request - Invalid data', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            401: { description: 'Unauthorized - Invalid or missing API key', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            404: { description: 'Customer not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            409: { description: 'Tracking number already exists', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/kcd/packages/update': {
+        put: {
+          summary: 'Update Package for KCD Courier',
+          description: 'Update an existing package in the warehouse system. Requires KCD API key. Use either Authorization: Bearer <token> or X-API-Key header.',
+          tags: ['KCD API'],
+          security: [
+            { kcdBearerAuth: [] },
+            { kcdApiKeyAuth: [] }
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['trackingNumber'],
+                  properties: {
+                    trackingNumber: { type: 'string', example: 'TRK123456789' },
+                    status: { type: 'string', enum: ['received', 'in_transit', 'out_for_delivery', 'delivered', 'pending', 'customs', 'returned'] },
+                    location: { type: 'string', example: 'New York, NY' },
+                    lastUpdated: { type: 'string', format: 'date-time' },
+                    weight: { type: 'number', example: 3.0 },
+                    warehouseAddress: { type: 'string', example: 'Warehouse B' },
+                    notes: { type: 'string', example: 'Updated weight and location' }
+                  }
+                },
+                example: {
+                  trackingNumber: 'TRK123456789',
+                  status: 'in_transit',
+                  location: 'New York, NY',
+                  lastUpdated: '2024-01-16T14:30:00Z'
+                }
+              }
+            }
+          },
+          responses: {
+            200: {
+              description: 'Package updated successfully',
+              content: {
+                'application/json': {
+                  example: {
+                    success: true,
+                    message: 'Package updated successfully',
+                    data: {
+                      trackingNumber: 'TRK123456789',
+                      status: 'in_transit',
+                      updatedAt: '2024-01-16T14:30:00Z'
+                    }
+                  }
+                }
+              }
+            },
+            400: { description: 'Bad request - Invalid data', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            401: { description: 'Unauthorized - Invalid or missing API key', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/kcd/packages/{trackingNumber}': {
+        get: {
+          summary: 'Get Package Details for KCD Courier',
+          description: 'Retrieve detailed package information. Requires KCD API key. Use either Authorization: Bearer <token> or X-API-Key header.',
+          tags: ['KCD API'],
+          security: [
+            { kcdBearerAuth: [] },
+            { kcdApiKeyAuth: [] }
+          ],
+          parameters: [
+            { in: 'path', name: 'trackingNumber', required: true, schema: { type: 'string' }, example: 'TRK123456789' }
+          ],
+          responses: {
+            200: {
+              description: 'Package details retrieved successfully',
+              content: {
+                'application/json': {
+                  example: {
+                    success: true,
+                    data: {
+                      trackingNumber: 'TRK123456789',
+                      userCode: 'CLEAN-0001',
+                      customer: {
+                        userCode: 'CLEAN-0001',
+                        firstName: 'John',
+                        lastName: 'Doe',
+                        email: 'john@example.com'
+                      },
+                      status: 'received',
+                      weight: 2.5,
+                      dimensions: { length: 10, width: 5, height: 3, unit: 'cm' },
+                      warehouseLocation: 'Warehouse A',
+                      dateReceived: '2024-01-15T10:30:00Z',
+                      trackingHistory: [
+                        {
+                          timestamp: '2024-01-15T10:30:00Z',
+                          status: 'received',
+                          location: 'Warehouse A',
+                          description: 'Package received from CLEAN'
+                        }
+                      ],
+                      createdAt: '2024-01-15T10:30:00Z',
+                      updatedAt: '2024-01-15T10:30:00Z'
+                    }
+                  }
+                }
+              }
+            },
+            401: { description: 'Unauthorized - Invalid or missing API key', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        },
+        delete: {
+          summary: 'Delete Package for KCD Courier',
+          description: 'Delete a package from the warehouse system. Requires KCD API key. Use either Authorization: Bearer <token> or X-API-Key header.',
+          tags: ['KCD API'],
+          security: [
+            { kcdBearerAuth: [] },
+            { kcdApiKeyAuth: [] }
+          ],
+          parameters: [
+            { in: 'path', name: 'trackingNumber', required: true, schema: { type: 'string' }, example: 'TRK123456789' }
+          ],
+          responses: {
+            200: {
+              description: 'Package deleted successfully',
+              content: {
+                'application/json': {
+                  example: {
+                    success: true,
+                    message: 'Package deleted successfully',
+                    data: {
+                      trackingNumber: 'TRK123456789',
+                      deletedAt: '2024-01-16T15:30:00Z'
+                    }
+                  }
+                }
+              }
+            },
+            401: { description: 'Unauthorized - Invalid or missing API key', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            403: { description: 'Forbidden - Package does not belong to this courier', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/kcd/packages/{trackingNumber}/manifest': {
+        put: {
+          summary: 'Update Package Manifest for KCD Courier',
+          description: 'Update package manifest information including items, value, and customs details. Requires KCD API key. Use either Authorization: Bearer <token> or X-API-Key header.',
+          tags: ['KCD API'],
+          security: [
+            { kcdBearerAuth: [] },
+            { kcdApiKeyAuth: [] }
+          ],
+          parameters: [
+            { in: 'path', name: 'trackingNumber', required: true, schema: { type: 'string' }, example: 'TRK123456789' }
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    items: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          name: { type: 'string', example: 'Laptop' },
+                          quantity: { type: 'number', example: 1 },
+                          value: { type: 'number', example: 999.99 },
+                          description: { type: 'string', example: 'Electronics' }
+                        }
+                      }
+                    },
+                    totalValue: { type: 'number', example: 999.99 },
+                    currency: { type: 'string', default: 'USD', example: 'USD' },
+                    weight: { type: 'number', example: 2.5 },
+                    dimensions: {
+                      type: 'object',
+                      properties: {
+                        length: { type: 'number' },
+                        width: { type: 'number' },
+                        height: { type: 'number' },
+                        unit: { type: 'string', default: 'cm' }
+                      }
+                    },
+                    specialInstructions: { type: 'string', example: 'Handle with care' },
+                    customsDeclaration: {
+                      type: 'object',
+                      properties: {
+                        purpose: { type: 'string', example: 'Commercial' },
+                        hsCode: { type: 'string', example: '8471.30.01' }
+                      }
+                    }
+                  }
+                },
+                example: {
+                  items: [
+                    {
+                      name: 'Laptop',
+                      quantity: 1,
+                      value: 999.99,
+                      description: 'Electronics'
+                    }
+                  ],
+                  totalValue: 999.99,
+                  currency: 'USD',
+                  specialInstructions: 'Handle with care'
+                }
+              }
+            }
+          },
+          responses: {
+            200: {
+              description: 'Package manifest updated successfully',
+              content: {
+                'application/json': {
+                  example: {
+                    success: true,
+                    message: 'Package manifest updated successfully',
+                    data: {
+                      trackingNumber: 'TRK123456789',
+                      manifestId: '64a7b8c9d1e2f3g4h5i6j7k8',
+                      updatedAt: '2024-01-16T16:30:00Z'
+                    }
+                  }
+                }
+              }
+            },
+            400: { description: 'Bad request - Invalid data', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            401: { description: 'Unauthorized - Invalid or missing API key', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            403: { description: 'Forbidden - Package does not belong to this courier', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      }
   }  // Close paths object
   }, // Close definition object
   apis: [] // No JSDoc scanning needed - all paths defined above

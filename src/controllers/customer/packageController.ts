@@ -74,7 +74,7 @@ export const getPackageById = async (req: AuthRequest, res: Response): Promise<v
 export const trackPackage = async (req: Request, res: Response): Promise<void> => {
   try {
     // Public endpoint - no authentication required
-    const trackingNumber = req.params.trackingNumber?.toUpperCase();
+    const trackingNumber = (req as any).params.trackingNumber?.toUpperCase();
 
     if (!trackingNumber) {
       errorResponse(res, 'Tracking number is required', 400);
