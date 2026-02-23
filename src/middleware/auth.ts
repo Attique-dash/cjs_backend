@@ -39,6 +39,10 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     let token: string;
     if (authHeaderStr.startsWith('Bearer ') || authHeaderStr.startsWith('bearer ')) {
       token = authHeaderStr.substring(7).trim();
+      // Remove "Bearer " prefix if it exists again (prevents double Bearer)
+      if (token.startsWith('Bearer ') || token.startsWith('bearer ')) {
+        token = token.substring(7).trim();
+      }
     } else {
       token = authHeaderStr.trim();
     }
@@ -143,7 +147,20 @@ export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction
 
 export const optionalAuth = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
+    const authHeader = req.header('Authorization');
+    if (!authHeader) {
+      return next();
+    }
+
+    // Extract token properly (handle "Bearer <token>" format)
+    let token = authHeader.trim();
+    if (token.startsWith('Bearer ') || token.startsWith('bearer ')) {
+      token = token.substring(7).trim();
+      // Remove "Bearer " prefix if it exists again (prevents double Bearer)
+      if (token.startsWith('Bearer ') || token.startsWith('bearer ')) {
+        token = token.substring(7).trim();
+      }
+    }
 
     if (token) {
       const decoded = jwt.verify(token, config.jwtSecret) as any;
