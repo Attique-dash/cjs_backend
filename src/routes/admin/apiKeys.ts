@@ -49,8 +49,16 @@ router.get('/list',
 );
 
 /**
- * GET /api/admin/api-keys/info
+ * GET /api/admin/api-keys/kcd-info
  * Get KCD connection information
+ */
+router.get('/kcd-info', 
+  asyncHandler(getKCDConnectionInfo)
+);
+
+/**
+ * GET /api/admin/api-keys/info
+ * Get KCD connection information (alias for backward compatibility)
  */
 router.get('/info', 
   asyncHandler(getKCDConnectionInfo)
