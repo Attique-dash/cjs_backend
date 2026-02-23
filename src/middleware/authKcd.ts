@@ -91,12 +91,12 @@ export const authKcdApiKey = async (
 
     // Find API key in database (first check if it exists at all, then check if active)
     const trimmedKey = apiKey.trim();
-    const kcdKeyInactive = await KcdApiKey.findOne({
+    const kcdKeyRecord = await KcdApiKey.findOne({
       apiKey: trimmedKey
     }).populate('createdBy');
 
     // If key doesn't exist at all
-    if (!kcdKeyInactive) {
+    if (!kcdKeyRecord) {
       console.error('KCD API Authentication failed: API key not found in database', {
         method: req.method,
         path: req.path,
@@ -113,13 +113,13 @@ export const authKcdApiKey = async (
     }
 
     // If key exists but is inactive
-    if (!kcdKeyInactive.isActive) {
+    if (!kcdKeyRecord.isActive) {
       console.error('KCD API Authentication failed: API key is inactive', {
         method: req.method,
         path: req.path,
-        apiKeyId: kcdKeyInactive._id,
-        courierCode: kcdKeyInactive.courierCode,
-        deactivatedAt: kcdKeyInactive.deactivatedAt
+        apiKeyId: kcdKeyRecord._id,
+        courierCode: kcdKeyRecord.courierCode,
+        deactivatedAt: kcdKeyRecord.deactivatedAt
       });
       res.status(401).json({
         success: false,
@@ -131,7 +131,7 @@ export const authKcdApiKey = async (
     }
 
     // Key exists and is active, use it
-    const kcdKey = kcdKeyInactive;
+    const kcdKey = kcdKeyRecord;
 
     // Check if key has expired
     if (kcdKey.expiresAt && kcdKey.expiresAt < new Date()) {
@@ -143,7 +143,9 @@ export const authKcdApiKey = async (
       });
       res.status(401).json({
         success: false,
-        message: 'API key has expired. Please generate a new API key.'
+        message: 'API key has expired. Please generate a new API key.',
+        error: 'API key expired',
+        hint: 'Generate a new key via POST /api/admin/api-keys/kcd'
       });
       return;
     }
