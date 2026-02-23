@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { ApiKey } from '../models/ApiKey';
+import { KcdApiKey } from '../models/KcdApiKey';
 import { logger } from '../utils/logger';
 import { errorResponse } from '../utils/helpers';
 
@@ -17,7 +17,10 @@ export const validateKCDWebhook = async (req: Request, res: Response, next: Next
       return;
     }
 
-    const keyRecord = await ApiKey.findOne({ key: apiKey, isActive: true });
+    const keyRecord = await KcdApiKey.findOne({ 
+      apiKey: apiKey.trim(), 
+      isActive: true 
+    });
 
     if (!keyRecord) {
       errorResponse(res, 'Invalid or inactive API key', 401);

@@ -184,7 +184,7 @@ export class TasokoService {
    * Format package data to match Tasoko API specification (PDF page 3)
    */
   private static formatPackagePayload(pkg: any) {
-    return {
+    const payload = {
       PackageID: pkg._id?.toString() || '',
       CourierID: pkg.courierId || '',
       ManifestID: pkg.manifestId || '',
@@ -201,7 +201,6 @@ export class TasokoService {
       EntryDateTime: pkg.entryDateTime || new Date().toISOString(),
       Branch: pkg.branch || '',
       Claimed: pkg.claimed || false,
-      APIToken: this.apiToken,
       ShowControls: pkg.showControls || false,
       Description: pkg.description || '',
       HSCode: pkg.hsCode || '',
@@ -222,5 +221,12 @@ export class TasokoService {
       PackageStatus: pkg.packageStatus || 0,
       PackagePayments: pkg.packagePayments || ''
     };
+
+    // Only add APIToken if it's configured and not empty
+    if (this.apiToken && this.apiToken.trim() !== '') {
+      (payload as any).APIToken = this.apiToken;
+    }
+
+    return payload;
   }
 }

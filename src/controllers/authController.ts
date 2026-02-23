@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { User } from '../models/User';
+import { Warehouse } from '../models/Warehouse';
 import { successResponse, errorResponse } from '../utils/helpers';
 import { config } from '../config/env';
 import { logger } from '../utils/logger';
@@ -232,12 +233,18 @@ export const register = async (req: RegisterRequest, res: Response): Promise<voi
 
     // Send welcome email with shipping information
     try {
+      // Fetch warehouse addresses
+      const warehouse = await Warehouse.findOne({ isActive: true, isDefault: true });
+      
       await EmailService.sendWelcomeWithShippingInfo(
         newUser.email,
         newUser.firstName,
         newUser.userCode,
         newUser.address,
-        cleanCode // Using cleanCode as courier code for now
+        cleanCode, // Using cleanCode as courier code for now
+        warehouse?.airAddress,  // pass warehouse air address
+        warehouse?.seaAddress,  // pass warehouse sea address
+        warehouse?.chinaAddress // pass warehouse china address
       );
       logger.info(`Welcome email sent to: ${newUser.email}`);
     } catch (emailError) {

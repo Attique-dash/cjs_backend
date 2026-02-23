@@ -390,10 +390,12 @@ export const getKCDConnectionInfo = async (req: Request, res: Response): Promise
           ? '✅ Use the key from POST /api/admin/api-keys/kcd response'
           : '❌ Generate a key first via POST /api/admin/api-keys/kcd',
         endpoints: {
-          getCustomers: `${base}/api/kcd/customers`,
-          addPackage: `${base}/api/kcd/packages/add`,
-          updatePackage: `${base}/api/kcd/packages/update`,
-          description: 'Copy the above 3 endpoints into KCD portal'
+          getCustomers:   `${base}/api/kcd/customers`,
+          addPackage:     `${base}/api/kcd/packages/add`,
+          updatePackage:  `${base}/api/kcd/packages/update`,
+          deletePackage:  `${base}/api/webhooks/kcd/package-deleted`,
+          updateManifest: `${base}/api/webhooks/kcd/manifest-created`,
+          description: 'Copy the above 5 endpoints into KCD portal - first 3 go in "Courier System API" tab, last 2 go in "Packing System API" tab'
         }
       },
       createdKeys: activeKeys.map(k => ({

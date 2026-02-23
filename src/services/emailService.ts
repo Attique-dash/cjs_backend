@@ -92,9 +92,24 @@ export class EmailService {
     }
   }
 
-  static async sendWelcomeWithShippingInfo(to: string, firstName: string, userCode: string, address?: any, courierCode?: string): Promise<boolean> {
+  static async sendWelcomeWithShippingInfo(to: string, firstName: string, userCode: string, address?: any, courierCode?: string, airAddress?: any, seaAddress?: any, chinaAddress?: any): Promise<boolean> {
     try {
       const subject = 'Welcome to Our Shipping Service - Your Account Details';
+      
+      // Helper function to format address
+      const formatAddress = (addr: any) => {
+        if (!addr) return '';
+        return `
+          <strong>${addr.name}</strong><br>
+          ${addr.street}<br>
+          ${addr.city}, ${addr.state} ${addr.zipCode}<br>
+          ${addr.country}
+          ${addr.phone ? `<br>Phone: ${addr.phone}` : ''}
+          ${addr.email ? `<br>Email: ${addr.email}` : ''}
+          ${addr.instructions ? `<br><em>Instructions: ${addr.instructions}</em>` : ''}
+        `;
+      };
+      
       const html = `
         <h2>Welcome, ${firstName}!</h2>
         <p>Thank you for joining our shipping service. Your account has been successfully created.</p>
@@ -104,13 +119,39 @@ export class EmailService {
           <li><strong>User Code:</strong> ${userCode}</li>
           <li><strong>Email:</strong> ${to}</li>
           ${address ? `
-          <li><strong>Shipping Address:</strong><br>
+          <li><strong>Your Shipping Address:</strong><br>
             ${address.street}<br>
             ${address.city}, ${address.state} ${address.zipCode}<br>
             ${address.country}
           </li>` : ''}
           ${courierCode ? `<li><strong>Courier Code:</strong> ${courierCode}</li>` : ''}
         </ul>
+        
+        ${(airAddress || seaAddress || chinaAddress) ? `
+        <h3>Warehouse Shipping Addresses:</h3>
+        <p>When sending packages to our warehouse, please use the appropriate address based on your shipping method:</p>
+        
+        ${airAddress ? `
+        <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+          <h4>🛩️ Air Shipping Address:</h4>
+          ${formatAddress(airAddress)}
+        </div>
+        ` : ''}
+        
+        ${seaAddress ? `
+        <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+          <h4>🚢 Sea Shipping Address:</h4>
+          ${formatAddress(seaAddress)}
+        </div>
+        ` : ''}
+        
+        ${chinaAddress ? `
+        <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+          <h4>🇨🇳 China Address:</h4>
+          ${formatAddress(chinaAddress)}
+        </div>
+        ` : ''}
+        ` : ''}
         
         <h3>Getting Started:</h3>
         <p>With your new account, you can:</p>
