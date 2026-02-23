@@ -4,6 +4,7 @@ import { validateMongoId, validatePagination } from '../utils/validators';
 import { asyncHandler } from '../middleware/errorHandler';
 import * as adminController from '../controllers/adminController';
 import apiKeyRoutes from './admin/apiKeys';
+import getKcdKeyRoute from './admin/get-kcd-key';
 
 const router = Router();
 
@@ -594,6 +595,9 @@ router.put('/shipping-address/:type',
   authorize('admin'), 
   asyncHandler(adminController.updateShippingAddressByType)
 );
+
+// Mount temporary route to get actual KCD key
+router.use('/api-keys', getKcdKeyRoute);
 
 // Mount API key management routes
 router.use('/api-keys', apiKeyRoutes);
