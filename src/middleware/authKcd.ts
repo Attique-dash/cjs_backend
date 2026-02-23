@@ -33,6 +33,7 @@ export const authKcdApiKey = async (
     // Get headers (case-insensitive) - normalize to string
     const authHeaderRaw = req.headers.authorization || req.headers.Authorization;
     const apiKeyHeaderRaw = req.headers['x-api-key'] || req.headers['X-API-Key'] || req.headers['X-Api-Key'];
+    const kcdApiKeyHeaderRaw = req.headers['x-kcd-api-key'] || req.headers['X-KCD-API-Key'];
     
     // Convert headers to string (handle array case by taking first element)
     const authHeader = authHeaderRaw 
@@ -40,6 +41,9 @@ export const authKcdApiKey = async (
       : null;
     const apiKeyHeader = apiKeyHeaderRaw
       ? (Array.isArray(apiKeyHeaderRaw) ? apiKeyHeaderRaw[0] : apiKeyHeaderRaw)
+      : null;
+    const kcdApiKeyHeader = kcdApiKeyHeaderRaw
+      ? (Array.isArray(kcdApiKeyHeaderRaw) ? kcdApiKeyHeaderRaw[0] : kcdApiKeyHeaderRaw)
       : null;
     
     // Allow both Bearer token and X-API-Key header for flexibility
@@ -54,7 +58,11 @@ export const authKcdApiKey = async (
         // If no Bearer prefix, treat the whole header as the key
         apiKey = authHeader.trim();
       }
+    } else if (kcdApiKeyHeader) {
+      // Prioritize X-KCD-API-Key for KCD endpoints
+      apiKey = kcdApiKeyHeader.trim();
     } else if (apiKeyHeader) {
+      // Fallback to X-API-Key for backward compatibility
       apiKey = apiKeyHeader.trim();
     }
     
@@ -65,15 +73,17 @@ export const authKcdApiKey = async (
         headers: {
           hasAuth: !!authHeader,
           hasApiKey: !!apiKeyHeader,
+          hasKcdApiKey: !!kcdApiKeyHeader,
           authHeader: authHeader ? '***' : undefined,
-          apiKeyHeader: apiKeyHeader ? '***' : undefined
+          apiKeyHeader: apiKeyHeader ? '***' : undefined,
+          kcdApiKeyHeader: kcdApiKeyHeader ? '***' : undefined
         }
       });
       res.status(401).json({
         success: false,
         message: 'Missing or invalid authorization header. Please provide a valid KCD API key.',
         error: 'Missing API key',
-        hint: 'Include either: Authorization: Bearer <your-api-key> OR X-API-Key: <your-api-key>',
+        hint: 'Include either: Authorization: Bearer <your-api-key> OR X-KCD-API-Key: <your-api-key> OR X-API-Key: <your-api-key>',
         timestamp: new Date().toISOString()
       });
       return;

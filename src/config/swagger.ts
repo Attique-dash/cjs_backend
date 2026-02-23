@@ -24,10 +24,10 @@ const options = {
     info: {
       title: 'Warehouse Management API',
       version: '1.0.0',
-      description: 'A comprehensive warehouse management system API with interactive documentation',
+      description: 'Clean J Shipping Warehouse Management System API',
       contact: {
         name: 'API Support',
-        email: 'support@warehouse.com'
+        email: 'support@cleanjshipping.com'
       },
       license: {
         name: 'MIT',
@@ -52,7 +52,7 @@ const options = {
         kcdApiKeyAuth: {
           type: 'apiKey',
           in: 'header',
-          name: 'X-API-Key',
+          name: 'X-KCD-API-Key',
           description: 'KCD API Key for courier integration (alternative to Bearer token)'
         },
         apiKeyAuth: {
@@ -138,6 +138,7 @@ const options = {
       { name: 'Warehouse', description: 'Warehouse management endpoints' },
       { name: 'Customer', description: 'Customer-facing endpoints' },
       { name: 'KCD API', description: 'KCD Logistics integration endpoints' },
+      { name: 'KCD Webhooks', description: 'KCD Logistics webhook endpoints' },
       { name: 'Health', description: 'API health check' }
     ],
     paths: {
@@ -150,19 +151,6 @@ const options = {
           responses: {
             200: {
               description: 'Server is running',
-              content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } }
-            }
-          }
-        }
-      },
-      '/api/health': {
-        get: {
-          summary: 'API health check',
-          tags: ['Health'],
-          security: [],
-          responses: {
-            200: {
-              description: 'API is running',
               content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } }
             }
           }
@@ -244,50 +232,6 @@ const options = {
           }
         }
       },
-      '/api/admin/staff': {
-        get: {
-          summary: 'Get all warehouse staff',
-          tags: ['Admin'],
-          security: [{ bearerAuth: [] }],
-          parameters: [
-            { in: 'query', name: 'page', schema: { type: 'integer', default: 1 } },
-            { in: 'query', name: 'limit', schema: { type: 'integer', default: 20 } },
-            { in: 'query', name: 'q', schema: { type: 'string' } }
-          ],
-          responses: {
-            200: { description: 'Staff retrieved successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
-            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
-          }
-        },
-        post: {
-          summary: 'Add new warehouse staff',
-          tags: ['Admin'],
-          security: [{ bearerAuth: [] }],
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  required: ['firstName', 'lastName', 'email', 'password'],
-                  properties: {
-                    firstName: { type: 'string', example: 'Jane' },
-                    lastName: { type: 'string', example: 'Smith' },
-                    email: { type: 'string', format: 'email', example: 'jane@warehouse.com' },
-                    password: { type: 'string', example: 'SecurePass123!' },
-                    phone: { type: 'string', example: '+1234567890' },
-                    permissions: { type: 'array', items: { type: 'string' }, example: ['inventory_management'] }
-                  }
-                }
-              }
-            }
-          },
-          responses: {
-            201: { description: 'Staff created successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
-            409: { description: 'Email already exists', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
-          }
-        }
-      },
       '/api/admin/packages': {
         get: {
           summary: 'Get all packages',
@@ -301,22 +245,6 @@ const options = {
           ],
           responses: {
             200: { description: 'Packages retrieved successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
-            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
-          }
-        }
-      },
-      '/api/admin/inventory': {
-        get: {
-          summary: 'Get all inventory',
-          tags: ['Admin'],
-          security: [{ bearerAuth: [] }],
-          parameters: [
-            { in: 'query', name: 'page', schema: { type: 'integer', default: 1 } },
-            { in: 'query', name: 'limit', schema: { type: 'integer', default: 20 } },
-            { in: 'query', name: 'category', schema: { type: 'string' } }
-          ],
-          responses: {
-            200: { description: 'Inventory retrieved successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
             401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
           }
         }
@@ -346,95 +274,6 @@ const options = {
           }
         }
       },
-      '/api/admin/users/{userCode}/role': {
-        put: {
-          summary: 'Change user role',
-          tags: ['Admin'],
-          security: [{ bearerAuth: [] }],
-          parameters: [{ in: 'path', name: 'userCode', required: true, schema: { type: 'string' }, example: 'CLEAN-0001' }],
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object', required: ['role'],
-                  properties: { role: { type: 'string', enum: ['admin', 'customer', 'warehouse'] } }
-                },
-                example: { role: 'warehouse' }
-              }
-            }
-          },
-          responses: {
-            200: { description: 'Role updated successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
-            404: { description: 'User not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
-          }
-        }
-      },
-      '/api/admin/users/{userCode}/status': {
-        put: {
-          summary: 'Update user account status',
-          tags: ['Admin'],
-          security: [{ bearerAuth: [] }],
-          parameters: [{ in: 'path', name: 'userCode', required: true, schema: { type: 'string' }, example: 'CLEAN-0001' }],
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                example: { accountStatus: 'active', emailVerified: true }
-              }
-            }
-          },
-          responses: {
-            200: { description: 'Status updated successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
-            404: { description: 'User not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
-          }
-        }
-      },
-      '/api/admin/users/{userCode}': {
-        delete: {
-          summary: 'Delete user',
-          tags: ['Admin'],
-          security: [{ bearerAuth: [] }],
-          parameters: [{ in: 'path', name: 'userCode', required: true, schema: { type: 'string' }, example: 'CLEAN-0001' }],
-          responses: {
-            200: { description: 'User deleted successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
-            404: { description: 'User not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
-          }
-        }
-      },
-      '/api/admin/shipping-addresses': {
-        get: {
-          summary: 'Get all shipping addresses',
-          tags: ['Admin'],
-          security: [{ bearerAuth: [] }],
-          parameters: [
-            { in: 'query', name: 'page', schema: { type: 'integer', default: 1 } },
-            { in: 'query', name: 'type', schema: { type: 'string', enum: ['air', 'sea', 'china', 'standard'] } }
-          ],
-          responses: {
-            200: { description: 'Shipping addresses retrieved successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
-          }
-        }
-      },
-      '/api/admin/shipping-address/{type}': {
-        put: {
-          summary: 'Update shipping address by type',
-          tags: ['Admin'],
-          security: [{ bearerAuth: [] }],
-          parameters: [{ in: 'path', name: 'type', required: true, schema: { type: 'string', enum: ['air', 'sea', 'china', 'standard'] } }],
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                example: { address: { street: '456 Oak Ave', city: 'Los Angeles', state: 'CA', zipCode: '90001', country: 'USA' } }
-              }
-            }
-          },
-          responses: {
-            200: { description: 'Address updated successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
-          }
-        }
-      },
 
       // ─── WAREHOUSE PACKAGES ───────────────────────────────────────────────
       '/api/warehouse/packages': {
@@ -452,26 +291,7 @@ const options = {
             200: { description: 'Packages retrieved successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
             401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
           }
-        }
-      },
-      '/api/warehouse/packages/search': {
-        get: {
-          summary: 'Search packages',
-          tags: ['Warehouse'],
-          security: [{ bearerAuth: [] }],
-          parameters: [
-            { in: 'query', name: 'q', schema: { type: 'string' }, description: 'Search by tracking number, name, etc.' },
-            { in: 'query', name: 'userCode', schema: { type: 'string' } },
-            { in: 'query', name: 'statuses', schema: { type: 'string' }, description: 'Comma-separated statuses' },
-            { in: 'query', name: 'page', schema: { type: 'integer', default: 1 } },
-            { in: 'query', name: 'limit', schema: { type: 'integer', default: 50 } }
-          ],
-          responses: {
-            200: { description: 'Search results', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
-          }
-        }
-      },
-      '/api/warehouse/packages/add': {
+        },
         post: {
           summary: 'Add new package',
           tags: ['Warehouse'],
@@ -499,28 +319,6 @@ const options = {
           }
         }
       },
-      '/api/warehouse/packages/bulk-upload': {
-        post: {
-          summary: 'Bulk upload packages',
-          tags: ['Warehouse'],
-          security: [{ bearerAuth: [] }],
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                example: {
-                  packages: [
-                    { trackingNumber: 'TRK001', userCode: 'CLEAN-0001', weight: 1.5, serviceMode: 'air' }
-                  ]
-                }
-              }
-            }
-          },
-          responses: {
-            200: { description: 'Bulk upload result', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
-          }
-        }
-      },
       '/api/warehouse/packages/{id}': {
         get: {
           summary: 'Get package by ID',
@@ -545,40 +343,8 @@ const options = {
             200: { description: 'Package updated', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
             404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
           }
-        },
-        delete: {
-          summary: 'Delete package',
-          tags: ['Warehouse'],
-          security: [{ bearerAuth: [] }],
-          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-          responses: {
-            200: { description: 'Package deleted', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
-            404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
-          }
         }
       },
-      '/api/warehouse/packages/{id}/status': {
-        post: {
-          summary: 'Update package status',
-          tags: ['Warehouse'],
-          security: [{ bearerAuth: [] }],
-          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                example: { status: 'out_for_delivery', location: 'New York, NY', description: 'Out for delivery' }
-              }
-            }
-          },
-          responses: {
-            200: { description: 'Status updated', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
-            404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
-          }
-        }
-      },
-
-      // ─── WAREHOUSE CUSTOMERS ──────────────────────────────────────────────
       '/api/warehouse/customers': {
         get: {
           summary: 'Get all customers',
@@ -590,186 +356,6 @@ const options = {
           ],
           responses: {
             200: { description: 'Customers list', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
-          }
-        },
-        delete: {
-          summary: 'Delete customer',
-          tags: ['Warehouse'],
-          security: [{ bearerAuth: [] }],
-          requestBody: {
-            required: true,
-            content: { 'application/json': { example: { user_code: 'CLEAN-0001' } } }
-          },
-          responses: {
-            200: { description: 'Customer deleted', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
-            404: { description: 'Customer not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
-          }
-        }
-      },
-      '/api/warehouse/customers/{userCode}': {
-        get: {
-          summary: 'Get customer by user code',
-          tags: ['Warehouse'],
-          security: [{ bearerAuth: [] }],
-          parameters: [{ in: 'path', name: 'userCode', required: true, schema: { type: 'string' }, example: 'CLEAN-0001' }],
-          responses: {
-            200: { description: 'Customer details', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
-            404: { description: 'Customer not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
-          }
-        }
-      },
-
-      // ─── WAREHOUSE INVENTORY ──────────────────────────────────────────────
-      '/api/warehouse/inventory': {
-        get: {
-          summary: 'Get inventory list',
-          tags: ['Warehouse'],
-          security: [{ bearerAuth: [] }],
-          parameters: [
-            { in: 'query', name: 'page', schema: { type: 'integer', default: 1 } },
-            { in: 'query', name: 'limit', schema: { type: 'integer', default: 20 } },
-            { in: 'query', name: 'category', schema: { type: 'string' } }
-          ],
-          responses: {
-            200: { description: 'Inventory list', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
-          }
-        },
-        post: {
-          summary: 'Create inventory item',
-          tags: ['Warehouse'],
-          security: [{ bearerAuth: [] }],
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                example: { name: 'Item A', sku: 'SKU-001', category: 'Electronics', quantity: 100, unitPrice: 29.99, minStockLevel: 10, maxStockLevel: 500 }
-              }
-            }
-          },
-          responses: {
-            201: { description: 'Item created', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
-          }
-        }
-      },
-      '/api/warehouse/inventory/{id}': {
-        get: {
-          summary: 'Get inventory item',
-          tags: ['Warehouse'],
-          security: [{ bearerAuth: [] }],
-          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-          responses: {
-            200: { description: 'Item details', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
-          }
-        },
-        put: {
-          summary: 'Update inventory item',
-          tags: ['Warehouse'],
-          security: [{ bearerAuth: [] }],
-          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-          requestBody: { required: true, content: { 'application/json': { example: { quantity: 150 } } } },
-          responses: {
-            200: { description: 'Item updated', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
-          }
-        },
-        delete: {
-          summary: 'Delete inventory item',
-          tags: ['Warehouse'],
-          security: [{ bearerAuth: [] }],
-          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-          responses: {
-            200: { description: 'Item deleted', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
-          }
-        }
-      },
-
-      // ─── WAREHOUSE ANALYTICS ─────────────────────────────────────────────
-      '/api/warehouse/analytics/dashboard': {
-        get: {
-          summary: 'Get dashboard statistics',
-          tags: ['Warehouse'],
-          security: [{ bearerAuth: [] }],
-          responses: {
-            200: { description: 'Dashboard stats', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
-          }
-        }
-      },
-      '/api/warehouse/analytics/packages': {
-        get: {
-          summary: 'Get package analytics',
-          tags: ['Warehouse'],
-          security: [{ bearerAuth: [] }],
-          parameters: [
-            { in: 'query', name: 'startDate', schema: { type: 'string', format: 'date' } },
-            { in: 'query', name: 'endDate', schema: { type: 'string', format: 'date' } }
-          ],
-          responses: {
-            200: { description: 'Package analytics', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
-          }
-        }
-      },
-      '/api/warehouse/analytics/revenue': {
-        get: {
-          summary: 'Get revenue analytics',
-          tags: ['Warehouse'],
-          security: [{ bearerAuth: [] }],
-          responses: {
-            200: { description: 'Revenue analytics', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
-          }
-        }
-      },
-
-      // ─── WAREHOUSE SETTINGS ───────────────────────────────────────────────
-      '/api/warehouse/settings/shipping-addresses': {
-        get: {
-          summary: 'Get shipping address config',
-          tags: ['Warehouse'],
-          security: [{ bearerAuth: [] }],
-          responses: {
-            200: { description: 'Shipping address config', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
-          }
-        },
-        put: {
-          summary: 'Update shipping addresses',
-          tags: ['Warehouse'],
-          security: [{ bearerAuth: [] }],
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                example: {
-                  airAddress: { name: 'Air Freight Co', street: '3200 NW 112th Ave', city: 'Doral', state: 'FL', zipCode: '33172', country: 'USA' }
-                }
-              }
-            }
-          },
-          responses: {
-            200: { description: 'Addresses updated', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
-          }
-        }
-      },
-
-      // ─── WAREHOUSE REPORTS ────────────────────────────────────────────────
-      '/api/warehouse/reports/packages': {
-        get: {
-          summary: 'Generate package report',
-          tags: ['Warehouse'],
-          security: [{ bearerAuth: [] }],
-          parameters: [
-            { in: 'query', name: 'startDate', schema: { type: 'string', format: 'date' } },
-            { in: 'query', name: 'endDate', schema: { type: 'string', format: 'date' } }
-          ],
-          responses: {
-            200: { description: 'Package report', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
-          }
-        }
-      },
-      '/api/warehouse/reports/inventory': {
-        get: {
-          summary: 'Generate inventory report',
-          tags: ['Warehouse'],
-          security: [{ bearerAuth: [] }],
-          responses: {
-            200: { description: 'Inventory report', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
           }
         }
       },
@@ -788,18 +374,6 @@ const options = {
           responses: {
             200: { description: 'Customer packages', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
             401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
-          }
-        }
-      },
-      '/api/customer/packages/{id}': {
-        get: {
-          summary: 'Get package by ID',
-          tags: ['Customer'],
-          security: [{ bearerAuth: [] }],
-          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-          responses: {
-            200: { description: 'Package details', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
-            404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
           }
         }
       },
@@ -837,34 +411,12 @@ const options = {
           }
         }
       },
-      '/api/customer/shipping-addresses': {
-        get: {
-          summary: 'Get warehouse shipping addresses',
-          description: 'Returns Air, Sea, and China warehouse addresses for this customer',
-          tags: ['Customer'],
-          security: [{ bearerAuth: [] }],
-          responses: {
-            200: { description: 'Shipping addresses', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
-          }
-        }
-      },
-      '/api/customer/shipping-addresses/{type}': {
-        get: {
-          summary: 'Get shipping address by type',
-          tags: ['Customer'],
-          security: [{ bearerAuth: [] }],
-          parameters: [{ in: 'path', name: 'type', required: true, schema: { type: 'string', enum: ['air', 'sea', 'china'] } }],
-          responses: {
-            200: { description: 'Shipping address', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
-          }
-        }
-      },
 
       // ─── ADMIN API KEYS ─────────────────────────────────────────────────
       '/api/admin/api-keys/kcd': {
         post: {
           summary: 'Create KCD API Key',
-          description: 'Create a new API key for KCD Logistics webhook integration. WarehouseId is auto-resolved if not provided.',
+          description: 'Create a new API key for KCD Logistics integration',
           tags: ['Admin API Keys'],
           security: [{ bearerAuth: [] }],
           requestBody: {
@@ -874,10 +426,9 @@ const options = {
                 schema: {
                   type: 'object',
                   properties: {
-                    name: { type: 'string', default: 'KCD Logistics Webhook' },
-                    permissions: { type: 'array', items: { type: 'string' }, default: ['kcd_webhook', 'webhook'] },
-                    description: { type: 'string', default: 'API key for KCD Logistics packing system' },
-                    warehouseId: { type: 'string', description: 'Warehouse ID (optional - auto-resolved if not provided)' }
+                    courierCode: { type: 'string', default: 'CLEAN' },
+                    expiresIn: { type: 'number', default: 365, description: 'Days until expiration' },
+                    description: { type: 'string', default: 'KCD Logistics Integration API Key' }
                   }
                 }
               }
@@ -892,17 +443,17 @@ const options = {
                     success: true,
                     message: '✅ KCD API key generated. Copy the key NOW — it will NOT be shown again.',
                     data: {
-                      id: '64a7b8c9d1e2f3g4h5i6j7k8',
-                      key: 'kcd_abcdef1234567890abcdef1234567890abcdef1234567890',
-                      name: 'KCD Logistics Webhook',
-                      kcdPortalFields: {
-                        apiAccessToken: 'kcd_abcdef1234567890abcdef1234567890abcdef1234567890',
-                        getCustomers: 'http://localhost:5000/api/warehouse/customers',
-                        addPackage: 'http://localhost:5000/api/warehouse/packages/add',
-                        updatePackage: 'http://localhost:5000/api/warehouse/packages/:id',
-                        deletePackage: 'http://localhost:5000/api/webhooks/kcd/package-deleted',
-                        updateManifest: 'http://localhost:5000/api/webhooks/kcd/manifest-created'
-                      }
+                      apiKey: 'kcd_live_abcdef1234567890abcdef1234567890',
+                      courierCode: 'CLEAN',
+                      description: 'KCD Logistics Integration API Key',
+                      expiresAt: '2025-01-15T10:30:00Z',
+                      nextSteps: [
+                        '1. Copy the API key above',
+                        '2. Go to https://pack.kcdlogistics.com',
+                        '3. Admin → Couriers → CLEAN → Edit',
+                        '4. Fill "API Access Token" field with the key above',
+                        '5. Configure endpoints as shown in GET /api/admin/api-keys/kcd-info'
+                      ]
                     }
                   }
                 }
@@ -912,64 +463,10 @@ const options = {
           }
         }
       },
-      '/api/admin/api-keys': {
-        get: {
-          summary: 'List All API Keys',
-          description: 'Retrieve all API keys (without exposing the actual keys)',
-          tags: ['Admin API Keys'],
-          security: [{ bearerAuth: [] }],
-          responses: {
-            200: { description: 'API keys retrieved successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
-            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
-          }
-        }
-      },
-      '/api/admin/api-keys/{keyId}/deactivate': {
-        put: {
-          summary: 'Deactivate API Key',
-          description: 'Deactivate an API key to revoke access',
-          tags: ['Admin API Keys'],
-          security: [{ bearerAuth: [] }],
-          parameters: [{ in: 'path', name: 'keyId', required: true, schema: { type: 'string' } }],
-          responses: {
-            200: { description: 'API key deactivated successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
-            404: { description: 'API key not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
-            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
-          }
-        }
-      },
-      '/api/admin/api-keys/{keyId}/activate': {
-        put: {
-          summary: 'Activate API Key',
-          description: 'Reactivate a previously deactivated API key',
-          tags: ['Admin API Keys'],
-          security: [{ bearerAuth: [] }],
-          parameters: [{ in: 'path', name: 'keyId', required: true, schema: { type: 'string' } }],
-          responses: {
-            200: { description: 'API key activated successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
-            404: { description: 'API key not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
-            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
-          }
-        }
-      },
-      '/api/admin/api-keys/{keyId}': {
-        delete: {
-          summary: 'Delete API Key',
-          description: 'Permanently delete an API key',
-          tags: ['Admin API Keys'],
-          security: [{ bearerAuth: [] }],
-          parameters: [{ in: 'path', name: 'keyId', required: true, schema: { type: 'string' } }],
-          responses: {
-            200: { description: 'API key deleted successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
-            404: { description: 'API key not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
-            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
-          }
-        }
-      },
       '/api/admin/api-keys/kcd-info': {
         get: {
           summary: 'Get KCD portal connection info',
-          description: 'Returns all URLs to paste into KCD portal Courier System API tab',
+          description: 'Returns all URLs to paste into KCD portal',
           tags: ['Admin API Keys'],
           security: [{ bearerAuth: [] }],
           responses: {
@@ -982,14 +479,23 @@ const options = {
                     data: {
                       hasActiveKey: true,
                       activeKeyCount: 1,
-                      instruction: '✅ Active key exists. Regenerate via POST /api/admin/api-keys/kcd if you need value.',
-                      kcdPortalFields: {
-                        apiAccessToken: '✅ Key exists — regenerate via POST /api/admin/api-keys/kcd to get the value',
-                        getCustomers: 'http://localhost:5000/api/kcd/customers',
-                        addPackage: 'http://localhost:5000/api/kcd/packages/add',
-                        updatePackage: 'http://localhost:5000/api/kcd/packages/update',
-                        deletePackage: 'http://localhost:5000/api/webhooks/kcd/package-deleted',
-                        updateManifest: 'http://localhost:5000/api/webhooks/kcd/manifest-created'
+                      kcdPortalConfiguration: {
+                        portalUrl: 'https://pack.kcdlogistics.com/',
+                        steps: [
+                          'Login with: Username: CleanJShip, Password: CleanJ$h!p',
+                          'Navigate to Admin → Couriers → CLEAN → Edit',
+                          'Fill "Courier System API" tab with values below',
+                          'Fill "Packing System API" tab with API token and endpoints'
+                        ],
+                        apiToken: '✅ Use the key from POST /api/admin/api-keys/kcd response',
+                        endpoints: {
+                          getCustomers: 'http://localhost:5000/api/kcd/customers',
+                          addPackage: 'http://localhost:5000/api/kcd/packages/add',
+                          updatePackage: 'http://localhost:5000/api/kcd/packages/update',
+                          deletePackage: 'http://localhost:5000/api/webhooks/kcd/package-deleted',
+                          updateManifest: 'http://localhost:5000/api/webhooks/kcd/manifest-created',
+                          description: 'Copy the above 5 endpoints into KCD portal - first 3 go in "Courier System API" tab, last 2 go in "Packing System API" tab'
+                        }
                       }
                     }
                   }
@@ -1005,7 +511,7 @@ const options = {
       '/api/kcd/customers': {
         get: {
           summary: 'Get Customers for KCD Courier',
-          description: 'Retrieve customers for authenticated courier. Requires KCD API key. Use either Authorization: Bearer <token> or X-API-Key header.',
+          description: 'Retrieve customers for authenticated courier. Use either Authorization: Bearer <token> or X-API-Key header.',
           tags: ['KCD API'],
           security: [
             { kcdBearerAuth: [] },
@@ -1026,23 +532,16 @@ const options = {
                     data: {
                       customers: [
                         {
-                          id: '64a7b8c9d1e2f3g4h5i6j7k8',
-                          userCode: 'User123',
-                          name: 'John Doe',
+                          userCode: 'CLEAN-0001',
+                          firstName: 'John',
+                          lastName: 'Doe',
                           email: 'john@example.com',
                           phone: '+1234567890',
                           address: '123 Main St',
-                          mailboxNumber: 'CLEAN-0001',
-                          shippingAddresses: [],
-                          courierCode: 'CLEAN'
+                          mailboxNumber: 'CLEAN-0001'
                         }
                       ],
-                      pagination: {
-                        total: 1,
-                        limit: 50,
-                        offset: 0,
-                        hasMore: false
-                      }
+                      pagination: { total: 1, limit: 50, offset: 0, hasMore: false }
                     }
                   }
                 }
@@ -1055,7 +554,7 @@ const options = {
       '/api/kcd/packages/add': {
         post: {
           summary: 'Add Package for KCD Courier',
-          description: 'Add a new package to the warehouse system. Requires KCD API key. Use either Authorization: Bearer <token> or X-API-Key header.',
+          description: 'Add a new package to the warehouse system. Use either Authorization: Bearer <token> or X-API-Key header.',
           tags: ['KCD API'],
           security: [
             { kcdBearerAuth: [] },
@@ -1070,44 +569,16 @@ const options = {
                   required: ['trackingNumber', 'customerCode', 'weight'],
                   properties: {
                     trackingNumber: { type: 'string', example: 'TRK123456789' },
-                    courierCode: { type: 'string', example: 'CLEAN' },
                     customerCode: { type: 'string', example: 'CLEAN-0001' },
                     weight: { type: 'number', example: 2.5 },
-                    status: { type: 'string', enum: ['received', 'in_transit', 'delivered'], default: 'received' },
-                    warehouseAddress: { type: 'string', example: 'Warehouse A' },
-                    processedAt: { type: 'string', format: 'date-time' },
-                    dimensions: {
-                      type: 'object',
-                      properties: {
-                        length: { type: 'number' },
-                        width: { type: 'number' },
-                        height: { type: 'number' },
-                        unit: { type: 'string', default: 'cm' }
-                      }
-                    },
-                    description: { type: 'string', example: 'Electronics package' },
-                    shipper: { type: 'string', example: 'DHL' },
-                    senderName: { type: 'string', example: 'John Sender' },
-                    senderEmail: { type: 'string', format: 'email', example: 'sender@example.com' },
-                    senderPhone: { type: 'string', example: '+1234567890' },
-                    senderAddress: { type: 'string', example: '123 Sender St' },
-                    recipient: {
-                      type: 'object',
-                      properties: {
-                        name: { type: 'string' },
-                        address: { type: 'string' },
-                        phone: { type: 'string' }
-                      }
-                    }
+                    description: { type: 'string', example: 'Electronics package' }
                   }
                 },
                 example: {
                   trackingNumber: 'TRK123456789',
                   customerCode: 'CLEAN-0001',
                   weight: 2.5,
-                  description: 'Electronics package',
-                  warehouseAddress: 'Warehouse A',
-                  processedAt: '2024-01-15T10:30:00Z'
+                  description: 'Electronics package'
                 }
               }
             }
@@ -1123,24 +594,21 @@ const options = {
                     data: {
                       trackingNumber: 'TRK123456789',
                       status: 'received',
-                      customerCode: 'CLEAN-0001',
-                      createdAt: '2024-01-15T10:30:00Z'
+                      customerCode: 'CLEAN-0001'
                     }
                   }
                 }
               }
             },
             400: { description: 'Bad request - Invalid data', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
-            401: { description: 'Unauthorized - Invalid or missing API key', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
-            404: { description: 'Customer not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
-            409: { description: 'Tracking number already exists', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+            401: { description: 'Unauthorized - Invalid or missing API key', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
           }
         }
       },
       '/api/kcd/packages/update': {
         put: {
           summary: 'Update Package for KCD Courier',
-          description: 'Update an existing package in the warehouse system. Requires KCD API key. Use either Authorization: Bearer <token> or X-API-Key header.',
+          description: 'Update an existing package in the warehouse system. Use either Authorization: Bearer <token> or X-API-Key header.',
           tags: ['KCD API'],
           security: [
             { kcdBearerAuth: [] },
@@ -1156,18 +624,13 @@ const options = {
                   properties: {
                     trackingNumber: { type: 'string', example: 'TRK123456789' },
                     status: { type: 'string', enum: ['received', 'in_transit', 'out_for_delivery', 'delivered', 'pending', 'customs', 'returned'] },
-                    location: { type: 'string', example: 'New York, NY' },
-                    lastUpdated: { type: 'string', format: 'date-time' },
-                    weight: { type: 'number', example: 3.0 },
-                    warehouseAddress: { type: 'string', example: 'Warehouse B' },
-                    notes: { type: 'string', example: 'Updated weight and location' }
+                    location: { type: 'string', example: 'New York, NY' }
                   }
                 },
                 example: {
                   trackingNumber: 'TRK123456789',
                   status: 'in_transit',
-                  location: 'New York, NY',
-                  lastUpdated: '2024-01-16T14:30:00Z'
+                  location: 'New York, NY'
                 }
               }
             }
@@ -1182,200 +645,142 @@ const options = {
                     message: 'Package updated successfully',
                     data: {
                       trackingNumber: 'TRK123456789',
-                      status: 'in_transit',
-                      updatedAt: '2024-01-16T14:30:00Z'
+                      status: 'in_transit'
                     }
                   }
                 }
               }
             },
             400: { description: 'Bad request - Invalid data', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
-            401: { description: 'Unauthorized - Invalid or missing API key', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
-            404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+            401: { description: 'Unauthorized - Invalid or missing API key', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
           }
         }
       },
-      '/api/kcd/packages/{trackingNumber}': {
-        get: {
-          summary: 'Get Package Details for KCD Courier',
-          description: 'Retrieve detailed package information. Requires KCD API key. Use either Authorization: Bearer <token> or X-API-Key header.',
-          tags: ['KCD API'],
-          security: [
-            { kcdBearerAuth: [] },
-            { kcdApiKeyAuth: [] }
-          ],
-          parameters: [
-            { in: 'path', name: 'trackingNumber', required: true, schema: { type: 'string' }, example: 'TRK123456789' }
-          ],
-          responses: {
-            200: {
-              description: 'Package details retrieved successfully',
-              content: {
-                'application/json': {
-                  example: {
-                    success: true,
-                    data: {
-                      trackingNumber: 'TRK123456789',
-                      userCode: 'CLEAN-0001',
-                      customer: {
-                        userCode: 'CLEAN-0001',
-                        firstName: 'John',
-                        lastName: 'Doe',
-                        email: 'john@example.com'
-                      },
-                      status: 'received',
-                      weight: 2.5,
-                      dimensions: { length: 10, width: 5, height: 3, unit: 'cm' },
-                      warehouseLocation: 'Warehouse A',
-                      dateReceived: '2024-01-15T10:30:00Z',
-                      trackingHistory: [
-                        {
-                          timestamp: '2024-01-15T10:30:00Z',
-                          status: 'received',
-                          location: 'Warehouse A',
-                          description: 'Package received from CLEAN'
-                        }
-                      ],
-                      createdAt: '2024-01-15T10:30:00Z',
-                      updatedAt: '2024-01-15T10:30:00Z'
-                    }
-                  }
-                }
-              }
-            },
-            401: { description: 'Unauthorized - Invalid or missing API key', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
-            404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
-          }
-        },
-        delete: {
-          summary: 'Delete Package for KCD Courier',
-          description: 'Delete a package from the warehouse system. Requires KCD API key. Use either Authorization: Bearer <token> or X-API-Key header.',
-          tags: ['KCD API'],
-          security: [
-            { kcdBearerAuth: [] },
-            { kcdApiKeyAuth: [] }
-          ],
-          parameters: [
-            { in: 'path', name: 'trackingNumber', required: true, schema: { type: 'string' }, example: 'TRK123456789' }
-          ],
-          responses: {
-            200: {
-              description: 'Package deleted successfully',
-              content: {
-                'application/json': {
-                  example: {
-                    success: true,
-                    message: 'Package deleted successfully',
-                    data: {
-                      trackingNumber: 'TRK123456789',
-                      deletedAt: '2024-01-16T15:30:00Z'
-                    }
-                  }
-                }
-              }
-            },
-            401: { description: 'Unauthorized - Invalid or missing API key', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
-            403: { description: 'Forbidden - Package does not belong to this courier', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
-            404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
-          }
-        }
-      },
-      '/api/kcd/packages/{trackingNumber}/manifest': {
-        put: {
-          summary: 'Update Package Manifest for KCD Courier',
-          description: 'Update package manifest information including items, value, and customs details. Requires KCD API key. Use either Authorization: Bearer <token> or X-API-Key header.',
-          tags: ['KCD API'],
-          security: [
-            { kcdBearerAuth: [] },
-            { kcdApiKeyAuth: [] }
-          ],
-          parameters: [
-            { in: 'path', name: 'trackingNumber', required: true, schema: { type: 'string' }, example: 'TRK123456789' }
-          ],
+
+      // ─── KCD WEBHOOKS ─────────────────────────────────────────────────────
+      '/api/webhooks/kcd/package-created': {
+        post: {
+          summary: 'KCD Logistics - Package Created Webhook',
+          description: 'Webhook endpoint for KCD Logistics to notify when a package is created in their system',
+          tags: ['KCD Webhooks'],
+          security: [{ kcdApiKeyAuth: [] }],
           requestBody: {
             required: true,
             content: {
               'application/json': {
                 schema: {
                   type: 'object',
+                  required: ['trackingNumber', 'courierCode', 'packageData'],
                   properties: {
-                    items: {
-                      type: 'array',
-                      items: {
-                        type: 'object',
-                        properties: {
-                          name: { type: 'string', example: 'Laptop' },
-                          quantity: { type: 'number', example: 1 },
-                          value: { type: 'number', example: 999.99 },
-                          description: { type: 'string', example: 'Electronics' }
-                        }
-                      }
-                    },
-                    totalValue: { type: 'number', example: 999.99 },
-                    currency: { type: 'string', default: 'USD', example: 'USD' },
-                    weight: { type: 'number', example: 2.5 },
-                    dimensions: {
-                      type: 'object',
-                      properties: {
-                        length: { type: 'number' },
-                        width: { type: 'number' },
-                        height: { type: 'number' },
-                        unit: { type: 'string', default: 'cm' }
-                      }
-                    },
-                    specialInstructions: { type: 'string', example: 'Handle with care' },
-                    customsDeclaration: {
-                      type: 'object',
-                      properties: {
-                        purpose: { type: 'string', example: 'Commercial' },
-                        hsCode: { type: 'string', example: '8471.30.01' }
-                      }
-                    }
+                    trackingNumber: { type: 'string', description: 'KCD tracking number' },
+                    courierCode: { type: 'string', description: 'Courier code (CLEAN)' },
+                    packageData: { type: 'object', description: 'Package details from KCD' },
+                    timestamp: { type: 'string', format: 'date-time', description: 'Event timestamp' }
                   }
-                },
-                example: {
-                  items: [
-                    {
-                      name: 'Laptop',
-                      quantity: 1,
-                      value: 999.99,
-                      description: 'Electronics'
-                    }
-                  ],
-                  totalValue: 999.99,
-                  currency: 'USD',
-                  specialInstructions: 'Handle with care'
                 }
               }
             }
           },
           responses: {
-            200: {
-              description: 'Package manifest updated successfully',
-              content: {
-                'application/json': {
-                  example: {
-                    success: true,
-                    message: 'Package manifest updated successfully',
-                    data: {
-                      trackingNumber: 'TRK123456789',
-                      manifestId: '64a7b8c9d1e2f3g4h5i6j7k8',
-                      updatedAt: '2024-01-16T16:30:00Z'
-                    }
+            200: { description: 'Webhook processed successfully' },
+            401: { description: 'Invalid API key' },
+            400: { description: 'Invalid webhook data' }
+          }
+        }
+      },
+      '/api/webhooks/kcd/package-updated': {
+        post: {
+          summary: 'KCD Logistics - Package Updated Webhook',
+          description: 'Webhook endpoint for KCD Logistics to notify when a package status is updated',
+          tags: ['KCD Webhooks'],
+          security: [{ kcdApiKeyAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['trackingNumber', 'status', 'timestamp'],
+                  properties: {
+                    trackingNumber: { type: 'string', description: 'KCD tracking number' },
+                    status: { type: 'string', enum: ['received', 'in_transit', 'out_for_delivery', 'delivered', 'pending', 'customs', 'returned'], description: 'New package status' },
+                    location: { type: 'string', description: 'Current package location' },
+                    notes: { type: 'string', description: 'Status update notes' },
+                    timestamp: { type: 'string', format: 'date-time', description: 'Event timestamp' }
                   }
                 }
               }
-            },
-            400: { description: 'Bad request - Invalid data', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
-            401: { description: 'Unauthorized - Invalid or missing API key', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
-            403: { description: 'Forbidden - Package does not belong to this courier', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
-            404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+            }
+          },
+          responses: {
+            200: { description: 'Webhook processed successfully' },
+            401: { description: 'Invalid API key' },
+            400: { description: 'Invalid webhook data' }
+          }
+        }
+      },
+      '/api/webhooks/kcd/package-deleted': {
+        post: {
+          summary: 'KCD Logistics - Package Deleted Webhook',
+          description: 'Webhook endpoint for KCD Logistics to notify when a package is deleted in their system',
+          tags: ['KCD Webhooks'],
+          security: [{ kcdApiKeyAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['trackingNumber', 'courierCode'],
+                  properties: {
+                    trackingNumber: { type: 'string', description: 'KCD tracking number' },
+                    courierCode: { type: 'string', description: 'Courier code (CLEAN)' },
+                    timestamp: { type: 'string', format: 'date-time', description: 'Event timestamp' }
+                  }
+                }
+              }
+            }
+          },
+          responses: {
+            200: { description: 'Webhook processed successfully' },
+            401: { description: 'Invalid API key' },
+            400: { description: 'Invalid webhook data' }
+          }
+        }
+      },
+      '/api/webhooks/kcd/manifest-created': {
+        post: {
+          summary: 'KCD Logistics - Manifest Created Webhook',
+          description: 'Webhook endpoint for KCD Logistics to notify when a manifest is created',
+          tags: ['KCD Webhooks'],
+          security: [{ kcdApiKeyAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['manifestId', 'courierCode', 'packages', 'timestamp'],
+                  properties: {
+                    manifestId: { type: 'string', description: 'KCD manifest ID' },
+                    courierCode: { type: 'string', description: 'Courier code (CLEAN)' },
+                    packages: { type: 'array', items: { type: 'string' }, description: 'Array of tracking numbers' },
+                    timestamp: { type: 'string', format: 'date-time', description: 'Event timestamp' }
+                  }
+                }
+              }
+            }
+          },
+          responses: {
+            200: { description: 'Webhook processed successfully' },
+            401: { description: 'Invalid API key' },
+            400: { description: 'Invalid webhook data' }
           }
         }
       }
-  }  // Close paths object
-  }, // Close definition object
-  apis: [] // No JSDoc scanning needed - all paths defined above
+    }
+  },
+  apis: []
 };
 
 const specs = swaggerJsdoc(options);

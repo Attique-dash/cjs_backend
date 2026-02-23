@@ -10,10 +10,14 @@ import { errorResponse } from '../utils/helpers';
  */
 export const validateKCDWebhook = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const apiKey = req.headers['x-api-key'] as string;
+    // Try both headers for backward compatibility
+    const apiKey = (req.headers['x-kcd-api-key'] as string) || 
+                   (req.headers['x-api-key'] as string) ||
+                   (req.headers['X-KCD-API-Key'] as string) || 
+                   (req.headers['X-API-Key'] as string);
 
     if (!apiKey) {
-      errorResponse(res, 'Missing X-API-Key header. KCD must send the API key with every request.', 401);
+      errorResponse(res, 'Missing X-KCD-API-Key or X-API-Key header. KCD must send the API key with every request.', 401);
       return;
     }
 
