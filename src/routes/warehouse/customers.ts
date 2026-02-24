@@ -1,11 +1,12 @@
 import { Router } from 'express';
-import { authenticateWarehouse } from '../../middleware/warehouseAuth';
+import { authenticate, authorize } from '../../middleware/auth';
+import { asyncHandler } from '../../middleware/errorHandler';
 import * as customerController from '../../controllers/warehouse/customerController';
 
 const router = Router();
 
-// All warehouse customer routes require warehouse authentication
-router.use(authenticateWarehouse);
+// All warehouse customer routes require authentication
+router.use(authenticate);
 
 /**
  * @swagger

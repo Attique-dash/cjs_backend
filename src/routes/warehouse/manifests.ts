@@ -1,13 +1,13 @@
 import { Router } from 'express';
-import { combinedAuth } from '../../middleware/combinedAuth';
+import { authenticate, authorize } from '../../middleware/auth';
 import { validateMongoId, validatePagination } from '../../utils/validators';
 import { asyncHandler } from '../../middleware/errorHandler';
 import * as manifestController from '../../controllers/warehouse/manifestController';
 
 const router = Router();
 
-// Allow both JWT and API key authentication for KCD integration
-router.use(combinedAuth);
+// All warehouse manifest routes require authentication
+router.use(authenticate);
 
 /**
  * @swagger
