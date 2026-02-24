@@ -53,7 +53,9 @@ export class apiKeyController {
 
       logger.info(`KCD API key created: ${newApiKey.name}`);
 
-      const base = `${req.protocol}://${req.get('host')}`;
+      // Fix for Vercel: ensure HTTPS protocol is used
+      const proto = req.headers['x-forwarded-proto'] || req.protocol;
+      const base = `${proto}://${req.get('host')}`;
 
       successResponse(res, {
         id: newApiKey._id,
@@ -196,7 +198,9 @@ export class apiKeyController {
   // Get KCD connection instructions
   static async getKCDConnectionInfo(req: Request, res: Response): Promise<void> {
     try {
-      const base = `${req.protocol}://${req.get('host')}`;
+      // Fix for Vercel: ensure HTTPS protocol is used
+      const proto = req.headers['x-forwarded-proto'] || req.protocol;
+      const base = `${proto}://${req.get('host')}`;
       const activeKeys = await ApiKey.find({ isActive: true }).select('-key').sort({ createdAt: -1 });
 
       const connectionInfo = {

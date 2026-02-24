@@ -47,7 +47,7 @@ const options = {
           type: 'http',
           scheme: 'bearer',
           bearerFormat: 'JWT',
-          description: 'Enter your KCD API Bearer token (for KCD endpoints only). You can also use X-API-Key header instead.'
+          description: 'Enter your KCD API key WITHOUT the "Bearer" prefix (e.g., kcd_live_abc123). The system will automatically add the Bearer prefix.'
         },
         kcdApiKeyAuth: {
           type: 'apiKey',
@@ -511,10 +511,9 @@ const options = {
       '/api/kcd/customers': {
         get: {
           summary: 'Get Customers for KCD Courier',
-          description: 'Retrieve customers for authenticated courier. Use either Authorization: Bearer <token> or X-API-Key header.',
+          description: 'Retrieve customers for authenticated courier. Use X-KCD-API-Key header with your KCD API key.',
           tags: ['KCD API'],
           security: [
-            { kcdBearerAuth: [] },
             { kcdApiKeyAuth: [] }
           ],
           parameters: [
@@ -554,10 +553,9 @@ const options = {
       '/api/kcd/packages/add': {
         post: {
           summary: 'Add Package for KCD Courier',
-          description: 'Add a new package to the warehouse system. Use either Authorization: Bearer <token> or X-API-Key header.',
+          description: 'Add a new package to the warehouse system. Use X-KCD-API-Key header with your KCD API key.',
           tags: ['KCD API'],
           security: [
-            { kcdBearerAuth: [] },
             { kcdApiKeyAuth: [] }
           ],
           requestBody: {
@@ -608,10 +606,9 @@ const options = {
       '/api/kcd/packages/update': {
         put: {
           summary: 'Update Package for KCD Courier',
-          description: 'Update an existing package in the warehouse system. Use either Authorization: Bearer <token> or X-API-Key header.',
+          description: 'Update an existing package in the warehouse system. Use X-KCD-API-Key header with your KCD API key.',
           tags: ['KCD API'],
           security: [
-            { kcdBearerAuth: [] },
             { kcdApiKeyAuth: [] }
           ],
           requestBody: {

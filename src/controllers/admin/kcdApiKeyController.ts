@@ -361,7 +361,9 @@ export const deleteApiKey = async (req: AuthRequest, res: Response): Promise<voi
 // ─────────────────────────────────────────────────────────────
 export const getKCDConnectionInfo = async (req: Request, res: Response): Promise<void> => {
   try {
-    const base = `${req.protocol}://${req.get('host')}`;
+    // Fix for Vercel: ensure HTTPS protocol is used
+    const proto = req.headers['x-forwarded-proto'] || req.protocol;
+    const base = `${proto}://${req.get('host')}`;
     
     logger.info('Retrieving KCD connection info', {
       requestedBy: req.ip,

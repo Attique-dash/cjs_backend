@@ -50,14 +50,13 @@ export const authKcdApiKey = async (
     let apiKey: string | null = null;
     
     if (authHeader) {
-      // Handle Bearer token (case-insensitive)
-      const bearerMatch = authHeader.match(/^Bearer\s+(.+)$/i);
-      if (bearerMatch) {
-        apiKey = bearerMatch[1].trim();
-      } else {
-        // If no Bearer prefix, treat the whole header as the key
-        apiKey = authHeader.trim();
+      let extracted = authHeader.trim();
+      // Remove ALL "Bearer " prefixes (Swagger UI sometimes doubles it)
+      const cleanMatch = extracted.match(/^(?:Bearer\s+)+(.+)$/i);
+      if (cleanMatch) {
+        extracted = cleanMatch[1].trim();
       }
+      apiKey = extracted;
     } else if (kcdApiKeyHeader) {
       // Prioritize X-KCD-API-Key for KCD endpoints
       apiKey = kcdApiKeyHeader.trim();
