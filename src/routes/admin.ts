@@ -284,6 +284,134 @@ router.get('/packages',
 
 /**
  * @swagger
+ * /api/admin/packages/{id}:
+ *   get:
+ *     summary: Get package by ID (admin only)
+ *     description: Retrieves a specific package by its ID. Requires admin privileges.
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Package ID
+ *     responses:
+ *       200:
+ *         description: Package retrieved successfully
+ *       404:
+ *         description: Package not found
+ *       401:
+ *         description: Unauthorized - Admin access required
+ */
+router.get('/packages/:id', 
+  authenticate, 
+  authorize('admin'), 
+  validateMongoId,
+  asyncHandler(adminController.getPackageById)
+);
+
+/**
+ * @swagger
+ * /api/admin/packages/{id}:
+ *   put:
+ *     summary: Update package (admin only)
+ *     description: Updates a specific package's information. Requires admin privileges.
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Package ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               description:
+ *                 type: string
+ *                 description: Package description
+ *               weight:
+ *                 type: number
+ *                 description: Package weight
+ *               dimensions:
+ *                 type: object
+ *                 properties:
+ *                   length:
+ *                     type: number
+ *                   width:
+ *                     type: number
+ *                   height:
+ *                     type: number
+ *                 description: Package dimensions
+ *               status:
+ *                 type: string
+ *                 enum: [received, in_transit, out_for_delivery, delivered, pending, customs, returned, at_warehouse, processing, ready_for_pickup]
+ *                 description: Package status
+ *               recipientName:
+ *                 type: string
+ *                 description: Recipient name
+ *               recipientAddress:
+ *                 type: object
+ *                 description: Recipient address
+ *     responses:
+ *       200:
+ *         description: Package updated successfully
+ *       404:
+ *         description: Package not found
+ *       400:
+ *         description: Invalid request data
+ *       401:
+ *         description: Unauthorized - Admin access required
+ */
+router.put('/packages/:id', 
+  authenticate, 
+  authorize('admin'), 
+  validateMongoId,
+  asyncHandler(adminController.updatePackage)
+);
+
+/**
+ * @swagger
+ * /api/admin/packages/{id}:
+ *   delete:
+ *     summary: Delete package (admin only)
+ *     description: Deletes a specific package from the system. Requires admin privileges.
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Package ID
+ *     responses:
+ *       200:
+ *         description: Package deleted successfully
+ *       404:
+ *         description: Package not found
+ *       401:
+ *         description: Unauthorized - Admin access required
+ */
+router.delete('/packages/:id', 
+  authenticate, 
+  authorize('admin'), 
+  validateMongoId,
+  asyncHandler(adminController.deletePackage)
+);
+
+/**
+ * @swagger
  * /api/admin/inventory:
  *   get:
  *     summary: Get all inventory (admin only)

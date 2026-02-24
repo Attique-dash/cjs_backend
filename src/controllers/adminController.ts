@@ -763,3 +763,92 @@ export const deleteCustomer = async (req: AdminRequest, res: Response): Promise<
     errorResponse(res, 'Failed to delete customer');
   }
 };
+
+// Get package by ID
+export const getPackageById = async (req: AdminRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    
+    const packageItem = await Package.findById(id).populate('customerId', 'firstName lastName email userCode');
+    
+    if (!packageItem) {
+      errorResponse(res, 'Package not found', 404);
+      return;
+    }
+
+    logger.info(`Admin retrieved package: ${packageItem._id}`);
+    successResponse(res, {
+      message: 'Package retrieved successfully',
+      data: packageItem
+    });
+  } catch (error) {
+    logger.error('Error getting package by ID:', error);
+    errorResponse(res, 'Failed to retrieve package');
+  }
+};
+
+// Update package
+export const updatePackage = async (req: AdminRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    
+    const packageItem = await Package.findById(id);
+    
+    if (!packageItem) {
+      errorResponse(res, 'Package not found', 404);
+      return;
+    }
+
+    // Update package
+    const updatedPackage = await Package.findByIdAndUpdate(
+      id,
+      { $set: updates },
+      { new: true, runValidators: true }
+    ).populate('customerId', 'firstName lastName email userCode');
+
+    logger.info(`Admin updated package: ${updatedPackage?._id}`);
+    successResponse(res, {
+      message: 'Package updated successfully',
+      data: updatedPackage
+    });
+  } catch (error) {
+    logger.error('Error updating package:', error);
+    errorResponse(res, 'Failed to update package');
+  }
+};
+
+// Delete package
+export const deletePackage = async (req: AdminRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    
+    const packageItem = await Package.findById(id);
+    
+    if (!packageItem) {
+      errorResponse(res, 'Package not found', 404);
+      return;
+    }
+
+    // Check if package is in a state that allows deletion
+    if (packageItem.status === 'in_transit' || packageItem.status === 'out_for_delivery') {
+      errorResponse(res, 'Cannot delete package that is currently in transit or out for delivery', 400);
+      return;
+    }
+
+    // Delete package
+    await Package.findByIdAndDelete(id);
+
+    logger.info(`Admin deleted package: ${id}`);
+    successResponse(res, {
+      message: 'Package deleted successfully',
+      data: {
+        id,
+        deleted: true
+      }
+    });
+  } catch (error) {
+    logger.error('Error deleting package:', error);
+    errorResponse(res, 'Failed to delete package');
+  }
+};
