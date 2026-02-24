@@ -23,6 +23,8 @@ interface CustomerRequest extends AuthRequest {
 // Get All Customers (API SPEC)
 export const getCustomers = async (req: CustomerRequest, res: Response): Promise<void> => {
   try {
+    logger.info('getCustomers called with query:', req.query);
+    
     const filter: any = { role: 'customer' };
 
     // Search by name, email, or userCode
@@ -41,9 +43,13 @@ export const getCustomers = async (req: CustomerRequest, res: Response): Promise
       filter.userCode = req.query.userCode.toUpperCase();
     }
 
+    logger.info('Filter applied:', filter);
+
     const customers = await User.find(filter)
       .select('-passwordHash')
       .sort({ createdAt: -1 });
+
+    logger.info('Found customers count:', customers.length);
 
     // Transform customers to match API response format
     const transformedCustomers = customers.map((customer) => {
@@ -64,11 +70,14 @@ export const getCustomers = async (req: CustomerRequest, res: Response): Promise
       };
     });
 
+    logger.info('Customers transformed successfully');
+
     successResponse(res, {
       customers: transformedCustomers
     });
   } catch (error) {
     logger.error('Error getting customers:', error);
+    logger.error('Error stack:', error instanceof Error ? error.stack : 'No stack available');
     errorResponse(res, 'Failed to get customers');
   }
 };
