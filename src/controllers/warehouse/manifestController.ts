@@ -2,6 +2,8 @@ import { Response } from 'express';
 import { AuthRequest } from '../../middleware/auth';
 import { Manifest } from '../../models/Manifest';
 import { Package } from '../../models/Package';
+import { Warehouse } from '../../models/Warehouse';
+import { User } from '../../models/User';
 import { successResponse, errorResponse, getPaginationData } from '../../utils/helpers';
 import { PAGINATION } from '../../utils/constants';
 import { logger } from '../../utils/logger';
@@ -84,10 +86,58 @@ export const createManifest = async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
+    const { warehouseId, driverId, packages } = req.body;
+
+    // Validate warehouse exists
+    if (warehouseId) {
+      const warehouse = await Warehouse.findById(warehouseId);
+      if (!warehouse) {
+        logger.error('Warehouse not found:', warehouseId);
+        errorResponse(res, 'Warehouse not found', 400);
+        return;
+      }
+    } else {
+      logger.error('warehouseId is required');
+      errorResponse(res, 'warehouseId is required', 400);
+      return;
+    }
+
+    // Validate driver exists (if provided)
+    if (driverId) {
+      const driver = await User.findById(driverId);
+      if (!driver) {
+        logger.error('Driver not found:', driverId);
+        errorResponse(res, 'Driver not found', 400);
+        return;
+      }
+    }
+
+    // Validate packages exist (if provided)
+    if (packages && packages.length > 0) {
+      const packageIds = packages.map((pkg: any) => pkg.packageId);
+      const existingPackages = await Package.find({ '_id': { $in: packageIds } });
+      
+      if (existingPackages.length !== packageIds.length) {
+        logger.error('Some packages not found');
+        errorResponse(res, 'One or more packages not found', 400);
+        return;
+      }
+    }
+
+    // Use provided manifestNumber or generate one
+    const manifestNumber = req.body.manifestNumber || 
+      `MF${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+
+    // Calculate total packages from the packages array
+    const totalPackages = packages ? packages.length : 0;
+
     const manifestData = {
       ...req.body,
       createdBy: req.user._id,
-      manifestNumber: `MF${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`
+      manifestNumber,
+      totalPackages,
+      deliveredPackages: 0,
+      status: 'draft'
     };
 
     logger.info('Manifest data prepared:', manifestData);
