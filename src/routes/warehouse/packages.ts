@@ -247,6 +247,72 @@ router.get('/:id',
 
 /**
  * @swagger
+ * /api/warehouse/packages:
+ *   post:
+ *     summary: Add new package
+ *     description: Creates a new package in the system with complete details including sender, recipient, dimensions, and shipping information. Supports both JWT authentication (staff) and API key authentication (KCD Logistics).
+ *     tags: [Warehouse Packages]
+ *     security:
+ *       - bearerAuth: []
+ *       - ApiKeyAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Package'
+ *           example:
+ *             trackingNumber: "TRK123456789"
+ *             userCode: "CS-12345"
+ *             userId: "64a1b2c3d4e5f6789012346"
+ *             weight: 2.5
+ *             dimensions:
+ *               length: 30
+ *               width: 20
+ *               height: 15
+ *               unit: "cm"
+ *             serviceMode: "air"
+ *             shipper: "John Doe"
+ *             senderName: "John Doe"
+ *             senderEmail: "john.doe@example.com"
+ *             senderPhone: "+1234567890"
+ *             senderAddress: "456 Oak Ave, Los Angeles, CA"
+ *             recipient:
+ *               name: "Jane Smith"
+ *               email: "jane.smith@example.com"
+ *               phone: "+1234567890"
+ *               address: "123 Main St, New York, NY 10001"
+ *             warehouseLocation: "Newark, NJ"
+ *             customsRequired: false
+ *             shippingCost: 25.50
+ *             isFragile: false
+ *             isHazardous: false
+ *             requiresSignature: true
+ *     responses:
+ *       201:
+ *         description: Package created successfully
+ *         content:
+ *           application/json:
+ *             example:
+ *               success: true
+ *               message: "Package created successfully"
+ *               data:
+ *                 id: "64a1b2c3d4e5f6789012345"
+ *                 trackingNumber: "TRK123456789"
+ *                 status: "received"
+ *                 createdAt: "2024-01-15T10:30:00Z"
+ *       400:
+ *         description: Invalid package data
+ *       401:
+ *         description: Unauthorized
+ */
+router.post('/', 
+  validateAddPackage,
+  packageController.addPackage
+);
+
+/**
+ * @swagger
  * /api/warehouse/packages/add:
  *   post:
  *     summary: Add new package
@@ -306,6 +372,11 @@ router.get('/:id',
  *       401:
  *         description: Unauthorized
  */
+router.post('/', 
+  validateAddPackage,
+  packageController.addPackage
+);
+
 router.post('/add', 
   validateAddPackage,
   packageController.addPackage
