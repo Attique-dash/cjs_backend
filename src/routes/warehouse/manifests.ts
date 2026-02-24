@@ -120,5 +120,6 @@ router.patch('/:id/start', validateMongoId, asyncHandler(manifestController.star
 router.patch('/:id/complete', validateMongoId, asyncHandler(manifestController.completeManifest));
 router.post('/:id/packages', validateMongoId, asyncHandler(manifestController.addPackageToManifest));
 router.delete('/:id/packages/:packageId', validateMongoId, asyncHandler(manifestController.removePackageFromManifest));
+router.post('/:id/packages/:packageId/deliver', validateMongoId, asyncHandler(manifestController.deliverPackageInManifest));
 
 export default router;

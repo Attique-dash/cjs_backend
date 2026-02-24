@@ -368,3 +368,69 @@ export const removePackageFromManifest = async (req: AuthRequest, res: Response)
     errorResponse(res, 'Failed to remove package from manifest');
   }
 };
+
+export const deliverPackageInManifest = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    logger.info('deliverPackageInManifest called with params:', {
+      manifestId: req.params.id,
+      packageId: req.params.packageId,
+      body: req.body
+    });
+
+    const { status, notes, actualTime } = req.body;
+
+    // Find the manifest
+    const manifest = await Manifest.findById(req.params.id);
+    if (!manifest) {
+      errorResponse(res, 'Manifest not found', 404);
+      return;
+    }
+
+    // Find the package in the manifest
+    const packageIndex = manifest.packages.findIndex(
+      (p: any) => p.packageId.toString() === req.params.packageId
+    );
+
+    if (packageIndex === -1) {
+      errorResponse(res, 'Package not found in manifest', 404);
+      return;
+    }
+
+    // Update package status and notes
+    if (status) {
+      manifest.packages[packageIndex].status = status;
+    }
+    if (notes) {
+      manifest.packages[packageIndex].notes = notes;
+    }
+
+    // Update delivered packages count if status is 'delivered'
+    if (status === 'delivered') {
+      manifest.deliveredPackages = manifest.packages.filter(
+        (p: any) => p.status === 'delivered'
+      ).length;
+    }
+
+    // Update route stop actual time if provided
+    if (actualTime && manifest.route && manifest.route.stops) {
+      for (const stop of manifest.route.stops) {
+        if (stop.packages && stop.packages.some((pkgId: any) => pkgId.toString() === req.params.packageId)) {
+          stop.actualTime = new Date(actualTime);
+          break;
+        }
+      }
+    }
+
+    await manifest.save();
+
+    // Populate related data
+    await manifest.populate('warehouseId driverId createdBy', 'name email');
+
+    logger.info(`Package delivered in manifest: ${req.params.packageId}`);
+    successResponse(res, manifest, 'Package marked as delivered successfully');
+  } catch (error) {
+    logger.error('Error delivering package in manifest:', error);
+    logger.error('Error stack:', error instanceof Error ? error.stack : 'No stack available');
+    errorResponse(res, 'Failed to mark package as delivered');
+  }
+};
