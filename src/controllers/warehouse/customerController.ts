@@ -25,9 +25,13 @@ export const getCustomers = async (req: CustomerRequest, res: Response): Promise
   try {
     logger.info('getCustomers called with query:', req.query);
     
+    // Simple test - just try to count customers first
+    const customerCount = await User.countDocuments({ role: 'customer' });
+    logger.info('Customer count:', customerCount);
+
+    // If count works, try the full query
     const filter: any = { role: 'customer' };
 
-    // Search by name, email, or userCode
     if (req.query.q) {
       const searchRegex = new RegExp(req.query.q, 'i');
       filter.$or = [
@@ -38,7 +42,6 @@ export const getCustomers = async (req: CustomerRequest, res: Response): Promise
       ];
     }
 
-    // Filter by exact userCode
     if (req.query.userCode) {
       filter.userCode = req.query.userCode.toUpperCase();
     }
@@ -51,22 +54,14 @@ export const getCustomers = async (req: CustomerRequest, res: Response): Promise
 
     logger.info('Found customers count:', customers.length);
 
-    // Transform customers to match API response format
+    // Simple transformation - just return basic fields first
     const transformedCustomers = customers.map((customer) => {
       return {
         id: customer._id,
         userCode: customer.userCode,
         firstName: customer.firstName,
         lastName: customer.lastName,
-        email: customer.email,
-        phone: customer.phone || '',
-        role: customer.role,
-        accountStatus: customer.accountStatus,
-        emailVerified: customer.emailVerified,
-        mailboxNumber: customer.mailboxNumber || '',
-        address: customer.address || {},
-        createdAt: customer.createdAt,
-        updatedAt: customer.updatedAt
+        email: customer.email
       };
     });
 
