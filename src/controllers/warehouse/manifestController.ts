@@ -169,6 +169,61 @@ export const createManifest = async (req: AuthRequest, res: Response): Promise<v
 
 export const updateManifest = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    logger.info('updateManifest called with params:', req.params.id);
+    logger.info('updateManifest called with body:', JSON.stringify(req.body, null, 2));
+
+    const { warehouseId, driverId, packages } = req.body;
+
+    // Validate warehouse exists (if provided)
+    if (warehouseId) {
+      try {
+        const warehouse = await Warehouse.findById(warehouseId);
+        if (!warehouse) {
+          logger.error('Warehouse not found:', warehouseId);
+          errorResponse(res, 'Warehouse not found. Please check warehouseId.', 400);
+          return;
+        }
+      } catch (warehouseError) {
+        logger.error('Warehouse validation error:', warehouseError);
+        errorResponse(res, 'Invalid warehouseId format. Please provide a valid MongoDB ObjectId.', 400);
+        return;
+      }
+    }
+
+    // Validate driver exists (if provided)
+    if (driverId) {
+      try {
+        const driver = await User.findById(driverId);
+        if (!driver) {
+          logger.error('Driver not found:', driverId);
+          errorResponse(res, 'Driver not found. Please check driverId.', 400);
+          return;
+        }
+      } catch (driverError) {
+        logger.error('Driver validation error:', driverError);
+        errorResponse(res, 'Invalid driverId format. Please provide a valid MongoDB ObjectId.', 400);
+        return;
+      }
+    }
+
+    // Validate packages exist (if provided)
+    if (packages && packages.length > 0) {
+      try {
+        const packageIds = packages.map((pkg: any) => pkg.packageId);
+        const existingPackages = await Package.find({ '_id': { $in: packageIds } });
+        
+        if (existingPackages.length !== packageIds.length) {
+          logger.error('Some packages not found');
+          errorResponse(res, 'One or more packages not found', 400);
+          return;
+        }
+      } catch (packageError) {
+        logger.error('Package validation error:', packageError);
+        errorResponse(res, 'Invalid packageId format. Please provide valid MongoDB ObjectIds.', 400);
+        return;
+      }
+    }
+
     const manifest = await Manifest.findByIdAndUpdate(
       req.params.id,
       req.body,
@@ -184,6 +239,11 @@ export const updateManifest = async (req: AuthRequest, res: Response): Promise<v
     successResponse(res, manifest, 'Manifest updated successfully');
   } catch (error) {
     logger.error('Error updating manifest:', error);
+    logger.error('Error stack:', error instanceof Error ? error.stack : 'No stack available');
+    logger.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      name: error instanceof Error ? error.name : 'Unknown'
+    });
     errorResponse(res, 'Failed to update manifest');
   }
 };
