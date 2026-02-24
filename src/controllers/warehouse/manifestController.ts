@@ -95,26 +95,63 @@ export const createManifest = async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
-    // For now, skip the complex validation and try to create a basic manifest
+    // Validate warehouse exists
+    try {
+      const warehouse = await Warehouse.findById(warehouseId);
+      if (!warehouse) {
+        logger.error('Warehouse not found:', warehouseId);
+        errorResponse(res, 'Warehouse not found. Please check the warehouseId.', 400);
+        return;
+      }
+    } catch (warehouseError) {
+      logger.error('Warehouse validation error:', warehouseError);
+      errorResponse(res, 'Invalid warehouseId format. Please provide a valid MongoDB ObjectId.', 400);
+      return;
+    }
+
+    // Validate driver exists (if provided)
+    if (driverId) {
+      try {
+        const driver = await User.findById(driverId);
+        if (!driver) {
+          logger.error('Driver not found:', driverId);
+          errorResponse(res, 'Driver not found. Please check the driverId.', 400);
+          return;
+        }
+      } catch (driverError) {
+        logger.error('Driver validation error:', driverError);
+        errorResponse(res, 'Invalid driverId format. Please provide a valid MongoDB ObjectId.', 400);
+        return;
+      }
+    }
+
+    // Use provided manifestNumber or generate one
     const manifestNumber = req.body.manifestNumber || 
       `MF${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
 
-    // Create minimal manifest data first
+    // Calculate total packages from the packages array
+    const totalPackages = packages ? packages.length : 0;
+
+    // Create manifest data
     const manifestData = {
       manifestNumber,
       warehouseId,
       createdBy: req.user._id,
-      totalPackages: 0,
+      totalPackages,
       deliveredPackages: 0,
       status: 'draft',
-      packages: []
+      packages: packages || []
     };
 
-    logger.info('Basic manifest data prepared:', manifestData);
+    logger.info('Manifest data prepared:', manifestData);
 
     const manifest = await Manifest.create(manifestData);
     
-    // Try to populate without complex fields first
+    // Populate with related data
+    await manifest.populate('warehouseId', 'name code');
+    if (driverId) {
+      await manifest.populate('driverId', 'name email');
+    }
     await manifest.populate('createdBy', 'name email');
 
     logger.info(`Manifest created successfully: ${manifest.manifestNumber}`);
