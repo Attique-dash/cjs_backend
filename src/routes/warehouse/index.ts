@@ -10,6 +10,7 @@ import settings from './settings';
 import reports from './reports';
 import bulkUpload from './bulkUpload';
 import staff from './staff';
+import addresses from './addresses';
 
 const router = Router();
 
@@ -52,7 +53,8 @@ router.get('/', (req, res) => {
       '/settings',
       '/reports',
       '/bulk-upload',
-      '/staff'
+      '/staff',
+      '/addresses'
     ]
   });
 });
@@ -69,5 +71,6 @@ router.use('/settings', settings);
 router.use('/reports', reports);
 router.use('/bulk-upload', bulkUpload);
 router.use('/staff', staff);
+router.use('/addresses', addresses);
 
 export default router;

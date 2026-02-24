@@ -344,7 +344,6 @@ const options = {
       { name: 'Warehouse', description: 'Warehouse management endpoints' },
       { name: 'Customer', description: 'Customer-facing endpoints' },
       { name: 'KCD API', description: 'KCD Logistics integration endpoints' },
-      { name: 'KCD Webhooks', description: 'KCD Logistics webhook endpoints' },
       { name: 'Health', description: 'API health check' }
     ],
     paths: {
@@ -2268,128 +2267,6 @@ const options = {
             400: { description: 'Bad request - Invalid data', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
             404: { description: 'Manifest not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
             401: { description: 'Unauthorized - Invalid or missing API key', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
-          }
-        }
-      },
-
-      // ─── KCD WEBHOOKS ─────────────────────────────────────────────────────
-      '/api/webhooks/kcd/package-created': {
-        post: {
-          summary: 'KCD Logistics - Package Created Webhook',
-          description: 'Webhook endpoint for KCD Logistics to notify when a package is created in their system',
-          tags: ['KCD Webhooks'],
-          security: [{ kcdApiKeyAuth: [] }],
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  required: ['trackingNumber', 'courierCode', 'packageData'],
-                  properties: {
-                    trackingNumber: { type: 'string', description: 'KCD tracking number' },
-                    courierCode: { type: 'string', description: 'Courier code (CLEAN)' },
-                    packageData: { type: 'object', description: 'Package details from KCD' },
-                    timestamp: { type: 'string', format: 'date-time', description: 'Event timestamp' }
-                  }
-                }
-              }
-            }
-          },
-          responses: {
-            200: { description: 'Webhook processed successfully' },
-            401: { description: 'Invalid API key' },
-            400: { description: 'Invalid webhook data' }
-          }
-        }
-      },
-      '/api/webhooks/kcd/package-updated': {
-        post: {
-          summary: 'KCD Logistics - Package Updated Webhook',
-          description: 'Webhook endpoint for KCD Logistics to notify when a package status is updated',
-          tags: ['KCD Webhooks'],
-          security: [{ kcdApiKeyAuth: [] }],
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  required: ['trackingNumber', 'status', 'timestamp'],
-                  properties: {
-                    trackingNumber: { type: 'string', description: 'KCD tracking number' },
-                    status: { type: 'string', enum: ['received', 'in_transit', 'out_for_delivery', 'delivered', 'pending', 'customs', 'returned'], description: 'New package status' },
-                    location: { type: 'string', description: 'Current package location' },
-                    notes: { type: 'string', description: 'Status update notes' },
-                    timestamp: { type: 'string', format: 'date-time', description: 'Event timestamp' }
-                  }
-                }
-              }
-            }
-          },
-          responses: {
-            200: { description: 'Webhook processed successfully' },
-            401: { description: 'Invalid API key' },
-            400: { description: 'Invalid webhook data' }
-          }
-        }
-      },
-      '/api/webhooks/kcd/package-deleted': {
-        post: {
-          summary: 'KCD Logistics - Package Deleted Webhook',
-          description: 'Webhook endpoint for KCD Logistics to notify when a package is deleted in their system',
-          tags: ['KCD Webhooks'],
-          security: [{ kcdApiKeyAuth: [] }],
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  required: ['trackingNumber', 'courierCode'],
-                  properties: {
-                    trackingNumber: { type: 'string', description: 'KCD tracking number' },
-                    courierCode: { type: 'string', description: 'Courier code (CLEAN)' },
-                    timestamp: { type: 'string', format: 'date-time', description: 'Event timestamp' }
-                  }
-                }
-              }
-            }
-          },
-          responses: {
-            200: { description: 'Webhook processed successfully' },
-            401: { description: 'Invalid API key' },
-            400: { description: 'Invalid webhook data' }
-          }
-        }
-      },
-      '/api/webhooks/kcd/manifest-created': {
-        post: {
-          summary: 'KCD Logistics - Manifest Created Webhook',
-          description: 'Webhook endpoint for KCD Logistics to notify when a manifest is created',
-          tags: ['KCD Webhooks'],
-          security: [{ kcdApiKeyAuth: [] }],
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  required: ['manifestId', 'courierCode', 'packages', 'timestamp'],
-                  properties: {
-                    manifestId: { type: 'string', description: 'KCD manifest ID' },
-                    courierCode: { type: 'string', description: 'Courier code (CLEAN)' },
-                    packages: { type: 'array', items: { type: 'string' }, description: 'Array of tracking numbers' },
-                    timestamp: { type: 'string', format: 'date-time', description: 'Event timestamp' }
-                  }
-                }
-              }
-            }
-          },
-          responses: {
-            200: { description: 'Webhook processed successfully' },
-            401: { description: 'Invalid API key' },
-            400: { description: 'Invalid webhook data' }
           }
         }
       }
