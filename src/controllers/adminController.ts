@@ -23,6 +23,7 @@ interface AdminRequest extends AuthRequest {
     userId?: string;
     userCode?: string;
     type?: string;
+    id?: string;
   };
   body: {
     address?: any;
@@ -666,5 +667,99 @@ export const updateShippingAddressByType = async (req: AdminRequest, res: Respon
   } catch (error) {
     logger.error('Error updating shipping address by type:', error);
     errorResponse(res, 'Failed to update shipping addresses');
+  }
+};
+
+// Get customer by ID
+export const getCustomerById = async (req: AdminRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    
+    const customer = await User.findOne({ _id: id, role: 'customer' });
+    
+    if (!customer) {
+      errorResponse(res, 'Customer not found', 404);
+      return;
+    }
+
+    logger.info(`Admin retrieved customer: ${customer._id}`);
+    successResponse(res, {
+      message: 'Customer retrieved successfully',
+      data: customer
+    });
+  } catch (error) {
+    logger.error('Error getting customer by ID:', error);
+    errorResponse(res, 'Failed to retrieve customer');
+  }
+};
+
+// Update customer
+export const updateCustomer = async (req: AdminRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    
+    // Don't allow role change through this endpoint
+    delete updates.role;
+    
+    const customer = await User.findOne({ _id: id, role: 'customer' });
+    
+    if (!customer) {
+      errorResponse(res, 'Customer not found', 404);
+      return;
+    }
+
+    // Update customer
+    const updatedCustomer = await User.findByIdAndUpdate(
+      id,
+      { $set: updates },
+      { new: true, runValidators: true }
+    );
+
+    logger.info(`Admin updated customer: ${updatedCustomer?._id}`);
+    successResponse(res, {
+      message: 'Customer updated successfully',
+      data: updatedCustomer
+    });
+  } catch (error) {
+    logger.error('Error updating customer:', error);
+    errorResponse(res, 'Failed to update customer');
+  }
+};
+
+// Delete customer
+export const deleteCustomer = async (req: AdminRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    
+    const customer = await User.findOne({ _id: id, role: 'customer' });
+    
+    if (!customer) {
+      errorResponse(res, 'Customer not found', 404);
+      return;
+    }
+
+    // Check if customer has packages
+    const packageCount = await Package.countDocuments({ customerId: id });
+    
+    if (packageCount > 0) {
+      errorResponse(res, `Cannot delete customer. Customer has ${packageCount} associated packages. Please delete or reassign packages first.`, 400);
+      return;
+    }
+
+    // Delete customer
+    await User.findByIdAndDelete(id);
+
+    logger.info(`Admin deleted customer: ${id}`);
+    successResponse(res, {
+      message: 'Customer deleted successfully',
+      data: {
+        id,
+        deleted: true
+      }
+    });
+  } catch (error) {
+    logger.error('Error deleting customer:', error);
+    errorResponse(res, 'Failed to delete customer');
   }
 };

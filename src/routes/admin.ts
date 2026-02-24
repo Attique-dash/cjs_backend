@@ -58,6 +58,131 @@ router.get('/customers',
   asyncHandler(adminController.getAllCustomers)
 );
 
+/**
+ * @swagger
+ * /api/admin/customers/{id}:
+ *   get:
+ *     summary: Get customer by ID (admin only)
+ *     description: Retrieves a specific customer by their ID. Requires admin privileges.
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Customer ID
+ *     responses:
+ *       200:
+ *         description: Customer retrieved successfully
+ *       404:
+ *         description: Customer not found
+ *       401:
+ *         description: Unauthorized - Admin access required
+ */
+router.get('/customers/:id', 
+  authenticate, 
+  authorize('admin'), 
+  validateMongoId,
+  asyncHandler(adminController.getCustomerById)
+);
+
+/**
+ * @swagger
+ * /api/admin/customers/{id}:
+ *   put:
+ *     summary: Update customer (admin only)
+ *     description: Updates a specific customer's information. Requires admin privileges.
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Customer ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *                 description: Customer's first name
+ *               lastName:
+ *                 type: string
+ *                 description: Customer's last name
+ *               phone:
+ *                 type: string
+ *                 description: Customer's phone number
+ *               address:
+ *                 type: object
+ *                 properties:
+ *                   street:
+ *                     type: string
+ *                   city:
+ *                     type: string
+ *                   state:
+ *                     type: string
+ *                   zipCode:
+ *                     type: string
+ *                   country:
+ *                     type: string
+ *                 description: Customer's address
+ *     responses:
+ *       200:
+ *         description: Customer updated successfully
+ *       404:
+ *         description: Customer not found
+ *       400:
+ *         description: Invalid request data
+ *       401:
+ *         description: Unauthorized - Admin access required
+ */
+router.put('/customers/:id', 
+  authenticate, 
+  authorize('admin'), 
+  validateMongoId,
+  asyncHandler(adminController.updateCustomer)
+);
+
+/**
+ * @swagger
+ * /api/admin/customers/{id}:
+ *   delete:
+ *     summary: Delete customer (admin only)
+ *     description: Deletes a specific customer from the system. Requires admin privileges.
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Customer ID
+ *     responses:
+ *       200:
+ *         description: Customer deleted successfully
+ *       404:
+ *         description: Customer not found
+ *       401:
+ *         description: Unauthorized - Admin access required
+ */
+router.delete('/customers/:id', 
+  authenticate, 
+  authorize('admin'), 
+  validateMongoId,
+  asyncHandler(adminController.deleteCustomer)
+);
+
 
 /**
  * @swagger
