@@ -117,7 +117,9 @@ router.put('/:id', validateMongoId, asyncHandler(manifestController.updateManife
 
 // Manifest operations
 router.patch('/:id/start', validateMongoId, asyncHandler(manifestController.startManifest));
+router.post('/:id/start', validateMongoId, asyncHandler(manifestController.startManifest));
 router.patch('/:id/complete', validateMongoId, asyncHandler(manifestController.completeManifest));
+router.post('/:id/complete', validateMongoId, asyncHandler(manifestController.completeManifest));
 router.post('/:id/packages', validateMongoId, asyncHandler(manifestController.addPackageToManifest));
 router.delete('/:id/packages/:packageId', validateMongoId, asyncHandler(manifestController.removePackageFromManifest));
 router.post('/:id/packages/:packageId/deliver', validateMongoId, asyncHandler(manifestController.deliverPackageInManifest));
