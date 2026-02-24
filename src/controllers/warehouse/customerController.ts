@@ -9,6 +9,11 @@ interface CustomerRequest extends AuthRequest {
   query: {
     q?: string;
     userCode?: string;
+    page?: string;
+    limit?: string;
+    search?: string;
+    status?: string;
+    role?: string;
   };
   body: {
     user_code?: string;
@@ -41,20 +46,23 @@ export const getCustomers = async (req: CustomerRequest, res: Response): Promise
       .sort({ createdAt: -1 });
 
     // Transform customers to match API response format
-    const transformedCustomers = await Promise.all(
-      customers.map(async (customer) => {
-        return {
-          UserCode: customer.userCode,
-          FirstName: customer.firstName,
-          LastName: customer.lastName,
-          Branch: customer.branch || '',
-          CustomerServiceTypeID: customer.serviceTypeId || '',
-          CustomerLevelInstructions: customer.instructions || '',
-          CourierServiceTypeID: '',
-          CourierLevelInstructions: ''
-        };
-      })
-    );
+    const transformedCustomers = customers.map((customer) => {
+      return {
+        id: customer._id,
+        userCode: customer.userCode,
+        firstName: customer.firstName,
+        lastName: customer.lastName,
+        email: customer.email,
+        phone: customer.phone || '',
+        role: customer.role,
+        accountStatus: customer.accountStatus,
+        emailVerified: customer.emailVerified,
+        mailboxNumber: customer.mailboxNumber || '',
+        address: customer.address || {},
+        createdAt: customer.createdAt,
+        updatedAt: customer.updatedAt
+      };
+    });
 
     successResponse(res, {
       customers: transformedCustomers
