@@ -507,17 +507,17 @@ const options = {
           }
         }
       },
-      '/api/admin/customers/{id}': {
+            '/api/admin/customers/{id}': {
         get: {
           summary: 'Get customer by ID',
           tags: ['Admin'],
           security: [{ bearerAuth: [] }],
           parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' }, description: 'Customer ID' }],
           responses: {
-            200: {
-              description: 'Customer retrieved successfully',
-              content: {
-                'application/json': {
+            200: { 
+              description: 'Customer retrieved successfully', 
+              content: { 
+                'application/json': { 
                   schema: { $ref: '#/components/schemas/ApiResponse' },
                   example: {
                     success: true,
@@ -543,8 +543,8 @@ const options = {
                       updatedAt: '2024-02-10T14:30:00Z'
                     }
                   }
-                }
-              }
+                } 
+              } 
             },
             404: { description: 'Customer not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
             401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
@@ -577,10 +577,10 @@ const options = {
             }
           },
           responses: {
-            200: {
-              description: 'Customer updated successfully',
-              content: {
-                'application/json': {
+            200: { 
+              description: 'Customer updated successfully', 
+              content: { 
+                'application/json': { 
                   schema: { $ref: '#/components/schemas/ApiResponse' },
                   example: {
                     success: true,
@@ -602,8 +602,8 @@ const options = {
                       updatedAt: '2024-02-14T16:45:00Z'
                     }
                   }
-                }
-              }
+                } 
+              } 
             },
             400: { description: 'Invalid data', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
             404: { description: 'Customer not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
@@ -616,10 +616,10 @@ const options = {
           security: [{ bearerAuth: [] }],
           parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' }, description: 'Customer ID' }],
           responses: {
-            200: {
-              description: 'Customer deleted successfully',
-              content: {
-                'application/json': {
+            200: { 
+              description: 'Customer deleted successfully', 
+              content: { 
+                'application/json': { 
                   schema: { $ref: '#/components/schemas/ApiResponse' },
                   example: {
                     success: true,
@@ -629,15 +629,92 @@ const options = {
                       deleted: true
                     }
                   }
-                }
-              }
+                } 
+              } 
             },
             404: { description: 'Customer not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
             401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
           }
         }
       },
-      '/api/admin/stats': {
+        '/api/admin/customers/{id}': {
+        get: {
+          summary: 'Get customer by ID (Legacy Endpoint)',
+          description: 'This endpoint handles the typo in "customers" for backward compatibility. Use /api/admin/customers/{id} for new implementations.',
+          tags: ['Admin'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' }, description: 'Customer ID' }],
+          responses: {
+            200: { 
+              description: 'Customer retrieved successfully', 
+              content: { 
+                'application/json': { 
+                  schema: { $ref: '#/components/schemas/ApiResponse' },
+                  example: {
+                    success: true,
+                    data: {
+                      id: '699ccdef21cd479ae3fc882e',
+                      userCode: 'CLEAN-0001',
+                      firstName: 'John',
+                      lastName: 'Doe',
+                      email: 'john.doe@example.com',
+                      phone: '+1234567890',
+                      role: 'customer',
+                      mailboxNumber: 'CLEAN-0001',
+                      accountStatus: 'active',
+                      emailVerified: true,
+                      address: {
+                        street: '123 Main St',
+                        city: 'New York',
+                        state: 'NY',
+                        zipCode: '10001',
+                        country: 'USA'
+                      },
+                      createdAt: '2024-01-15T10:30:00Z',
+                      updatedAt: '2024-02-10T14:30:00Z'
+                    }
+                  }
+                } 
+              } 
+            },
+            404: { description: 'Customer not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+                  example: {
+                    success: true,
+                    data: {
+                      id: '699ccdef21cd479ae3fc882e',
+                      userCode: 'CLEAN-0001',
+                      firstName: 'John',
+                      lastName: 'Doe',
+                      email: 'john.doe@example.com',
+                      phone: '+1234567890',
+                      role: 'customer',
+                      mailboxNumber: 'CLEAN-0001',
+                      accountStatus: 'active',
+                      emailVerified: true,
+                      address: {
+                        street: '123 Main St',
+                        city: 'New York',
+                        state: 'NY',
+                        zipCode: '10001',
+                        country: 'USA'
+                      },
+                      createdAt: '2024-01-15T10:30:00Z',
+                      updatedAt: '2024-02-10T14:30:00Z'
+                    }
+                  }
+                } 
+              } 
+            },
+            404: { description: 'Customer not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+            '/api/admin/stats': {
         get: {
           summary: 'Get system statistics',
           tags: ['Admin'],
@@ -2180,17 +2257,6 @@ const options = {
             200: {
               description: 'Package deleted successfully',
               content: {
-                'application/json': {
-                  example: {
-                    success: true,
-                    message: 'Package deleted successfully',
-                    data: {
-                      trackingNumber: 'TRK123456789',
-                      deleted: true
-                    }
-                  }
-                }
-              }
             },
             404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
             400: { description: 'Bad request - Missing tracking number', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
