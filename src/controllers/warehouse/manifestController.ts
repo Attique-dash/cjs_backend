@@ -8,6 +8,8 @@ import { logger } from '../../utils/logger';
 
 export const getManifests = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    logger.info('getManifests called with query:', req.query);
+    
     const page = parseInt(req.query.page as string) || PAGINATION.DEFAULT_PAGE;
     const limit = parseInt(req.query.limit as string) || PAGINATION.DEFAULT_LIMIT;
     const skip = (page - 1) * limit;
@@ -16,6 +18,21 @@ export const getManifests = async (req: AuthRequest, res: Response): Promise<voi
     if (req.query.status) filter.status = req.query.status;
     if (req.query.warehouseId) filter.warehouseId = req.query.warehouseId;
 
+    logger.info('Filter applied:', filter);
+
+    // Try a simple count first to see if there are any manifests
+    const total = await Manifest.countDocuments(filter);
+    logger.info('Total manifests found:', total);
+
+    if (total === 0) {
+      successResponse(res, {
+        manifests: [],
+        pagination: getPaginationData(page, limit, total)
+      });
+      return;
+    }
+
+    // Now try the full query with population
     const manifests = await Manifest.find(filter)
       .populate('warehouseId', 'name code')
       .populate('driverId', 'name email')
@@ -24,7 +41,7 @@ export const getManifests = async (req: AuthRequest, res: Response): Promise<voi
       .skip(skip)
       .limit(limit);
 
-    const total = await Manifest.countDocuments(filter);
+    logger.info('Manifests retrieved successfully:', manifests.length);
 
     successResponse(res, {
       manifests,
@@ -32,6 +49,7 @@ export const getManifests = async (req: AuthRequest, res: Response): Promise<voi
     });
   } catch (error) {
     logger.error('Error getting manifests:', error);
+    logger.error('Error stack:', error instanceof Error ? error.stack : 'No stack available');
     errorResponse(res, 'Failed to get manifests');
   }
 };
@@ -58,7 +76,10 @@ export const getManifestById = async (req: AuthRequest, res: Response): Promise<
 
 export const createManifest = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    logger.info('createManifest called with body:', req.body);
+    
     if (!req.user) {
+      logger.error('User not authenticated in createManifest');
       errorResponse(res, 'User not authenticated', 401);
       return;
     }
@@ -69,6 +90,8 @@ export const createManifest = async (req: AuthRequest, res: Response): Promise<v
       manifestNumber: `MF${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`
     };
 
+    logger.info('Manifest data prepared:', manifestData);
+
     const manifest = await Manifest.create(manifestData);
     await manifest.populate('warehouseId driverId createdBy', 'name email');
 
@@ -76,6 +99,7 @@ export const createManifest = async (req: AuthRequest, res: Response): Promise<v
     successResponse(res, manifest, 'Manifest created successfully', 201);
   } catch (error) {
     logger.error('Error creating manifest:', error);
+    logger.error('Error stack:', error instanceof Error ? error.stack : 'No stack available');
     errorResponse(res, 'Failed to create manifest');
   }
 };
