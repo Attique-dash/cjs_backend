@@ -76,7 +76,17 @@ const options = {
             role: { type: 'string', enum: ['admin', 'customer', 'warehouse'], example: 'customer' },
             mailboxNumber: { type: 'string', example: 'CLEAN-0001' },
             accountStatus: { type: 'string', enum: ['pending', 'active', 'inactive'], example: 'active' },
-            emailVerified: { type: 'boolean', example: true }
+            emailVerified: { type: 'boolean', example: true },
+            address: {
+              type: 'object',
+              properties: {
+                street: { type: 'string', example: '123 Main St' },
+                city: { type: 'string', example: 'New York' },
+                state: { type: 'string', example: 'NY' },
+                zipCode: { type: 'string', example: '10001' },
+                country: { type: 'string', example: 'USA' }
+              }
+            }
           }
         },
         Login: {
@@ -94,21 +104,97 @@ const options = {
             firstName: { type: 'string', example: 'John' },
             lastName: { type: 'string', example: 'Doe' },
             email: { type: 'string', format: 'email', example: 'john@example.com' },
-            password: { type: 'string', minLength: 8, example: 'password123' },
+            password: { type: 'string', minLength: 8, example: 'Password123!' },
             phone: { type: 'string', example: '+1234567890' },
-            role: { type: 'string', enum: ['customer', 'warehouse'], example: 'customer' }
+            role: { type: 'string', enum: ['customer', 'warehouse'], example: 'customer' },
+            address: {
+              type: 'object',
+              properties: {
+                street: { type: 'string', example: '123 Main St' },
+                city: { type: 'string', example: 'New York' },
+                state: { type: 'string', example: 'NY' },
+                zipCode: { type: 'string', example: '10001' },
+                country: { type: 'string', example: 'USA' }
+              }
+            }
           }
         },
         Package: {
           type: 'object',
+          required: ['trackingNumber', 'userCode', 'weight'],
           properties: {
             trackingNumber: { type: 'string', example: 'TRK123456789' },
             userCode: { type: 'string', example: 'CLEAN-0001' },
             weight: { type: 'number', example: 5.5 },
+            dimensions: {
+              type: 'object',
+              properties: {
+                length: { type: 'number', example: 10 },
+                width: { type: 'number', example: 5 },
+                height: { type: 'number', example: 3 },
+                unit: { type: 'string', enum: ['cm', 'in'], example: 'cm' }
+              }
+            },
             serviceMode: { type: 'string', enum: ['air', 'ocean', 'local'], example: 'air' },
-            status: { type: 'string', enum: ['received', 'in_transit', 'out_for_delivery', 'delivered', 'pending', 'customs', 'returned'], example: 'received' },
+            status: { type: 'string', enum: ['received', 'in_transit', 'out_for_delivery', 'delivered', 'pending', 'customs', 'returned', 'at_warehouse', 'processing', 'ready_for_pickup'], example: 'received' },
             shipper: { type: 'string', example: 'DHL' },
-            description: { type: 'string', example: 'Electronics package' }
+            description: { type: 'string', example: 'Electronics package' },
+            itemDescription: { type: 'string', example: 'Laptop computer' },
+            
+            // Sender information
+            senderName: { type: 'string', example: 'John Smith' },
+            senderEmail: { type: 'string', example: 'sender@example.com' },
+            senderPhone: { type: 'string', example: '+1234567890' },
+            senderAddress: { type: 'string', example: '123 Sender St, Sender City' },
+            senderCountry: { type: 'string', example: 'USA' },
+            
+            // Recipient information
+            recipient: {
+              type: 'object',
+              properties: {
+                name: { type: 'string', example: 'Jane Doe' },
+                email: { type: 'string', example: 'jane@example.com' },
+                shippingId: { type: 'string', example: 'SHIP001' },
+                phone: { type: 'string', example: '+0987654321' },
+                address: { type: 'string', example: '456 Recipient Ave, Recipient City' }
+              }
+            },
+            
+            // Warehouse and logistics
+            warehouseLocation: { type: 'string', example: 'New York Warehouse' },
+            warehouseAddress: { type: 'string', example: '789 Warehouse Blvd, NY' },
+            location: { type: 'string', example: 'In transit - New York' },
+            estimatedDelivery: { type: 'string', format: 'date-time', example: '2024-02-15T10:00:00Z' },
+            
+            // Customs
+            customsRequired: { type: 'boolean', example: false },
+            customsStatus: { type: 'string', enum: ['not_required', 'pending', 'cleared'], example: 'not_required' },
+            
+            // Payment
+            shippingCost: { type: 'number', example: 25.50 },
+            totalAmount: { type: 'number', example: 125.50 },
+            paymentStatus: { type: 'string', enum: ['pending', 'paid', 'partially_paid'], example: 'pending' },
+            
+            // Package flags
+            isFragile: { type: 'boolean', example: false },
+            isHazardous: { type: 'boolean', example: false },
+            requiresSignature: { type: 'boolean', example: true },
+            
+            // Additional information
+            specialInstructions: { type: 'string', example: 'Handle with care' },
+            notes: { type: 'string', example: 'Customer requested expedited shipping' },
+            
+            // KCD Integration fields
+            courierCode: { type: 'string', example: 'CLEAN' },
+            customerCode: { type: 'string', example: 'CLEAN-0001' },
+            source: { type: 'string', enum: ['web', 'kcd-packing-system', 'api'], example: 'web' },
+            
+            // Tasoko API fields
+            controlNumber: { type: 'string', example: 'EP0096513' },
+            entryStaff: { type: 'string', example: 'warehouse_staff_01' },
+            branch: { type: 'string', example: 'Down Town' },
+            pieces: { type: 'number', example: 1 },
+            cubes: { type: 'number', example: 0.15 }
           }
         },
         ApiResponse: {
@@ -126,6 +212,126 @@ const options = {
             success: { type: 'boolean', example: false },
             message: { type: 'string', example: 'An error occurred' },
             timestamp: { type: 'string', format: 'date-time' }
+          }
+        },
+        Manifest: {
+          type: 'object',
+          required: ['manifestNumber', 'warehouseId'],
+          properties: {
+            manifestNumber: { type: 'string', example: 'MAN-2024-001' },
+            warehouseId: { type: 'string', example: '64a1b2c3d4e5f6789012345' },
+            driverId: { type: 'string', example: '64a1b2c3d4e5f6789012346' },
+            vehicleInfo: {
+              type: 'object',
+              properties: {
+                make: { type: 'string', example: 'Ford' },
+                model: { type: 'string', example: 'Transit' },
+                licensePlate: { type: 'string', example: 'ABC-1234' },
+                color: { type: 'string', example: 'White' }
+              }
+            },
+            route: {
+              type: 'object',
+              properties: {
+                startLocation: { type: 'string', example: 'Warehouse - New York' },
+                endLocation: { type: 'string', example: 'Distribution Center - Boston' },
+                stops: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      address: { type: 'string', example: '123 Main St, New York, NY' },
+                      coordinates: {
+                        type: 'object',
+                        properties: {
+                          lat: { type: 'number', example: 40.7128 },
+                          lng: { type: 'number', example: -74.0060 }
+                        }
+                      },
+                      estimatedTime: { type: 'string', format: 'date-time', example: '2024-02-15T10:00:00Z' },
+                      actualTime: { type: 'string', format: 'date-time', example: '2024-02-15T10:15:00Z' },
+                      packages: { type: 'array', items: { type: 'string' } }
+                    }
+                  }
+                }
+              }
+            },
+            packages: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  packageId: { type: 'string', example: '64a1b2c3d4e5f6789012347' },
+                  trackingNumber: { type: 'string', example: 'TRK123456789' },
+                  status: { type: 'string', enum: ['pending', 'delivered', 'failed', 'returned'], example: 'pending' },
+                  notes: { type: 'string', example: 'Customer not available' }
+                }
+              }
+            },
+            status: { type: 'string', enum: ['draft', 'in-progress', 'completed', 'cancelled'], example: 'draft' },
+            scheduledDate: { type: 'string', format: 'date-time', example: '2024-02-15T09:00:00Z' },
+            startedAt: { type: 'string', format: 'date-time', example: '2024-02-15T09:30:00Z' },
+            completedAt: { type: 'string', format: 'date-time', example: '2024-02-15T17:00:00Z' },
+            totalPackages: { type: 'number', example: 15 },
+            deliveredPackages: { type: 'number', example: 12 },
+            notes: { type: 'string', example: 'Route completed with 3 failed deliveries' },
+            createdBy: { type: 'string', example: '64a1b2c3d4e5f6789012348' }
+          }
+        },
+        Warehouse: {
+          type: 'object',
+          properties: {
+            code: { type: 'string', example: 'NYC' },
+            name: { type: 'string', example: 'New York Distribution Center' },
+            address: { type: 'string', example: '123 Warehouse Blvd' },
+            city: { type: 'string', example: 'New York' },
+            state: { type: 'string', example: 'NY' },
+            zipCode: { type: 'string', example: '10001' },
+            country: { type: 'string', example: 'USA' },
+            isActive: { type: 'boolean', example: true },
+            isDefault: { type: 'boolean', example: true },
+            airAddress: {
+              type: 'object',
+              properties: {
+                name: { type: 'string', example: 'Clean J Shipping - Air Freight' },
+                street: { type: 'string', example: '456 Air Cargo Rd' },
+                city: { type: 'string', example: 'New York' },
+                state: { type: 'string', example: 'NY' },
+                zipCode: { type: 'string', example: '10001' },
+                country: { type: 'string', example: 'USA' },
+                phone: { type: 'string', example: '+1-555-123-4567' },
+                email: { type: 'string', example: 'air@cleanjshipping.com' },
+                instructions: { type: 'string', example: 'Please arrive 30 minutes before flight departure' }
+              }
+            },
+            seaAddress: {
+              type: 'object',
+              properties: {
+                name: { type: 'string', example: 'Clean J Shipping - Sea Freight' },
+                street: { type: 'string', example: '789 Port Authority Blvd' },
+                city: { type: 'string', example: 'New York' },
+                state: { type: 'string', example: 'NY' },
+                zipCode: { type: 'string', example: '10001' },
+                country: { type: 'string', example: 'USA' },
+                phone: { type: 'string', example: '+1-555-987-6543' },
+                email: { type: 'string', example: 'sea@cleanjshipping.com' },
+                instructions: { type: 'string', example: 'Bring bill of lading and identification' }
+              }
+            },
+            chinaAddress: {
+              type: 'object',
+              properties: {
+                name: { type: 'string', example: 'Clean J Shipping - China Office' },
+                street: { type: 'string', example: '123 Beijing Road' },
+                city: { type: 'string', example: 'Shanghai' },
+                state: { type: 'string', example: 'Shanghai' },
+                zipCode: { type: 'string', example: '200000' },
+                country: { type: 'string', example: 'China' },
+                phone: { type: 'string', example: '+86-21-1234-5678' },
+                email: { type: 'string', example: 'china@cleanjshipping.com' },
+                instructions: { type: 'string', example: 'Please call ahead for appointment' }
+              }
+            }
           }
         }
       }
@@ -171,7 +377,14 @@ const options = {
                 example: {
                   firstName: 'John', lastName: 'Doe',
                   email: 'john@example.com', password: 'Password123!',
-                  phone: '+1234567890', role: 'customer'
+                  phone: '+1234567890', role: 'customer',
+                  address: {
+                    street: '123 Main St',
+                    city: 'New York',
+                    state: 'NY',
+                    zipCode: '10001',
+                    country: 'USA'
+                  }
                 }
               }
             }
@@ -249,6 +462,96 @@ const options = {
           }
         }
       },
+      '/api/admin/packages/{id}': {
+        get: {
+          summary: 'Get package by ID',
+          tags: ['Admin'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' }, description: 'Package ID' }],
+          responses: {
+            200: { description: 'Package retrieved successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        },
+        put: {
+          summary: 'Update package',
+          tags: ['Admin'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' }, description: 'Package ID' }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Package' },
+                description: 'All package fields can be updated. Only include fields you want to change.'
+              }
+            }
+          },
+          responses: {
+            200: { description: 'Package updated successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            400: { description: 'Invalid data', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        },
+        delete: {
+          summary: 'Delete package',
+          tags: ['Admin'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' }, description: 'Package ID' }],
+          responses: {
+            200: { description: 'Package deleted successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/admin/customers/{id}': {
+        get: {
+          summary: 'Get customer by ID',
+          tags: ['Admin'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' }, description: 'Customer ID' }],
+          responses: {
+            200: { description: 'Customer retrieved successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            404: { description: 'Customer not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        },
+        put: {
+          summary: 'Update customer',
+          tags: ['Admin'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' }, description: 'Customer ID' }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/User' },
+                description: 'All customer fields can be updated. Only include fields you want to change.'
+              }
+            }
+          },
+          responses: {
+            200: { description: 'Customer updated successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            400: { description: 'Invalid data', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            404: { description: 'Customer not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        },
+        delete: {
+          summary: 'Delete customer',
+          tags: ['Admin'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' }, description: 'Customer ID' }],
+          responses: {
+            200: { description: 'Customer deleted successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            404: { description: 'Customer not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
       '/api/admin/stats': {
         get: {
           summary: 'Get system statistics',
@@ -304,10 +607,70 @@ const options = {
                 example: {
                   trackingNumber: 'TRK123456789',
                   userCode: 'CLEAN-0001',
-                  weight: 2.5,
+                  weight: 5.5,
+                  dimensions: {
+                    length: 10,
+                    width: 5,
+                    height: 3,
+                    unit: 'cm'
+                  },
                   serviceMode: 'air',
-                  shipper: 'Amazon',
-                  description: 'Electronics'
+                  status: 'received',
+                  shipper: 'DHL',
+                  description: 'Electronics package',
+                  itemDescription: 'Laptop computer',
+                  
+                  // Sender information
+                  senderName: 'John Smith',
+                  senderEmail: 'sender@example.com',
+                  senderPhone: '+1234567890',
+                  senderAddress: '123 Sender St, Sender City',
+                  senderCountry: 'USA',
+                  
+                  // Recipient information
+                  recipient: {
+                    name: 'Jane Doe',
+                    email: 'jane@example.com',
+                    shippingId: 'SHIP001',
+                    phone: '+0987654321',
+                    address: '456 Recipient Ave, Recipient City'
+                  },
+                  
+                  // Warehouse and logistics
+                  warehouseLocation: 'New York Warehouse',
+                  warehouseAddress: '789 Warehouse Blvd, NY',
+                  location: 'In transit - New York',
+                  estimatedDelivery: '2024-02-15T10:00:00Z',
+                  
+                  // Customs
+                  customsRequired: false,
+                  customsStatus: 'not_required',
+                  
+                  // Payment
+                  shippingCost: 25.50,
+                  totalAmount: 125.50,
+                  paymentStatus: 'pending',
+                  
+                  // Package flags
+                  isFragile: false,
+                  isHazardous: false,
+                  requiresSignature: true,
+                  
+                  // Additional information
+                  specialInstructions: 'Handle with care',
+                  notes: 'Customer requested expedited shipping',
+                  
+                  // KCD Integration fields
+                  courierCode: 'CLEAN',
+                  customerCode: 'CLEAN-0001',
+                  source: 'web',
+                  
+                  // Tasoko API fields
+                  controlNumber: 'EP0096513',
+                  entryStaff: 'warehouse_staff_01',
+                  branch: 'Down Town',
+                  pieces: 1,
+                  cubes: 0.15
                 }
               }
             }
@@ -343,6 +706,16 @@ const options = {
             200: { description: 'Package updated', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
             404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
           }
+        },
+        delete: {
+          summary: 'Delete package',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
+          responses: {
+            200: { description: 'Package deleted successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
         }
       },
       '/api/warehouse/customers': {
@@ -360,6 +733,688 @@ const options = {
         }
       },
 
+      // ─── WAREHOUSE MANIFESTS ───────────────────────────────────────────────
+      '/api/warehouse/manifests': {
+        get: {
+          summary: 'Get all manifests',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { in: 'query', name: 'page', schema: { type: 'integer', default: 1 } },
+            { in: 'query', name: 'limit', schema: { type: 'integer', default: 20 } },
+            { in: 'query', name: 'status', schema: { type: 'string', enum: ['draft', 'in-progress', 'completed', 'cancelled'] } },
+            { in: 'query', name: 'warehouseId', schema: { type: 'string' } },
+            { in: 'query', name: 'driverId', schema: { type: 'string' } }
+          ],
+          responses: {
+            200: { description: 'Manifests retrieved successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        },
+        post: {
+          summary: 'Create new manifest',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Manifest' },
+                example: {
+                  manifestNumber: 'MAN-2024-001',
+                  warehouseId: '64a1b2c3d4e5f6789012345',
+                  driverId: '64a1b2c3d4e5f6789012346',
+                  vehicleInfo: {
+                    make: 'Ford',
+                    model: 'Transit',
+                    licensePlate: 'ABC-1234',
+                    color: 'White'
+                  },
+                  route: {
+                    startLocation: 'Warehouse - New York',
+                    endLocation: 'Distribution Center - Boston',
+                    stops: [
+                      {
+                        address: '123 Main St, New York, NY',
+                        coordinates: { lat: 40.7128, lng: -74.0060 },
+                        estimatedTime: '2024-02-15T10:00:00Z',
+                        packages: ['64a1b2c3d4e5f6789012347', '64a1b2c3d4e5f6789012348']
+                      },
+                      {
+                        address: '456 Oak Ave, Brooklyn, NY',
+                        coordinates: { lat: 40.6782, lng: -73.9442 },
+                        estimatedTime: '2024-02-15T11:30:00Z',
+                        packages: ['64a1b2c3d4e5f6789012349']
+                      }
+                    ]
+                  },
+                  packages: [
+                    {
+                      packageId: '64a1b2c3d4e5f6789012347',
+                      trackingNumber: 'TRK123456789',
+                      status: 'pending'
+                    },
+                    {
+                      packageId: '64a1b2c3d4e5f6789012348',
+                      trackingNumber: 'TRK123456790',
+                      status: 'pending'
+                    },
+                    {
+                      packageId: '64a1b2c3d4e5f6789012349',
+                      trackingNumber: 'TRK123456791',
+                      status: 'pending'
+                    }
+                  ],
+                  scheduledDate: '2024-02-15T09:00:00Z',
+                  notes: 'Morning delivery route to Brooklyn and Manhattan'
+                }
+              }
+            }
+          },
+          responses: {
+            201: { description: 'Manifest created successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            400: { description: 'Invalid data', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            409: { description: 'Manifest number already exists', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/warehouse/manifests/{id}': {
+        get: {
+          summary: 'Get manifest by ID',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' }, description: 'Manifest ID' }],
+          responses: {
+            200: { description: 'Manifest retrieved successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            404: { description: 'Manifest not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        },
+        put: {
+          summary: 'Update manifest',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' }, description: 'Manifest ID' }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Manifest' },
+                description: 'All manifest fields can be updated. Only include fields you want to change.'
+              }
+            }
+          },
+          responses: {
+            200: { description: 'Manifest updated successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            400: { description: 'Invalid data', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            404: { description: 'Manifest not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        },
+        delete: {
+          summary: 'Delete manifest',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' }, description: 'Manifest ID' }],
+          responses: {
+            200: { description: 'Manifest deleted successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            404: { description: 'Manifest not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/warehouse/manifests/{id}/start': {
+        post: {
+          summary: 'Start manifest delivery',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' }, description: 'Manifest ID' }],
+          responses: {
+            200: { description: 'Manifest started successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            404: { description: 'Manifest not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            400: { description: 'Manifest cannot be started', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/warehouse/manifests/{id}/complete': {
+        post: {
+          summary: 'Complete manifest delivery',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' }, description: 'Manifest ID' }],
+          requestBody: {
+            required: false,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    notes: { type: 'string', example: 'Route completed successfully' },
+                    deliveredPackages: { type: 'number', example: 12 }
+                  }
+                }
+              }
+            }
+          },
+          responses: {
+            200: { description: 'Manifest completed successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            404: { description: 'Manifest not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            400: { description: 'Manifest cannot be completed', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/warehouse/manifests/{id}/packages/{packageId}/deliver': {
+        post: {
+          summary: 'Mark package as delivered in manifest',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { in: 'path', name: 'id', required: true, schema: { type: 'string' }, description: 'Manifest ID' },
+            { in: 'path', name: 'packageId', required: true, schema: { type: 'string' }, description: 'Package ID' }
+          ],
+          requestBody: {
+            required: false,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    status: { type: 'string', enum: ['delivered', 'failed', 'returned'], example: 'delivered' },
+                    notes: { type: 'string', example: 'Customer received package' },
+                    actualTime: { type: 'string', format: 'date-time', example: '2024-02-15T10:15:00Z' }
+                  }
+                }
+              }
+            }
+          },
+          responses: {
+            200: { description: 'Package delivery status updated', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            404: { description: 'Manifest or package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            400: { description: 'Invalid status or action', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+
+      // ─── WAREHOUSE MANAGEMENT ─────────────────────────────────────────────
+      '/api/warehouse/addresses': {
+        get: {
+          summary: 'Get all warehouse addresses',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          description: 'Retrieve all warehouses with their complete address information including shipping method addresses',
+          responses: {
+            200: { 
+              description: 'Warehouse addresses retrieved successfully', 
+              content: { 
+                'application/json': { 
+                  schema: { $ref: '#/components/schemas/ApiResponse' },
+                  example: {
+                    success: true,
+                    data: {
+                      warehouses: [
+                        {
+                          id: '64a1b2c3d4e5f6789012345',
+                          code: 'NYC',
+                          name: 'New York Distribution Center',
+                          isActive: true,
+                          isDefault: true,
+                          mainAddress: {
+                            street: '123 Warehouse Blvd',
+                            city: 'New York',
+                            state: 'NY',
+                            zipCode: '10001',
+                            country: 'USA'
+                          },
+                          airAddress: {
+                            name: 'Clean J Shipping - Air Freight',
+                            street: '456 Air Cargo Rd',
+                            city: 'New York',
+                            state: 'NY',
+                            zipCode: '10001',
+                            country: 'USA',
+                            phone: '+1-555-123-4567',
+                            email: 'air@cleanjshipping.com',
+                            instructions: 'Please arrive 30 minutes before flight departure'
+                          },
+                          seaAddress: {
+                            name: 'Clean J Shipping - Sea Freight',
+                            street: '789 Port Authority Blvd',
+                            city: 'New York',
+                            state: 'NY',
+                            zipCode: '10001',
+                            country: 'USA',
+                            phone: '+1-555-987-6543',
+                            email: 'sea@cleanjshipping.com',
+                            instructions: 'Bring bill of lading and identification'
+                          },
+                          chinaAddress: {
+                            name: 'Clean J Shipping - China Office',
+                            street: '123 Beijing Road',
+                            city: 'Shanghai',
+                            state: 'Shanghai',
+                            zipCode: '200000',
+                            country: 'China',
+                            phone: '+86-21-1234-5678',
+                            email: 'china@cleanjshipping.com',
+                            instructions: 'Please call ahead for appointment'
+                          },
+                          companyAbbreviation: 'CLEAN',
+                          createdAt: '2024-01-01T00:00:00Z',
+                          updatedAt: '2024-02-10T14:30:00Z'
+                        }
+                      ],
+                      total: 1,
+                      defaultWarehouse: 'NYC'
+                    }
+                  }
+                } 
+              } 
+            },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/warehouse/addresses/{id}': {
+        get: {
+          summary: 'Get warehouse by ID',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' }, description: 'Warehouse ID' }],
+          responses: {
+            200: { 
+              description: 'Warehouse retrieved successfully', 
+              content: { 
+                'application/json': { 
+                  schema: { $ref: '#/components/schemas/ApiResponse' },
+                  example: {
+                    success: true,
+                    data: {
+                      id: '64a1b2c3d4e5f6789012345',
+                      code: 'NYC',
+                      name: 'New York Distribution Center',
+                      isActive: true,
+                      isDefault: true,
+                      mainAddress: {
+                        street: '123 Warehouse Blvd',
+                        city: 'New York',
+                        state: 'NY',
+                        zipCode: '10001',
+                        country: 'USA'
+                      },
+                      airAddress: {
+                        name: 'Clean J Shipping - Air Freight',
+                        street: '456 Air Cargo Rd',
+                        city: 'New York',
+                        state: 'NY',
+                        zipCode: '10001',
+                        country: 'USA',
+                        phone: '+1-555-123-4567',
+                        email: 'air@cleanjshipping.com',
+                        instructions: 'Please arrive 30 minutes before flight departure'
+                      },
+                      seaAddress: {
+                        name: 'Clean J Shipping - Sea Freight',
+                        street: '789 Port Authority Blvd',
+                        city: 'New York',
+                        state: 'NY',
+                        zipCode: '10001',
+                        country: 'USA',
+                        phone: '+1-555-987-6543',
+                        email: 'sea@cleanjshipping.com',
+                        instructions: 'Bring bill of lading and identification'
+                      },
+                      chinaAddress: {
+                        name: 'Clean J Shipping - China Office',
+                        street: '123 Beijing Road',
+                        city: 'Shanghai',
+                        state: 'Shanghai',
+                        zipCode: '200000',
+                        country: 'China',
+                        phone: '+86-21-1234-5678',
+                        email: 'china@cleanjshipping.com',
+                        instructions: 'Please call ahead for appointment'
+                      },
+                      companyAbbreviation: 'CLEAN'
+                    }
+                  }
+                } 
+              } 
+            },
+            404: { description: 'Warehouse not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        },
+        put: {
+          summary: 'Update warehouse addresses',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' }, description: 'Warehouse ID' }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Warehouse' },
+                description: 'Update warehouse information and shipping addresses. Only include fields you want to change.',
+                example: {
+                  name: 'New York Distribution Center',
+                  mainAddress: {
+                    street: '123 Warehouse Blvd',
+                    city: 'New York',
+                    state: 'NY',
+                    zipCode: '10001',
+                    country: 'USA'
+                  },
+                  airAddress: {
+                    name: 'Clean J Shipping - Air Freight',
+                    street: '456 Air Cargo Rd',
+                    city: 'New York',
+                    state: 'NY',
+                    zipCode: '10001',
+                    country: 'USA',
+                    phone: '+1-555-123-4567',
+                    email: 'air@cleanjshipping.com',
+                    instructions: 'Please arrive 30 minutes before flight departure'
+                  },
+                  seaAddress: {
+                    name: 'Clean J Shipping - Sea Freight',
+                    street: '789 Port Authority Blvd',
+                    city: 'New York',
+                    state: 'NY',
+                    zipCode: '10001',
+                    country: 'USA',
+                    phone: '+1-555-987-6543',
+                    email: 'sea@cleanjshipping.com',
+                    instructions: 'Bring bill of lading and identification'
+                  },
+                  chinaAddress: {
+                    name: 'Clean J Shipping - China Office',
+                    street: '123 Beijing Road',
+                    city: 'Shanghai',
+                    state: 'Shanghai',
+                    zipCode: '200000',
+                    country: 'China',
+                    phone: '+86-21-1234-5678',
+                    email: 'china@cleanjshipping.com',
+                    instructions: 'Please call ahead for appointment'
+                  },
+                  isActive: true,
+                  isDefault: true
+                }
+              }
+            }
+          },
+          responses: {
+            200: { 
+              description: 'Warehouse updated successfully', 
+              content: { 
+                'application/json': { 
+                  schema: { $ref: '#/components/schemas/ApiResponse' },
+                  example: {
+                    success: true,
+                    message: 'Warehouse addresses updated successfully',
+                    data: {
+                      id: '64a1b2c3d4e5f6789012345',
+                      code: 'NYC',
+                      name: 'New York Distribution Center',
+                      airAddress: {
+                        name: 'Clean J Shipping - Air Freight',
+                        street: '456 Air Cargo Rd',
+                        city: 'New York',
+                        state: 'NY',
+                        zipCode: '10001',
+                        country: 'USA',
+                        phone: '+1-555-123-4567',
+                        email: 'air@cleanjshipping.com',
+                        instructions: 'Please arrive 30 minutes before flight departure'
+                      },
+                      seaAddress: {
+                        name: 'Clean J Shipping - Sea Freight',
+                        street: '789 Port Authority Blvd',
+                        city: 'New York',
+                        state: 'NY',
+                        zipCode: '10001',
+                        country: 'USA',
+                        phone: '+1-555-987-6543',
+                        email: 'sea@cleanjshipping.com',
+                        instructions: 'Bring bill of lading and identification'
+                      },
+                      chinaAddress: {
+                        name: 'Clean J Shipping - China Office',
+                        street: '123 Beijing Road',
+                        city: 'Shanghai',
+                        state: 'Shanghai',
+                        zipCode: '200000',
+                        country: 'China',
+                        phone: '+86-21-1234-5678',
+                        email: 'china@cleanjshipping.com',
+                        instructions: 'Please call ahead for appointment'
+                      },
+                      updatedAt: '2024-02-14T16:45:00Z'
+                    }
+                  }
+                } 
+              } 
+            },
+            400: { description: 'Invalid data', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            404: { description: 'Warehouse not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/warehouse/addresses/{id}/air': {
+        put: {
+          summary: 'Update warehouse air address',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' }, description: 'Warehouse ID' }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['name', 'street', 'city', 'state', 'zipCode', 'country'],
+                  properties: {
+                    name: { type: 'string', example: 'Clean J Shipping - Air Freight' },
+                    street: { type: 'string', example: '456 Air Cargo Rd' },
+                    city: { type: 'string', example: 'New York' },
+                    state: { type: 'string', example: 'NY' },
+                    zipCode: { type: 'string', example: '10001' },
+                    country: { type: 'string', example: 'USA' },
+                    phone: { type: 'string', example: '+1-555-123-4567' },
+                    email: { type: 'string', example: 'air@cleanjshipping.com' },
+                    instructions: { type: 'string', example: 'Please arrive 30 minutes before flight departure' }
+                  }
+                },
+                example: {
+                  name: 'Clean J Shipping - Air Freight',
+                  street: '456 Air Cargo Rd',
+                  city: 'New York',
+                  state: 'NY',
+                  zipCode: '10001',
+                  country: 'USA',
+                  phone: '+1-555-123-4567',
+                  email: 'air@cleanjshipping.com',
+                  instructions: 'Please arrive 30 minutes before flight departure'
+                }
+              }
+            }
+          },
+          responses: {
+            200: { 
+              description: 'Air address updated successfully', 
+              content: { 
+                'application/json': { 
+                  schema: { $ref: '#/components/schemas/ApiResponse' },
+                  example: {
+                    success: true,
+                    message: 'Air address updated successfully',
+                    data: {
+                      airAddress: {
+                        name: 'Clean J Shipping - Air Freight',
+                        street: '456 Air Cargo Rd',
+                        city: 'New York',
+                        state: 'NY',
+                        zipCode: '10001',
+                        country: 'USA',
+                        phone: '+1-555-123-4567',
+                        email: 'air@cleanjshipping.com',
+                        instructions: 'Please arrive 30 minutes before flight departure'
+                      }
+                    }
+                  }
+                } 
+              } 
+            },
+            400: { description: 'Invalid data', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            404: { description: 'Warehouse not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/warehouse/addresses/{id}/sea': {
+        put: {
+          summary: 'Update warehouse sea address',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' }, description: 'Warehouse ID' }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['name', 'street', 'city', 'state', 'zipCode', 'country'],
+                  properties: {
+                    name: { type: 'string', example: 'Clean J Shipping - Sea Freight' },
+                    street: { type: 'string', example: '789 Port Authority Blvd' },
+                    city: { type: 'string', example: 'New York' },
+                    state: { type: 'string', example: 'NY' },
+                    zipCode: { type: 'string', example: '10001' },
+                    country: { type: 'string', example: 'USA' },
+                    phone: { type: 'string', example: '+1-555-987-6543' },
+                    email: { type: 'string', example: 'sea@cleanjshipping.com' },
+                    instructions: { type: 'string', example: 'Bring bill of lading and identification' }
+                  }
+                },
+                example: {
+                  name: 'Clean J Shipping - Sea Freight',
+                  street: '789 Port Authority Blvd',
+                  city: 'New York',
+                  state: 'NY',
+                  zipCode: '10001',
+                  country: 'USA',
+                  phone: '+1-555-987-6543',
+                  email: 'sea@cleanjshipping.com',
+                  instructions: 'Bring bill of lading and identification'
+                }
+              }
+            }
+          },
+          responses: {
+            200: { 
+              description: 'Sea address updated successfully', 
+              content: { 
+                'application/json': { 
+                  schema: { $ref: '#/components/schemas/ApiResponse' },
+                  example: {
+                    success: true,
+                    message: 'Sea address updated successfully',
+                    data: {
+                      seaAddress: {
+                        name: 'Clean J Shipping - Sea Freight',
+                        street: '789 Port Authority Blvd',
+                        city: 'New York',
+                        state: 'NY',
+                        zipCode: '10001',
+                        country: 'USA',
+                        phone: '+1-555-987-6543',
+                        email: 'sea@cleanjshipping.com',
+                        instructions: 'Bring bill of lading and identification'
+                      }
+                    }
+                  }
+                } 
+              } 
+            },
+            400: { description: 'Invalid data', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            404: { description: 'Warehouse not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/warehouse/addresses/{id}/china': {
+        put: {
+          summary: 'Update warehouse china address',
+          tags: ['Warehouse'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' }, description: 'Warehouse ID' }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['name', 'street', 'city', 'state', 'zipCode', 'country'],
+                  properties: {
+                    name: { type: 'string', example: 'Clean J Shipping - China Office' },
+                    street: { type: 'string', example: '123 Beijing Road' },
+                    city: { type: 'string', example: 'Shanghai' },
+                    state: { type: 'string', example: 'Shanghai' },
+                    zipCode: { type: 'string', example: '200000' },
+                    country: { type: 'string', example: 'China' },
+                    phone: { type: 'string', example: '+86-21-1234-5678' },
+                    email: { type: 'string', example: 'china@cleanjshipping.com' },
+                    instructions: { type: 'string', example: 'Please call ahead for appointment' }
+                  }
+                },
+                example: {
+                  name: 'Clean J Shipping - China Office',
+                  street: '123 Beijing Road',
+                  city: 'Shanghai',
+                  state: 'Shanghai',
+                  zipCode: '200000',
+                  country: 'China',
+                  phone: '+86-21-1234-5678',
+                  email: 'china@cleanjshipping.com',
+                  instructions: 'Please call ahead for appointment'
+                }
+              }
+            }
+          },
+          responses: {
+            200: { 
+              description: 'China address updated successfully', 
+              content: { 
+                'application/json': { 
+                  schema: { $ref: '#/components/schemas/ApiResponse' },
+                  example: {
+                    success: true,
+                    message: 'China address updated successfully',
+                    data: {
+                      chinaAddress: {
+                        name: 'Clean J Shipping - China Office',
+                        street: '123 Beijing Road',
+                        city: 'Shanghai',
+                        state: 'Shanghai',
+                        zipCode: '200000',
+                        country: 'China',
+                        phone: '+86-21-1234-5678',
+                        email: 'china@cleanjshipping.com',
+                        instructions: 'Please call ahead for appointment'
+                      }
+                    }
+                  }
+                } 
+              } 
+            },
+            400: { description: 'Invalid data', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            404: { description: 'Warehouse not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+
       // ─── CUSTOMER ─────────────────────────────────────────────────────────
       '/api/customer/packages': {
         get: {
@@ -369,10 +1424,125 @@ const options = {
           parameters: [
             { in: 'query', name: 'page', schema: { type: 'integer', default: 1 } },
             { in: 'query', name: 'limit', schema: { type: 'integer', default: 10 } },
-            { in: 'query', name: 'status', schema: { type: 'string', enum: ['received', 'in_transit', 'delivered', 'pending'] } }
+            { in: 'query', name: 'status', schema: { type: 'string', enum: ['received', 'in_transit', 'delivered', 'pending', 'customs', 'returned', 'at_warehouse', 'processing', 'ready_for_pickup'] } }
           ],
           responses: {
-            200: { description: 'Customer packages', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
+            200: { 
+              description: 'Customer packages retrieved successfully', 
+              content: { 
+                'application/json': { 
+                  schema: { $ref: '#/components/schemas/ApiResponse' },
+                  example: {
+                    success: true,
+                    data: {
+                      packages: [
+                        {
+                          trackingNumber: 'TRK123456789',
+                          userCode: 'CLEAN-0001',
+                          weight: 5.5,
+                          dimensions: { length: 10, width: 5, height: 3, unit: 'cm' },
+                          serviceMode: 'air',
+                          status: 'in_transit',
+                          shipper: 'DHL',
+                          description: 'Electronics package',
+                          itemDescription: 'Laptop computer',
+                          senderName: 'John Smith',
+                          recipient: {
+                            name: 'Jane Doe',
+                            address: '456 Recipient Ave, Recipient City'
+                          },
+                          location: 'In transit - New York',
+                          estimatedDelivery: '2024-02-15T10:00:00Z',
+                          customsRequired: false,
+                          shippingCost: 25.50,
+                          totalAmount: 125.50,
+                          paymentStatus: 'pending',
+                          isFragile: false,
+                          requiresSignature: true,
+                          specialInstructions: 'Handle with care',
+                          createdAt: '2024-02-10T14:30:00Z',
+                          updatedAt: '2024-02-14T09:15:00Z'
+                        }
+                      ],
+                      pagination: { page: 1, limit: 10, total: 1, hasMore: false }
+                    }
+                  }
+                } 
+              } 
+            },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/customer/packages/{id}': {
+        get: {
+          summary: 'Get customer package by ID',
+          tags: ['Customer'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' }, description: 'Package ID' }],
+          responses: {
+            200: { 
+              description: 'Package retrieved successfully', 
+              content: { 
+                'application/json': { 
+                  schema: { $ref: '#/components/schemas/ApiResponse' },
+                  example: {
+                    success: true,
+                    data: {
+                      trackingNumber: 'TRK123456789',
+                      userCode: 'CLEAN-0001',
+                      weight: 5.5,
+                      dimensions: { length: 10, width: 5, height: 3, unit: 'cm' },
+                      serviceMode: 'air',
+                      status: 'in_transit',
+                      shipper: 'DHL',
+                      description: 'Electronics package',
+                      itemDescription: 'Laptop computer',
+                      senderName: 'John Smith',
+                      senderEmail: 'sender@example.com',
+                      senderPhone: '+1234567890',
+                      recipient: {
+                        name: 'Jane Doe',
+                        email: 'jane@example.com',
+                        shippingId: 'SHIP001',
+                        phone: '+0987654321',
+                        address: '456 Recipient Ave, Recipient City'
+                      },
+                      warehouseLocation: 'New York Warehouse',
+                      location: 'In transit - New York',
+                      estimatedDelivery: '2024-02-15T10:00:00Z',
+                      customsRequired: false,
+                      customsStatus: 'not_required',
+                      shippingCost: 25.50,
+                      totalAmount: 125.50,
+                      paymentStatus: 'pending',
+                      isFragile: false,
+                      isHazardous: false,
+                      requiresSignature: true,
+                      specialInstructions: 'Handle with care',
+                      notes: 'Customer requested expedited shipping',
+                      trackingHistory: [
+                        {
+                          timestamp: '2024-02-10T14:30:00Z',
+                          status: 'received',
+                          location: 'New York Warehouse',
+                          description: 'Package received at warehouse'
+                        },
+                        {
+                          timestamp: '2024-02-14T09:15:00Z',
+                          status: 'in_transit',
+                          location: 'In transit - New York',
+                          description: 'Package departed for delivery'
+                        }
+                      ],
+                      createdAt: '2024-02-10T14:30:00Z',
+                      updatedAt: '2024-02-14T09:15:00Z'
+                    }
+                  }
+                } 
+              } 
+            },
+            404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
             401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
           }
         }
@@ -384,8 +1554,132 @@ const options = {
           security: [],
           parameters: [{ in: 'path', name: 'trackingNumber', required: true, schema: { type: 'string' }, example: 'TRK123456789' }],
           responses: {
-            200: { description: 'Tracking info', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
-            404: { description: 'Not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+            200: { 
+              description: 'Tracking information retrieved successfully', 
+              content: { 
+                'application/json': { 
+                  schema: { $ref: '#/components/schemas/ApiResponse' },
+                  example: {
+                    success: true,
+                    data: {
+                      trackingNumber: 'TRK123456789',
+                      currentStatus: 'in_transit',
+                      currentLocation: 'In transit - New York',
+                      estimatedDelivery: '2024-02-15T10:00:00Z',
+                      serviceMode: 'air',
+                      shipper: 'DHL',
+                      weight: 5.5,
+                      recipient: {
+                        name: 'Jane Doe',
+                        address: '456 Recipient Ave, Recipient City'
+                      },
+                      trackingHistory: [
+                        {
+                          timestamp: '2024-02-10T14:30:00Z',
+                          status: 'received',
+                          location: 'New York Warehouse',
+                          description: 'Package received at warehouse'
+                        },
+                        {
+                          timestamp: '2024-02-12T11:20:00Z',
+                          status: 'processing',
+                          location: 'New York Warehouse',
+                          description: 'Package processed and sorted for delivery'
+                        },
+                        {
+                          timestamp: '2024-02-14T09:15:00Z',
+                          status: 'in_transit',
+                          location: 'In transit - New York',
+                          description: 'Package departed for delivery'
+                        }
+                      ],
+                      milestones: {
+                        received: { timestamp: '2024-02-10T14:30:00Z', completed: true },
+                        processing: { timestamp: '2024-02-12T11:20:00Z', completed: true },
+                        shipped: { timestamp: '2024-02-14T09:15:00Z', completed: true },
+                        inTransit: { timestamp: '2024-02-14T09:15:00Z', completed: true },
+                        delivered: { timestamp: null, completed: false }
+                      }
+                    }
+                  }
+                } 
+              } 
+            },
+            404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/customer/shipping-addresses': {
+        get: {
+          summary: 'Get warehouse shipping addresses',
+          tags: ['Customer'],
+          security: [],
+          description: 'Retrieve all available warehouse shipping addresses for different shipping methods',
+          responses: {
+            200: { 
+              description: 'Shipping addresses retrieved successfully', 
+              content: { 
+                'application/json': { 
+                  schema: { $ref: '#/components/schemas/ApiResponse' },
+                  example: {
+                    success: true,
+                    data: {
+                      warehouses: [
+                        {
+                          code: 'NYC',
+                          name: 'New York Distribution Center',
+                          isActive: true,
+                          isDefault: true,
+                          mainAddress: {
+                            street: '123 Warehouse Blvd',
+                            city: 'New York',
+                            state: 'NY',
+                            zipCode: '10001',
+                            country: 'USA'
+                          },
+                          shippingAddresses: {
+                            air: {
+                              name: 'Clean J Shipping - Air Freight',
+                              street: '456 Air Cargo Rd',
+                              city: 'New York',
+                              state: 'NY',
+                              zipCode: '10001',
+                              country: 'USA',
+                              phone: '+1-555-123-4567',
+                              email: 'air@cleanjshipping.com',
+                              instructions: 'Please arrive 30 minutes before flight departure'
+                            },
+                            sea: {
+                              name: 'Clean J Shipping - Sea Freight',
+                              street: '789 Port Authority Blvd',
+                              city: 'New York',
+                              state: 'NY',
+                              zipCode: '10001',
+                              country: 'USA',
+                              phone: '+1-555-987-6543',
+                              email: 'sea@cleanjshipping.com',
+                              instructions: 'Bring bill of lading and identification'
+                            },
+                            china: {
+                              name: 'Clean J Shipping - China Office',
+                              street: '123 Beijing Road',
+                              city: 'Shanghai',
+                              state: 'Shanghai',
+                              zipCode: '200000',
+                              country: 'China',
+                              phone: '+86-21-1234-5678',
+                              email: 'china@cleanjshipping.com',
+                              instructions: 'Please call ahead for appointment'
+                            }
+                          }
+                        }
+                      ],
+                      defaultWarehouse: 'NYC'
+                    }
+                  }
+                } 
+              } 
+            }
           }
         }
       },
@@ -395,7 +1689,37 @@ const options = {
           tags: ['Customer'],
           security: [{ bearerAuth: [] }],
           responses: {
-            200: { description: 'Profile data', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+            200: { 
+              description: 'Profile data retrieved successfully', 
+              content: { 
+                'application/json': { 
+                  schema: { $ref: '#/components/schemas/ApiResponse' },
+                  example: {
+                    success: true,
+                    data: {
+                      userCode: 'CLEAN-0001',
+                      firstName: 'John',
+                      lastName: 'Doe',
+                      email: 'john.doe@example.com',
+                      phone: '+1234567890',
+                      role: 'customer',
+                      mailboxNumber: 'CLEAN-0001',
+                      accountStatus: 'active',
+                      emailVerified: true,
+                      address: {
+                        street: '123 Main St',
+                        city: 'New York',
+                        state: 'NY',
+                        zipCode: '10001',
+                        country: 'USA'
+                      },
+                      createdAt: '2024-01-15T10:30:00Z',
+                      updatedAt: '2024-02-10T14:30:00Z'
+                    }
+                  }
+                } 
+              } 
+            }
           }
         },
         put: {
@@ -404,10 +1728,54 @@ const options = {
           security: [{ bearerAuth: [] }],
           requestBody: {
             required: true,
-            content: { 'application/json': { example: { firstName: 'John', lastName: 'Smith', phone: '+1234567890' } } }
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/User' },
+                description: 'All customer fields can be updated. Only include fields you want to change.',
+                example: {
+                  firstName: 'John',
+                  lastName: 'Smith',
+                  phone: '+1234567890',
+                  address: {
+                    street: '456 Updated St',
+                    city: 'Boston',
+                    state: 'MA',
+                    zipCode: '02101',
+                    country: 'USA'
+                  }
+                }
+              }
+            }
           },
           responses: {
-            200: { description: 'Profile updated', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } }
+            200: { 
+              description: 'Profile updated successfully', 
+              content: { 
+                'application/json': { 
+                  schema: { $ref: '#/components/schemas/ApiResponse' },
+                  example: {
+                    success: true,
+                    message: 'Profile updated successfully',
+                    data: {
+                      userCode: 'CLEAN-0001',
+                      firstName: 'John',
+                      lastName: 'Smith',
+                      email: 'john.doe@example.com',
+                      phone: '+1234567890',
+                      address: {
+                        street: '456 Updated St',
+                        city: 'Boston',
+                        state: 'MA',
+                        zipCode: '02101',
+                        country: 'USA'
+                      },
+                      updatedAt: '2024-02-14T16:45:00Z'
+                    }
+                  }
+                } 
+              } 
+            },
+            400: { description: 'Invalid data', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
           }
         }
       },
@@ -492,9 +1860,11 @@ const options = {
                           getCustomers: 'http://localhost:5000/api/kcd/customers',
                           addPackage: 'http://localhost:5000/api/kcd/packages/add',
                           updatePackage: 'http://localhost:5000/api/kcd/packages/update',
-                          deletePackage: 'http://localhost:5000/api/webhooks/kcd/package-deleted',
-                          updateManifest: 'http://localhost:5000/api/webhooks/kcd/manifest-created',
-                          description: 'Copy the above 5 endpoints into KCD portal - first 3 go in "Courier System API" tab, last 2 go in "Packing System API" tab'
+                          deletePackage: 'http://localhost:5000/api/kcd/packages/delete',
+                          updateManifest: 'http://localhost:5000/api/kcd/manifests/update',
+                          packageDeletedWebhook: 'http://localhost:5000/api/webhooks/kcd/package-deleted',
+                          manifestCreatedWebhook: 'http://localhost:5000/api/webhooks/kcd/manifest-created',
+                          description: 'Copy the above endpoints into KCD portal - first 5 go in "Courier System API" tab, last 2 go in "Packing System API" tab'
                         }
                       }
                     }
@@ -606,7 +1976,7 @@ const options = {
       '/api/kcd/packages/update': {
         put: {
           summary: 'Update Package for KCD Courier',
-          description: 'Update an existing package in the warehouse system. Use X-KCD-API-Key header with your KCD API key.',
+          description: 'Update an existing package in the warehouse system with all available fields. Use X-KCD-API-Key header with your KCD API key.',
           tags: ['KCD API'],
           security: [
             { kcdApiKeyAuth: [] }
@@ -615,19 +1985,74 @@ const options = {
             required: true,
             content: {
               'application/json': {
-                schema: {
-                  type: 'object',
-                  required: ['trackingNumber'],
-                  properties: {
-                    trackingNumber: { type: 'string', example: 'TRK123456789' },
-                    status: { type: 'string', enum: ['received', 'in_transit', 'out_for_delivery', 'delivered', 'pending', 'customs', 'returned'] },
-                    location: { type: 'string', example: 'New York, NY' }
-                  }
-                },
+                schema: { $ref: '#/components/schemas/Package' },
+                description: 'All package fields can be updated. Only include fields you want to change.',
                 example: {
                   trackingNumber: 'TRK123456789',
+                  weight: 5.5,
+                  dimensions: {
+                    length: 10,
+                    width: 5,
+                    height: 3,
+                    unit: 'cm'
+                  },
+                  serviceMode: 'air',
                   status: 'in_transit',
-                  location: 'New York, NY'
+                  shipper: 'DHL',
+                  description: 'Electronics package',
+                  itemDescription: 'Laptop computer',
+                  
+                  // Sender information
+                  senderName: 'John Smith',
+                  senderEmail: 'sender@example.com',
+                  senderPhone: '+1234567890',
+                  senderAddress: '123 Sender St, Sender City',
+                  senderCountry: 'USA',
+                  
+                  // Recipient information
+                  recipient: {
+                    name: 'Jane Doe',
+                    email: 'jane@example.com',
+                    shippingId: 'SHIP001',
+                    phone: '+0987654321',
+                    address: '456 Recipient Ave, Recipient City'
+                  },
+                  
+                  // Warehouse and logistics
+                  warehouseLocation: 'New York Warehouse',
+                  warehouseAddress: '789 Warehouse Blvd, NY',
+                  location: 'In transit - New York',
+                  estimatedDelivery: '2024-02-15T10:00:00Z',
+                  
+                  // Customs
+                  customsRequired: false,
+                  customsStatus: 'not_required',
+                  
+                  // Payment
+                  shippingCost: 25.50,
+                  totalAmount: 125.50,
+                  paymentStatus: 'pending',
+                  
+                  // Package flags
+                  isFragile: false,
+                  isHazardous: false,
+                  requiresSignature: true,
+                  
+                  // Additional information
+                  specialInstructions: 'Handle with care',
+                  notes: 'Customer requested expedited shipping',
+                  
+                  // KCD Integration fields
+                  courierCode: 'CLEAN',
+                  customerCode: 'CLEAN-0001',
+                  source: 'kcd-packing-system',
+                  
+                  // Tasoko API fields
+                  controlNumber: 'EP0096513',
+                  entryStaff: 'warehouse_staff_01',
+                  branch: 'Down Town',
+                  pieces: 1,
+                  cubes: 0.15
                 }
               }
             }
@@ -642,13 +2067,121 @@ const options = {
                     message: 'Package updated successfully',
                     data: {
                       trackingNumber: 'TRK123456789',
-                      status: 'in_transit'
+                      status: 'in_transit',
+                      location: 'In transit - New York'
                     }
                   }
                 }
               }
             },
             400: { description: 'Bad request - Invalid data', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            401: { description: 'Unauthorized - Invalid or missing API key', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/kcd/packages/delete': {
+        delete: {
+          summary: 'Delete Package for KCD Courier',
+          description: 'Delete a package from the warehouse system. Use X-KCD-API-Key header with your KCD API key.',
+          tags: ['KCD API'],
+          security: [
+            { kcdApiKeyAuth: [] }
+          ],
+          parameters: [
+            { in: 'query', name: 'trackingNumber', required: true, schema: { type: 'string' }, description: 'Package tracking number to delete' }
+          ],
+          responses: {
+            200: {
+              description: 'Package deleted successfully',
+              content: {
+                'application/json': {
+                  example: {
+                    success: true,
+                    message: 'Package deleted successfully',
+                    data: {
+                      trackingNumber: 'TRK123456789',
+                      deleted: true
+                    }
+                  }
+                }
+              }
+            },
+            404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            400: { description: 'Bad request - Missing tracking number', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            401: { description: 'Unauthorized - Invalid or missing API key', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
+      '/api/kcd/manifests/update': {
+        put: {
+          summary: 'Update Manifest for KCD Courier',
+          description: 'Update an existing manifest in the warehouse system. Use X-KCD-API-Key header with your KCD API key.',
+          tags: ['KCD API'],
+          security: [
+            { kcdApiKeyAuth: [] }
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Manifest' },
+                description: 'All manifest fields can be updated. Only include fields you want to change.',
+                example: {
+                  manifestNumber: 'MAN-2024-001',
+                  status: 'in-progress',
+                  startedAt: '2024-02-15T09:30:00Z',
+                  route: {
+                    startLocation: 'Warehouse - New York',
+                    endLocation: 'Distribution Center - Boston',
+                    stops: [
+                      {
+                        address: '123 Main St, New York, NY',
+                        coordinates: { lat: 40.7128, lng: -74.0060 },
+                        estimatedTime: '2024-02-15T10:00:00Z',
+                        actualTime: '2024-02-15T10:15:00Z',
+                        packages: ['64a1b2c3d4e5f6789012347', '64a1b2c3d4e5f6789012348']
+                      }
+                    ]
+                  },
+                  packages: [
+                    {
+                      packageId: '64a1b2c3d4e5f6789012347',
+                      trackingNumber: 'TRK123456789',
+                      status: 'delivered',
+                      notes: 'Customer received package'
+                    },
+                    {
+                      packageId: '64a1b2c3d4e5f6789012348',
+                      trackingNumber: 'TRK123456790',
+                      status: 'pending'
+                    }
+                  ],
+                  deliveredPackages: 1,
+                  notes: 'First delivery completed, continuing route'
+                }
+              }
+            }
+          },
+          responses: {
+            200: {
+              description: 'Manifest updated successfully',
+              content: {
+                'application/json': {
+                  example: {
+                    success: true,
+                    message: 'Manifest updated successfully',
+                    data: {
+                      manifestNumber: 'MAN-2024-001',
+                      status: 'in-progress',
+                      deliveredPackages: 1
+                    }
+                  }
+                }
+              }
+            },
+            400: { description: 'Bad request - Invalid data', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            404: { description: 'Manifest not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
             401: { description: 'Unauthorized - Invalid or missing API key', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
           }
         }
