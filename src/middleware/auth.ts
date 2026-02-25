@@ -4,6 +4,7 @@ import { User, IUser } from '../models/User';
 import { config } from '../config/env';
 import { errorResponse } from '../utils/helpers';
 import { ERROR_MESSAGES } from '../utils/constants';
+import { logger } from '../utils/logger';
 
 export interface AuthRequest extends Request {
   user?: IUser;
@@ -13,15 +14,19 @@ export { Response };
 
 export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
+    // Debug: Log all headers for troubleshooting
+    logger.info('Auth middleware - All headers:', req.headers);
+    logger.info('Auth middleware - Authorization header:', req.headers.authorization);
+
     // Handle OPTIONS preflight requests
     if (req.method === 'OPTIONS') {
       return next();
     }
 
-    // Get Authorization header (case-insensitive)
-    const authHeader = req.headers.authorization || req.headers.Authorization;
+    const authHeader = req.headers.authorization;
     
     if (!authHeader) {
+      logger.error('Missing Authorization header in request');
       res.status(401).json({
         success: false,
         message: 'Authentication required. Please provide a valid Bearer token in the Authorization header.',
@@ -34,17 +39,21 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
 
     // Normalize header to string
     const authHeaderStr = Array.isArray(authHeader) ? authHeader[0] : authHeader;
+    logger.info('Auth middleware - Normalized header:', authHeaderStr);
     
     // Extract token (handle both "Bearer <token>" and just "<token>")
     let token: string;
     if (authHeaderStr.startsWith('Bearer ') || authHeaderStr.startsWith('bearer ')) {
       token = authHeaderStr.substring(7).trim();
+      logger.info('Auth middleware - Extracted token (Bearer format):', token.substring(0, 20) + '...');
       // Remove "Bearer " prefix if it exists again (prevents double Bearer)
       if (token.startsWith('Bearer ') || token.startsWith('bearer ')) {
         token = token.substring(7).trim();
+        logger.info('Auth middleware - Removed double Bearer, token:', token.substring(0, 20) + '...');
       }
     } else {
       token = authHeaderStr.trim();
+      logger.info('Auth middleware - Extracted token (direct format):', token.substring(0, 20) + '...');
     }
 
     if (!token || token.length === 0) {
