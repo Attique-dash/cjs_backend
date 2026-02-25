@@ -2007,7 +2007,7 @@ const options = {
       '/api/kcd/packages/add': {
         post: {
           summary: 'Add Package for KCD Courier',
-          description: 'Add a new package to the warehouse system. Use X-KCD-API-Key header with your KCD API key.',
+          description: 'Add a new package to the warehouse system with complete warehouse fields. Use X-KCD-API-Key header with your KCD API key.',
           tags: ['KCD API'],
           security: [
             { kcdApiKeyAuth: [] }
@@ -2016,21 +2016,67 @@ const options = {
             required: true,
             content: {
               'application/json': {
-                schema: {
-                  type: 'object',
-                  required: ['trackingNumber', 'customerCode', 'weight'],
-                  properties: {
-                    trackingNumber: { type: 'string', example: 'TRK123456789' },
-                    customerCode: { type: 'string', example: 'CLEAN-0001' },
-                    weight: { type: 'number', example: 2.5 },
-                    description: { type: 'string', example: 'Electronics package' }
-                  }
-                },
+                schema: { $ref: '#/components/schemas/Package' },
+                description: 'Complete package information. Only userCode is required. Tracking number will be auto-generated if not provided.',
                 example: {
                   trackingNumber: 'TRK123456789',
-                  customerCode: 'CLEAN-0001',
-                  weight: 2.5,
-                  description: 'Electronics package'
+                  userCode: 'CLEAN-0001',
+                  weight: 5.5,
+                  dimensions: {
+                    length: 10,
+                    width: 5,
+                    height: 3,
+                    unit: 'cm'
+                  },
+                  serviceMode: 'air',
+                  status: 'received',
+                  shipper: 'DHL',
+                  description: 'Electronics package',
+                  itemDescription: 'Laptop computer',
+                  
+                  // Sender information
+                  senderName: 'John Smith',
+                  senderEmail: 'sender@example.com',
+                  senderPhone: '+1234567890',
+                  senderAddress: '123 Sender St, Sender City',
+                  senderCountry: 'USA',
+                  
+                  // Recipient information
+                  recipient: {
+                    name: 'Jane Doe',
+                    email: 'jane@example.com',
+                    shippingId: 'SHIP001',
+                    phone: '+0987654321',
+                    address: '456 Recipient Ave, Recipient City'
+                  },
+                  
+                  // Warehouse and logistics
+                  warehouseLocation: 'New York Warehouse',
+                  warehouseAddress: '789 Warehouse Blvd, NY',
+                  location: 'In transit - New York',
+                  estimatedDelivery: '2024-02-15T10:00:00Z',
+                  
+                  // Customs
+                  customsRequired: false,
+                  customsStatus: 'not_required',
+                  
+                  // Payment
+                  shippingCost: 25.50,
+                  totalAmount: 125.50,
+                  paymentStatus: 'pending',
+                  
+                  // Package flags
+                  isFragile: false,
+                  isHazardous: false,
+                  requiresSignature: true,
+                  
+                  // Additional information
+                  specialInstructions: 'Handle with care',
+                  notes: 'Customer requested expedited shipping',
+                  
+                  // Entry information
+                  entryDate: '2024-02-10T09:00:00Z',
+                  itemValue: 125.50
                 }
               }
             }
@@ -2060,7 +2106,7 @@ const options = {
       '/api/kcd/packages/update': {
         put: {
           summary: 'Update Package for KCD Courier',
-          description: 'Update an existing package in the warehouse system with all available fields. Use X-KCD-API-Key header with your KCD API key.',
+          description: 'Update an existing package in the warehouse system by ID with all available fields. Use X-KCD-API-Key header with your KCD API key.',
           tags: ['KCD API'],
           security: [
             { kcdApiKeyAuth: [] }
@@ -2069,10 +2115,80 @@ const options = {
             required: true,
             content: {
               'application/json': {
-                schema: { $ref: '#/components/schemas/Package' },
-                description: 'All package fields can be updated. Only include fields you want to change.',
+                schema: {
+                  type: 'object',
+                  required: ['id'],
+                  properties: {
+                    id: { type: 'string', description: 'Package ID (MongoDB ObjectId)', example: '64a1b2c3d4e5f6789012345' },
+                    trackingNumber: { type: 'string', example: 'TRK123456789' },
+                    userCode: { type: 'string', example: 'CLEAN-0001' },
+                    weight: { type: 'number', example: 5.5 },
+                    dimensions: {
+                      type: 'object',
+                      properties: {
+                        length: { type: 'number', example: 10 },
+                        width: { type: 'number', example: 5 },
+                        height: { type: 'number', example: 3 },
+                        unit: { type: 'string', enum: ['cm', 'in'], example: 'cm' }
+                      }
+                    },
+                    serviceMode: { type: 'string', enum: ['air', 'ocean', 'local'], example: 'air' },
+                    status: { type: 'string', enum: ['received', 'in_transit', 'out_for_delivery', 'delivered', 'pending', 'customs', 'returned', 'at_warehouse', 'processing', 'ready_for_pickup'], example: 'in_transit' },
+                    shipper: { type: 'string', example: 'DHL' },
+                    description: { type: 'string', example: 'Electronics package' },
+                    itemDescription: { type: 'string', example: 'Laptop computer' },
+                    
+                    // Sender information
+                    senderName: { type: 'string', example: 'John Smith' },
+                    senderEmail: { type: 'string', example: 'sender@example.com' },
+                    senderPhone: { type: 'string', example: '+1234567890' },
+                    senderAddress: { type: 'string', example: '123 Sender St, Sender City' },
+                    senderCountry: { type: 'string', example: 'USA' },
+                    
+                    // Recipient information
+                    recipient: {
+                      type: 'object',
+                      properties: {
+                        name: { type: 'string', example: 'Jane Doe' },
+                        email: { type: 'string', example: 'jane@example.com' },
+                        shippingId: { type: 'string', example: 'SHIP001' },
+                        phone: { type: 'string', example: '+0987654321' },
+                        address: { type: 'string', example: '456 Recipient Ave, Recipient City' }
+                      }
+                    },
+                    
+                    // Warehouse and logistics
+                    warehouseLocation: { type: 'string', example: 'New York Warehouse' },
+                    warehouseAddress: { type: 'string', example: '789 Warehouse Blvd, NY' },
+                    location: { type: 'string', example: 'In transit - New York' },
+                    estimatedDelivery: { type: 'string', format: 'date-time', example: '2024-02-15T10:00:00Z' },
+                    
+                    // Customs
+                    customsRequired: { type: 'boolean', example: false },
+                    customsStatus: { type: 'string', enum: ['not_required', 'pending', 'cleared'], example: 'not_required' },
+                    
+                    // Payment
+                    shippingCost: { type: 'number', example: 25.50 },
+                    totalAmount: { type: 'number', example: 125.50 },
+                    paymentStatus: { type: 'string', enum: ['pending', 'paid', 'partially_paid'], example: 'pending' },
+                    
+                    // Package flags
+                    isFragile: { type: 'boolean', example: false },
+                    isHazardous: { type: 'boolean', example: false },
+                    requiresSignature: { type: 'boolean', example: true },
+                    
+                    // Additional information
+                    specialInstructions: { type: 'string', example: 'Handle with care' },
+                    notes: { type: 'string', example: 'Customer requested expedited shipping' },
+                    
+                    // Entry information
+                    entryDate: { type: 'string', format: 'date-time', example: '2024-02-10T09:00:00Z' },
+                    itemValue: { type: 'number', example: 125.50 }
+                  }
+                },
+                description: 'Package ID is required. All other fields are optional - only include fields you want to change.',
                 example: {
-                  trackingNumber: 'TRK123456789',
+                  id: '64a1b2c3d4e5f6789012345',
                   weight: 5.5,
                   dimensions: {
                     length: 10,
@@ -2126,17 +2242,9 @@ const options = {
                   specialInstructions: 'Handle with care',
                   notes: 'Customer requested expedited shipping',
                   
-                  // KCD Integration fields
-                  courierCode: 'CLEAN',
-                  customerCode: 'CLEAN-0001',
-                  source: 'kcd-packing-system',
-                  
-                  // Tasoko API fields
-                  controlNumber: 'EP0096513',
-                  entryStaff: 'warehouse_staff_01',
-                  branch: 'Down Town',
-                  pieces: 1,
-                  cubes: 0.15
+                  // Entry information
+                  entryDate: '2024-02-10T09:00:00Z',
+                  itemValue: 125.50
                 }
               }
             }
