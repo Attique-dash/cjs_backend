@@ -76,7 +76,7 @@ router.get('/customers',
 
 // ─────────────────────────────────────────────────────────────
 // POST /api/kcd/packages/add
-// Add a new package
+// Add a new package - complete warehouse fields
 // ─────────────────────────────────────────────────────────────
 router.post('/packages/add',
   authKcdApiKey,
@@ -86,27 +86,35 @@ router.post('/packages/add',
     try {
       const {
         trackingNumber,
-        courierCode,
-        customerCode,
+        userCode,
         weight,
-        status = 'received',
-        warehouseAddress,
-        processedAt,
-        dimensions,
-        description,
         shipper,
+        description,
+        itemDescription,
+        serviceMode = 'local',
+        status = 'received',
+        dimensions,
         senderName,
         senderEmail,
         senderPhone,
         senderAddress,
-        recipient
+        senderCountry,
+        recipient,
+        itemValue,
+        specialInstructions,
+        isFragile,
+        isHazardous,
+        requiresSignature,
+        customsRequired,
+        customsStatus,
+        entryDate
       } = req.body;
 
       const authenticatedCourierCode = req.courierCode;
 
       // Find the customer
       const customer = await User.findOne({ 
-        userCode: customerCode, 
+        userCode: userCode.toUpperCase(), 
         role: 'customer' 
       });
 
@@ -118,8 +126,16 @@ router.post('/packages/add',
         return;
       }
 
+      // Generate tracking number if not provided
+      const finalTrackingNumber = trackingNumber || (() => {
+        const timestamp = Date.now().toString();
+        const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+        const generated = `TRK${timestamp}${random}`;
+        return generated.substring(0, 20).toUpperCase();
+      })();
+
       // Check if tracking number already exists
-      const existingPackage = await Package.findOne({ trackingNumber });
+      const existingPackage = await Package.findOne({ trackingNumber: finalTrackingNumber });
       if (existingPackage) {
         res.status(409).json({
           success: false,
@@ -128,47 +144,63 @@ router.post('/packages/add',
         return;
       }
 
-      // Create the package
+      // Create the package with complete warehouse fields
       const packageData: any = {
-        trackingNumber,
-        userCode: customerCode,
+        trackingNumber: finalTrackingNumber,
+        userCode: userCode.toUpperCase(),
         userId: customer._id,
-        weight,
+        weight: weight || 0,
+        shipper: shipper || 'Amazon',
+        description: description || '',
+        itemDescription: itemDescription || '',
+        serviceMode,
         status,
+        dimensions: dimensions || { length: 0, width: 0, height: 0, unit: 'cm' },
+        senderName: senderName || shipper || 'Amazon',
+        senderEmail: senderEmail || '',
+        senderPhone: senderPhone || '',
+        senderAddress: senderAddress || '',
+        senderCountry: senderCountry || '',
+        recipient: recipient || {
+          name: `${customer.firstName} ${customer.lastName}`,
+          email: customer.email,
+          phone: customer.phone || '',
+          shippingId: customer.userCode,
+          address: customer.address?.street || ''
+        },
+        totalAmount: itemValue || 0,
+        specialInstructions: specialInstructions || '',
+        isFragile: isFragile || false,
+        isHazardous: isHazardous || false,
+        requiresSignature: requiresSignature || false,
+        customsRequired: customsRequired || false,
+        customsStatus: customsStatus || 'not_required',
+        dateReceived: entryDate ? new Date(entryDate) : new Date(),
         source: 'kcd-packing-system',
         courierCode: authenticatedCourierCode,
-        warehouseLocation: warehouseAddress,
-        dateReceived: processedAt ? new Date(processedAt) : new Date(),
-        processedAt: processedAt ? new Date(processedAt) : new Date()
+        processedAt: new Date()
       };
 
-      // Add optional fields
-      if (dimensions) packageData.dimensions = dimensions;
-      if (description) packageData.description = description;
-      if (shipper) packageData.shipper = shipper;
-      if (senderName) packageData.senderName = senderName;
-      if (senderEmail) packageData.senderEmail = senderEmail;
-      if (senderPhone) packageData.senderPhone = senderPhone;
-      if (senderAddress) packageData.senderAddress = senderAddress;
-      if (recipient) packageData.recipient = recipient;
-
       const newPackage = await Package.create(packageData);
+      await newPackage.populate('userId', 'firstName lastName email phone mailboxNumber');
 
       // Add to tracking history
-      if (processedAt) {
-        newPackage.trackingHistory = [{
-          timestamp: new Date(processedAt),
-          status,
-          location: warehouseAddress || 'Warehouse',
-          description: `Package received from ${courierCode}`
-        }];
-        await newPackage.save();
-      }
+      const historyEntry = {
+        timestamp: new Date(),
+        status,
+        location: 'Warehouse',
+        description: `Package received from ${authenticatedCourierCode}`
+      };
+      
+      newPackage.trackingHistory = newPackage.trackingHistory || [];
+      newPackage.trackingHistory.push(historyEntry);
+      await newPackage.save();
 
       res.status(201).json({
         success: true,
         message: 'Package added successfully',
         data: {
+          package: newPackage,
           trackingNumber: newPackage.trackingNumber,
           status: newPackage.status,
           customerCode: newPackage.userCode,
@@ -188,7 +220,7 @@ router.post('/packages/add',
 
 // ─────────────────────────────────────────────────────────────
 // PUT /api/kcd/packages/update
-// Update an existing package
+// Update package by ID - complete warehouse fields
 // ─────────────────────────────────────────────────────────────
 router.put('/packages/update',
   authKcdApiKey,
@@ -196,20 +228,16 @@ router.put('/packages/update',
   handleValidationErrors,
   async (req: AuthenticatedKcdRequest, res: Response): Promise<void> => {
     try {
-      const {
-        trackingNumber,
-        status,
-        location,
-        lastUpdated,
-        weight,
-        warehouseAddress,
-        notes
-      } = req.body;
-
+      const { id } = req.body;
+      const updateData = { ...req.body };
+      
+      // Remove id from updateData to avoid updating it
+      delete updateData.id;
+      
       const authenticatedCourierCode = req.courierCode;
 
-      // Find the package
-      const packageDoc = await Package.findOne({ trackingNumber });
+      // Find the package by ID
+      const packageDoc = await Package.findById(id);
       if (!packageDoc) {
         res.status(404).json({
           success: false,
@@ -218,38 +246,64 @@ router.put('/packages/update',
         return;
       }
 
-      // Update package fields
-      const updates: any = {};
-      if (status) updates.status = status;
-      if (weight) updates.weight = weight;
-      if (warehouseAddress) updates.warehouseLocation = warehouseAddress;
-      if (notes) updates.notes = notes;
-
-      // Add tracking history entry if status or location changed
-      if (status || location) {
-        const historyEntry = {
-          timestamp: lastUpdated ? new Date(lastUpdated) : new Date(),
-          status: status || packageDoc.status,
-          location: location || packageDoc.warehouseLocation || 'Unknown',
-          description: status ? `Status updated to ${status}` : 'Location updated'
-        };
-
-        updates.$push = { trackingHistory: historyEntry };
+      // Verify the package belongs to the authenticated courier
+      if (packageDoc.courierCode && packageDoc.courierCode !== authenticatedCourierCode) {
+        res.status(403).json({
+          success: false,
+          message: 'Access denied: Package does not belong to this courier'
+        });
+        return;
       }
 
+      // If no update data provided, just return current package
+      if (Object.keys(updateData).length === 0) {
+        await packageDoc.populate('userId', 'firstName lastName email phone mailboxNumber');
+        res.json({
+          success: true,
+          message: 'Current package data (no updates provided)',
+          data: {
+            package: packageDoc
+          }
+        });
+        return;
+      }
+
+      // Add tracking history entry if status changed
+      if (updateData.status && updateData.status !== packageDoc.status) {
+        const historyEntry = {
+          timestamp: new Date(),
+          status: updateData.status,
+          location: updateData.warehouseLocation || packageDoc.warehouseLocation || 'Warehouse',
+          description: `Status updated to ${updateData.status}`
+        };
+
+        updateData.trackingHistory = packageDoc.trackingHistory || [];
+        updateData.trackingHistory.push(historyEntry);
+      }
+
+      // Apply updates
       const updatedPackage = await Package.findByIdAndUpdate(
-        packageDoc._id,
-        updates,
-        { new: true }
-      );
+        id,
+        updateData,
+        { new: true, runValidators: true }
+      ).populate('userId', 'firstName lastName email phone mailboxNumber');
+
+      if (!updatedPackage) {
+        res.status(500).json({
+          success: false,
+          message: 'Failed to update package'
+        });
+        return;
+      }
 
       res.json({
         success: true,
         message: 'Package updated successfully',
         data: {
-          trackingNumber: updatedPackage?.trackingNumber,
-          status: updatedPackage?.status,
-          updatedAt: updatedPackage?.updatedAt
+          package: updatedPackage,
+          trackingNumber: updatedPackage.trackingNumber,
+          status: updatedPackage.status,
+          updatedAt: updatedPackage.updatedAt
         }
       });
     } catch (error: any) {

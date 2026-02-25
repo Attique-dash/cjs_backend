@@ -21,21 +21,14 @@ export const generateApiKeyValidation = [
     .withMessage('Description cannot exceed 500 characters')
 ];
 
-// Validation for adding package
+// Validation for adding package - complete warehouse fields
 export const addPackageValidation = [
   body('trackingNumber')
-    .notEmpty()
-    .withMessage('Tracking number is required')
+    .optional()
     .isLength({ min: 3, max: 50 })
     .withMessage('Tracking number must be 3-50 characters'),
   
-  body('courierCode')
-    .notEmpty()
-    .withMessage('Courier code is required')
-    .isLength({ min: 2, max: 20 })
-    .withMessage('Courier code must be 2-20 characters'),
-  
-  body('customerCode')
+  body('userCode')
     .notEmpty()
     .withMessage('Customer code is required')
     .matches(/^[A-Z]{2,6}-\d{3,5}$/)
@@ -45,20 +38,30 @@ export const addPackageValidation = [
     .isFloat({ min: 0 })
     .withMessage('Weight must be a positive number'),
   
+  body('shipper')
+    .optional()
+    .isLength({ max: 100 })
+    .withMessage('Shipper name cannot exceed 100 characters'),
+  
+  body('description')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('Description cannot exceed 500 characters'),
+  
+  body('itemDescription')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('Item description cannot exceed 500 characters'),
+  
+  body('serviceMode')
+    .optional()
+    .isIn(['air', 'ocean', 'local'])
+    .withMessage('Service mode must be air, ocean, or local'),
+  
   body('status')
     .optional()
     .isIn(['received', 'in_transit', 'out_for_delivery', 'delivered', 'pending', 'customs', 'returned', 'at_warehouse', 'processing', 'ready_for_pickup'])
     .withMessage('Invalid package status'),
-  
-  body('warehouseAddress')
-    .optional()
-    .isLength({ max: 500 })
-    .withMessage('Warehouse address cannot exceed 500 characters'),
-  
-  body('processedAt')
-    .optional()
-    .isISO8601()
-    .withMessage('Processed at must be a valid date'),
   
   body('dimensions.length')
     .optional()
@@ -78,39 +81,244 @@ export const addPackageValidation = [
   body('dimensions.unit')
     .optional()
     .isIn(['cm', 'in'])
-    .withMessage('Unit must be either cm or in')
-];
-
-// Validation for updating package
-export const updatePackageValidation = [
-  body('trackingNumber')
-    .notEmpty()
-    .withMessage('Tracking number is required'),
+    .withMessage('Unit must be either cm or in'),
   
-  body('status')
+  body('senderName')
     .optional()
-    .isIn(['received', 'in_transit', 'out_for_delivery', 'delivered', 'pending', 'customs', 'returned', 'at_warehouse', 'processing', 'ready_for_pickup'])
-    .withMessage('Invalid package status'),
+    .isLength({ max: 100 })
+    .withMessage('Sender name cannot exceed 100 characters'),
   
-  body('location')
+  body('senderEmail')
     .optional()
-    .isLength({ max: 200 })
-    .withMessage('Location cannot exceed 200 characters'),
+    .isEmail()
+    .withMessage('Sender email must be valid'),
   
-  body('lastUpdated')
+  body('senderPhone')
+    .optional()
+    .matches(/^\+?[\d\s\-\(\)]{10,20}$/)
+    .withMessage('Sender phone must be valid'),
+  
+  body('senderAddress')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('Sender address cannot exceed 500 characters'),
+  
+  body('senderCountry')
+    .optional()
+    .isLength({ max: 100 })
+    .withMessage('Sender country cannot exceed 100 characters'),
+  
+  body('recipient.name')
+    .optional()
+    .isLength({ max: 100 })
+    .withMessage('Recipient name cannot exceed 100 characters'),
+  
+  body('recipient.email')
+    .optional()
+    .isEmail()
+    .withMessage('Recipient email must be valid'),
+  
+  body('recipient.phone')
+    .optional()
+    .matches(/^\+?[\d\s\-\(\)]{10,20}$/)
+    .withMessage('Recipient phone must be valid'),
+  
+  body('recipient.address')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('Recipient address cannot exceed 500 characters'),
+  
+  body('itemValue')
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('Item value must be a positive number'),
+  
+  body('specialInstructions')
+    .optional()
+    .isLength({ max: 1000 })
+    .withMessage('Special instructions cannot exceed 1000 characters'),
+  
+  body('isFragile')
+    .optional()
+    .isBoolean()
+    .withMessage('Is fragile must be boolean'),
+  
+  body('isHazardous')
+    .optional()
+    .isBoolean()
+    .withMessage('Is hazardous must be boolean'),
+  
+  body('requiresSignature')
+    .optional()
+    .isBoolean()
+    .withMessage('Requires signature must be boolean'),
+  
+  body('customsRequired')
+    .optional()
+    .isBoolean()
+    .withMessage('Customs required must be boolean'),
+  
+  body('customsStatus')
+    .optional()
+    .isIn(['not_required', 'pending', 'cleared'])
+    .withMessage('Customs status must be not_required, pending, or cleared'),
+  
+  body('entryDate')
     .optional()
     .isISO8601()
-    .withMessage('Last updated must be a valid date'),
+    .withMessage('Entry date must be a valid date')
+];
+
+// Validation for updating package - ID-based with complete fields
+export const updatePackageValidation = [
+  body('id')
+    .notEmpty()
+    .withMessage('Package ID is required'),
+  
+  body('trackingNumber')
+    .optional()
+    .isLength({ min: 3, max: 50 })
+    .withMessage('Tracking number must be 3-50 characters'),
+  
+  body('userCode')
+    .optional()
+    .matches(/^[A-Z]{2,6}-\d{3,5}$/)
+    .withMessage('Customer code must be in format CLEAN-XXXX (3-5 digits)'),
   
   body('weight')
     .optional()
     .isFloat({ min: 0 })
     .withMessage('Weight must be a positive number'),
   
-  body('warehouseAddress')
+  body('shipper')
+    .optional()
+    .isLength({ max: 100 })
+    .withMessage('Shipper name cannot exceed 100 characters'),
+  
+  body('description')
     .optional()
     .isLength({ max: 500 })
-    .withMessage('Warehouse address cannot exceed 500 characters'),
+    .withMessage('Description cannot exceed 500 characters'),
+  
+  body('itemDescription')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('Item description cannot exceed 500 characters'),
+  
+  body('serviceMode')
+    .optional()
+    .isIn(['air', 'ocean', 'local'])
+    .withMessage('Service mode must be air, ocean, or local'),
+  
+  body('status')
+    .optional()
+    .isIn(['received', 'in_transit', 'out_for_delivery', 'delivered', 'pending', 'customs', 'returned', 'at_warehouse', 'processing', 'ready_for_pickup'])
+    .withMessage('Invalid package status'),
+  
+  body('dimensions.length')
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('Length must be a positive number'),
+  
+  body('dimensions.width')
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('Width must be a positive number'),
+  
+  body('dimensions.height')
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('Height must be a positive number'),
+  
+  body('dimensions.unit')
+    .optional()
+    .isIn(['cm', 'in'])
+    .withMessage('Unit must be either cm or in'),
+  
+  body('senderName')
+    .optional()
+    .isLength({ max: 100 })
+    .withMessage('Sender name cannot exceed 100 characters'),
+  
+  body('senderEmail')
+    .optional()
+    .isEmail()
+    .withMessage('Sender email must be valid'),
+  
+  body('senderPhone')
+    .optional()
+    .matches(/^\+?[\d\s\-\(\)]{10,20}$/)
+    .withMessage('Sender phone must be valid'),
+  
+  body('senderAddress')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('Sender address cannot exceed 500 characters'),
+  
+  body('senderCountry')
+    .optional()
+    .isLength({ max: 100 })
+    .withMessage('Sender country cannot exceed 100 characters'),
+  
+  body('recipient.name')
+    .optional()
+    .isLength({ max: 100 })
+    .withMessage('Recipient name cannot exceed 100 characters'),
+  
+  body('recipient.email')
+    .optional()
+    .isEmail()
+    .withMessage('Recipient email must be valid'),
+  
+  body('recipient.phone')
+    .optional()
+    .matches(/^\+?[\d\s\-\(\)]{10,20}$/)
+    .withMessage('Recipient phone must be valid'),
+  
+  body('recipient.address')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('Recipient address cannot exceed 500 characters'),
+  
+  body('itemValue')
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('Item value must be a positive number'),
+  
+  body('specialInstructions')
+    .optional()
+    .isLength({ max: 1000 })
+    .withMessage('Special instructions cannot exceed 1000 characters'),
+  
+  body('isFragile')
+    .optional()
+    .isBoolean()
+    .withMessage('Is fragile must be boolean'),
+  
+  body('isHazardous')
+    .optional()
+    .isBoolean()
+    .withMessage('Is hazardous must be boolean'),
+  
+  body('requiresSignature')
+    .optional()
+    .isBoolean()
+    .withMessage('Requires signature must be boolean'),
+  
+  body('customsRequired')
+    .optional()
+    .isBoolean()
+    .withMessage('Customs required must be boolean'),
+  
+  body('customsStatus')
+    .optional()
+    .isIn(['not_required', 'pending', 'cleared'])
+    .withMessage('Customs status must be not_required, pending, or cleared'),
+  
+  body('warehouseLocation')
+    .optional()
+    .isLength({ max: 100 })
+    .withMessage('Warehouse location cannot exceed 100 characters'),
   
   body('notes')
     .optional()
