@@ -169,12 +169,8 @@ export const addPackageValidation = [
     .withMessage('Entry date must be a valid date')
 ];
 
-// Validation for updating package - ID-based with complete fields
+// Validation for updating package - ID-based with complete fields (ID from URL parameter)
 export const updatePackageValidation = [
-  body('id')
-    .notEmpty()
-    .withMessage('Package ID is required'),
-  
   body('trackingNumber')
     .optional()
     .isLength({ min: 3, max: 50 })

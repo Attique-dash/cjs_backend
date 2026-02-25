@@ -2103,7 +2103,7 @@ const options = {
           }
         }
       },
-      '/api/kcd/packages/update': {
+      '/api/kcd/packages/{id}': {
         put: {
           summary: 'Update Package for KCD Courier',
           description: 'Update an existing package in the warehouse system by ID with all available fields. Use X-KCD-API-Key header with your KCD API key.',
@@ -2111,15 +2111,16 @@ const options = {
           security: [
             { kcdApiKeyAuth: [] }
           ],
+          parameters: [
+            { in: 'path', name: 'id', required: true, schema: { type: 'string' }, description: 'Package ID (MongoDB ObjectId)' }
+          ],
           requestBody: {
             required: true,
             content: {
               'application/json': {
                 schema: {
                   type: 'object',
-                  required: ['id'],
                   properties: {
-                    id: { type: 'string', description: 'Package ID (MongoDB ObjectId)', example: '64a1b2c3d4e5f6789012345' },
                     trackingNumber: { type: 'string', example: 'TRK123456789' },
                     userCode: { type: 'string', example: 'CLEAN-0001' },
                     weight: { type: 'number', example: 5.5 },
@@ -2186,9 +2187,8 @@ const options = {
                     itemValue: { type: 'number', example: 125.50 }
                   }
                 },
-                description: 'Package ID is required. All other fields are optional - only include fields you want to change.',
+                description: 'All fields are optional - only include fields you want to change.',
                 example: {
-                  id: '64a1b2c3d4e5f6789012345',
                   weight: 5.5,
                   dimensions: {
                     length: 10,

@@ -219,20 +219,17 @@ router.post('/packages/add',
 );
 
 // ─────────────────────────────────────────────────────────────
-// PUT /api/kcd/packages/update
-// Update package by ID - complete warehouse fields
+// PUT /api/kcd/packages/:id
+// Update package by ID - complete warehouse fields (URL parameter)
 // ─────────────────────────────────────────────────────────────
-router.put('/packages/update',
+router.put('/packages/:id',
   authKcdApiKey,
   updatePackageValidation,
   handleValidationErrors,
   async (req: AuthenticatedKcdRequest, res: Response): Promise<void> => {
     try {
-      const { id } = req.body;
-      const updateData = { ...req.body };
-      
-      // Remove id from updateData to avoid updating it
-      delete updateData.id;
+      const { id } = req.params;
+      const updateData = req.body;
       
       const authenticatedCourierCode = req.courierCode;
 
