@@ -43,25 +43,16 @@ router.get('/customers',
 
       res.json({
         success: true,
-        data: {
-          customers: customers.map(customer => ({
-            id: customer._id,
-            userCode: customer.userCode,
-            name: `${customer.firstName} ${customer.lastName}`,
-            email: customer.email,
-            phone: customer.phone,
-            address: customer.address,
-            mailboxNumber: customer.mailboxNumber,
-            shippingAddresses: customer.shippingAddresses,
-            courierCode: authenticatedCourierCode
-          })),
-          pagination: {
-            total,
-            limit,
-            offset,
-            hasMore: Number(offset) + Number(limit) < total
-          }
-        }
+        data: customers.map(customer => ({
+          UserCode: customer.userCode,
+          FirstName: customer.firstName,
+          LastName: customer.lastName,
+          Email: customer.email,
+          Phone: customer.phone || '',
+          Branch: 'Down Town', // Default branch as expected by portal
+          MailboxNumber: customer.mailboxNumber,
+          Address: customer.address
+        }))
       });
     } catch (error: any) {
       console.error('Get customers error:', error);
@@ -199,13 +190,44 @@ router.post('/packages/add',
       res.status(201).json({
         success: true,
         message: 'Package added successfully',
-        data: {
-          package: newPackage,
-          trackingNumber: newPackage.trackingNumber,
-          status: newPackage.status,
-          customerCode: newPackage.userCode,
-          createdAt: newPackage.createdAt
-        }
+        data: [{
+          PackageID: newPackage._id.toString(),
+          CourierID: newPackage._id.toString(),
+          ManifestID: newPackage.manifestId?.toString() || '',
+          CollectionID: newPackage.collectionId || '',
+          TrackingNumber: newPackage.trackingNumber,
+          ControlNumber: newPackage.controlNumber || `EP${Math.random().toString().slice(2, 10)}`,
+          FirstName: newPackage.recipient?.name?.split(' ')[0] || customer.firstName,
+          LastName: newPackage.recipient?.name?.split(' ')[1] || customer.lastName,
+          UserCode: newPackage.userCode,
+          Weight: newPackage.weight,
+          Shipper: newPackage.shipper || '',
+          EntryStaff: newPackage.entryStaff || '',
+          EntryDate: newPackage.dateReceived?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
+          EntryDateTime: newPackage.entryDateTime || newPackage.dateReceived?.toISOString() || new Date().toISOString(),
+          Branch: newPackage.branch || 'Down Town',
+          Claimed: newPackage.claimed || false,
+          APIToken: authenticatedCourierCode,
+          ShowControls: newPackage.showControls || false,
+          ManifestCode: newPackage.manifestId?.toString() || '',
+          CollectionCode: newPackage.collectionId || '',
+          Description: newPackage.description || '',
+          HSCode: newPackage.hsCode || '',
+          Unknown: newPackage.unknown || false,
+          AIProcessed: newPackage.aiProcessed || false,
+          OriginalHouseNumber: newPackage.originalHouseNumber || '',
+          Cubes: newPackage.cubes || 0,
+          Length: newPackage.dimensions?.length || 0,
+          Width: newPackage.dimensions?.width || 0,
+          Height: newPackage.dimensions?.height || 0,
+          Pieces: newPackage.pieces || 1,
+          Discrepancy: newPackage.discrepancy || false,
+          DiscrepancyDescription: newPackage.discrepancyDescription || '',
+          ServiceTypeID: newPackage.serviceTypeId || '',
+          HazmatCodeID: newPackage.hazmatCodeId || '',
+          Coloaded: newPackage.coloaded || false,
+          ColoadIndicator: newPackage.coloadIndicator || ''
+        }]
       });
     } catch (error: any) {
       console.error('Add package error:', error);
@@ -638,6 +660,38 @@ router.put('/packages/:trackingNumber/manifest',
       res.status(500).json({
         success: false,
         message: 'Failed to update package manifest',
+        error: error.message
+      });
+    }
+  }
+);
+
+// ─────────────────────────────────────────────────────────────
+// POST /api/kcd/test
+// Test endpoint for KCD portal validation
+// ─────────────────────────────────────────────────────────────
+router.post('/test',
+  authKcdApiKey,
+  async (req: AuthenticatedKcdRequest, res: Response): Promise<void> => {
+    try {
+      const authenticatedCourierCode = req.courierCode;
+      
+      res.json({
+        success: true,
+        message: 'KCD API connection test successful',
+        data: {
+          courierCode: authenticatedCourierCode,
+          timestamp: new Date().toISOString(),
+          server: 'Clean J Shipping Backend',
+          version: '1.0.0',
+          status: 'connected'
+        }
+      });
+    } catch (error: any) {
+      console.error('KCD test endpoint error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Test endpoint failed',
         error: error.message
       });
     }

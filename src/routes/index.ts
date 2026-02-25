@@ -5,6 +5,7 @@ import customerRoutes from './customer';
 import adminRoutes from './admin';
 import kcdWebhookRoutes from './webhooks/kcd';
 import kcdRoutes from './kcd';
+import courierRoutes from './courier';
 import { ensureDatabaseConnection } from '../middleware/databaseConnection';
 
 const router = Router();
@@ -49,5 +50,6 @@ router.use('/customer', ensureDatabaseConnection, customerRoutes);
 router.use('/admin', ensureDatabaseConnection, adminRoutes);
 router.use('/webhooks/kcd', ensureDatabaseConnection, kcdWebhookRoutes);
 router.use('/kcd', ensureDatabaseConnection, kcdRoutes);
+router.use('/Courier', ensureDatabaseConnection, courierRoutes);
 
 export default router;
