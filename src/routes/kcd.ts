@@ -220,7 +220,7 @@ router.post('/packages/add',
 
 // ─────────────────────────────────────────────────────────────
 // PUT /api/kcd/packages/:id
-// Update package by ID - complete warehouse fields (URL parameter)
+// Update package by tracking number - complete warehouse fields (URL parameter)
 // ─────────────────────────────────────────────────────────────
 router.put('/packages/:id',
   authKcdApiKey,
@@ -233,8 +233,8 @@ router.put('/packages/:id',
       
       const authenticatedCourierCode = req.courierCode;
 
-      // Find the package by ID
-      const packageDoc = await Package.findById(id);
+      // Find the package by tracking number
+      const packageDoc = await Package.findOne({ trackingNumber: id });
       if (!packageDoc) {
         res.status(404).json({
           success: false,
@@ -279,8 +279,8 @@ router.put('/packages/:id',
       }
 
       // Apply updates
-      const updatedPackage = await Package.findByIdAndUpdate(
-        id,
+      const updatedPackage = await Package.findOneAndUpdate(
+        { trackingNumber: id },
         updateData,
         { new: true, runValidators: true }
       ).populate('userId', 'firstName lastName email phone mailboxNumber');

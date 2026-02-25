@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import { authenticate, authorize } from '../../middleware/auth';
+import { combinedAuth } from '../../middleware/apiKeyAuth';
 import { validateMongoId, validatePagination } from '../../utils/validators';
 import { asyncHandler } from '../../middleware/errorHandler';
 import * as manifestController from '../../controllers/warehouse/manifestController';
 
 const router = Router();
 
-// All warehouse manifest routes require authentication
-router.use(authenticate);
+// All warehouse manifest routes require authentication (JWT or API Key)
+router.use(combinedAuth);
 
 /**
  * @swagger

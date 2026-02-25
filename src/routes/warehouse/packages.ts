@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import { authenticate, authorize } from '../../middleware/auth';
+import { combinedAuth } from '../../middleware/apiKeyAuth';
 import * as packageController from '../../controllers/warehouse/packageController';
 import { validateAddPackage, validateUpdatePackage, validateUpdatePackageStatus } from '../../validators/packageValidators';
 import { validateObjectId } from '../../middleware/validation';
 
 const router = Router();
 
-// All warehouse package routes require authentication
-router.use(authenticate);
+// All warehouse package routes require authentication (JWT or API Key)
+router.use(combinedAuth);
 
 /**
  * @swagger

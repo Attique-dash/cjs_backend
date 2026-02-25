@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../../middleware/auth';
 import { Package } from '../../models/Package';
 import { Manifest } from '../../models/Manifest';
+import { User } from '../../models/User';
 import { successResponse, errorResponse } from '../../utils/helpers';
 import { logger } from '../../utils/logger';
 
@@ -59,12 +60,27 @@ export class KCDWebhookController {
         return;
       }
 
+      // Find the customer by userCode
+      const customer = await User.findOne({ 
+        userCode: packageData.userCode || 'CLEAN', 
+        role: 'customer' 
+      });
+      
+      if (!customer) {
+        errorResponse(res, `Customer not found for userCode: ${packageData.userCode || 'CLEAN'}`, 404);
+        return;
+      }
+
       // Create new package
       const newPackage = new Package({
         trackingNumber,
         userCode: packageData.userCode || 'CLEAN',
+        userId: customer._id,
         status: 'received',
         dateReceived: new Date(timestamp || Date.now()),
+        source: 'kcd-packing-system',
+        courierCode: 'CLEAN',
+        processedAt: new Date(),
         ...packageData
       });
 
