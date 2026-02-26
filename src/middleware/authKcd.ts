@@ -78,6 +78,14 @@ export const authKcdApiKey = async (
   try {
     if (req.method === 'OPTIONS') return next();
 
+    // Debug: Log all headers
+    console.log('[KCD Auth] Request headers:', {
+      authorization: req.headers.authorization,
+      'x-kcd-api-key': req.headers['x-kcd-api-key'],
+      'x-api-key': req.headers['x-api-key'],
+      'content-type': req.headers['content-type']
+    });
+
     const apiKey = extractToken(req);
 
     if (!apiKey) {
