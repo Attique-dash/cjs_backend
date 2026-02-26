@@ -1361,8 +1361,8 @@ const options = {
                           getCustomers: `${getBaseUrl()}/api/kcd/customers`,
                           addPackage: `${getBaseUrl()}/api/kcd/packages/add`,
                           updatePackage: `${getBaseUrl()}/api/kcd/packages/{trackingNumber}`,
-                          deletePackage: `${getBaseUrl()}/api/kcd/packages/delete`,
-                          updateManifest: `${getBaseUrl()}/api/kcd/manifests/update`,
+                          deletePackage: `${getBaseUrl()}/api/kcd/packages/{trackingNumber}/delete`,
+                          updateManifest: `${getBaseUrl()}/api/kcd/packages/{trackingNumber}/manifest`,
                           packageDeletedWebhook: `${getBaseUrl()}/api/webhooks/kcd/package-deleted`,
                           manifestCreatedWebhook: `${getBaseUrl()}/api/webhooks/kcd/manifest-created`,
                           description: 'First 5 endpoints go in "Courier System API" tab. Last 2 go in "Packing System API" tab.'
