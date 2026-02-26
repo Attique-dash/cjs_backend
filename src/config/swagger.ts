@@ -1498,7 +1498,7 @@ const options = {
       // FIX: Changed path param from {id} (MongoDB ObjectId) to {trackingNumber}
       // This matches what KCD portal sends and what was discussed with the client
       '/api/kcd/packages/{trackingNumber}': {
-        put: {
+        post: {
           summary: 'Update Package for KCD Courier',
           description: 'Update an existing package by tracking number. Authenticate using the X-KCD-API-Key header with your plain API key. All fields are optional — only include what you want to change.',
           tags: ['KCD API'],
@@ -1593,14 +1593,14 @@ const options = {
           }
         }
       },
-      '/api/kcd/packages/delete': {
-        delete: {
+      '/api/kcd/packages/{trackingNumber}/delete': {
+        post: {
           summary: 'Delete Package for KCD Courier',
           description: 'Delete a package from the warehouse system by tracking number. Authenticate using the X-KCD-API-Key header with your plain API key.',
           tags: ['KCD API'],
           security: [{ kcdApiKeyAuth: [] }],
           parameters: [
-            { in: 'query', name: 'trackingNumber', required: true, schema: { type: 'string' }, description: 'Package tracking number to delete', example: 'TRK123456789' }
+            { in: 'path', name: 'trackingNumber', required: true, schema: { type: 'string' }, description: 'Package tracking number to delete', example: 'TRK123456789' }
           ],
           responses: {
             200: {
@@ -1621,8 +1621,8 @@ const options = {
           }
         }
       },
-      '/api/kcd/manifests/update': {
-        put: {
+      '/api/kcd/packages/{trackingNumber}/manifest': {
+        post: {
           summary: 'Update Manifest for KCD Courier',
           description: 'Update an existing manifest in the warehouse system. Authenticate using the X-KCD-API-Key header with your plain API key.',
           tags: ['KCD API'],

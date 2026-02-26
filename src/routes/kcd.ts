@@ -241,10 +241,10 @@ router.post('/packages/add',
 );
 
 // ─────────────────────────────────────────────────────────────
-// PUT /api/kcd/packages/:trackingNumber
+// POST /api/kcd/packages/:trackingNumber
 // Update package by tracking number - complete warehouse fields (URL parameter)
 // ─────────────────────────────────────────────────────────────
-router.put('/packages/:trackingNumber',
+router.post('/packages/:trackingNumber',
   authKcdApiKey,
   updatePackageValidation,
   handleValidationErrors,
@@ -345,7 +345,9 @@ router.get('/packages/:trackingNumber',
   async (req: AuthenticatedKcdRequest, res: Response): Promise<void> => {
     try {
       const { trackingNumber } = req.params;
+      const authenticatedCourierCode = req.courierCode;
 
+      // Find package by tracking number
       const packageDoc = await Package.findOne({ trackingNumber })
         .populate('userId', 'userCode firstName lastName email');
 
@@ -353,6 +355,15 @@ router.get('/packages/:trackingNumber',
         res.status(404).json({
           success: false,
           message: 'Package not found'
+        });
+        return;
+      }
+
+      // Verify package belongs to authenticated courier
+      if (packageDoc.courierCode && packageDoc.courierCode !== authenticatedCourierCode) {
+        res.status(403).json({
+          success: false,
+          message: 'Access denied: Package does not belong to this courier'
         });
         return;
       }
@@ -435,7 +446,7 @@ router.get('/packages/:trackingNumber',
  *       500:
  *         description: Internal server error
  */
-router.delete('/packages/:trackingNumber',
+router.post('/packages/:trackingNumber/delete',
   authKcdApiKey,
   async (req: AuthenticatedKcdRequest, res: Response): Promise<void> => {
     try {
@@ -576,7 +587,7 @@ router.delete('/packages/:trackingNumber',
  *       500:
  *         description: Internal server error
  */
-router.put('/packages/:trackingNumber/manifest',
+router.post('/packages/:trackingNumber/manifest',
   authKcdApiKey,
   async (req: AuthenticatedKcdRequest, res: Response): Promise<void> => {
     try {
