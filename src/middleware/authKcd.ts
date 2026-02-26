@@ -53,7 +53,14 @@ const extractToken = (req: Request): string | null => {
     }
   }
 
-  // 4. X-API-Key header fallback
+  // 4. X-KCD-API-Key header — primary header for KCD API
+  const xKcdApiKey = req.headers['x-kcd-api-key'];
+  if (xKcdApiKey && typeof xKcdApiKey === 'string' && xKcdApiKey.trim()) {
+    console.log('[KCD Auth] Token from X-KCD-API-Key header');
+    return xKcdApiKey.trim();
+  }
+
+  // 5. X-API-Key header fallback
   const xApiKey = req.headers['x-api-key'];
   if (xApiKey && typeof xApiKey === 'string' && xApiKey.trim()) {
     console.log('[KCD Auth] Token from X-API-Key header');
