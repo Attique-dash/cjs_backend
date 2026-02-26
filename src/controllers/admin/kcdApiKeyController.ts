@@ -147,7 +147,7 @@ export const listApiKeys = async (req: Request, res: Response): Promise<void> =>
           lastUsed: key.lastUsed,
           usageCount: key.usageCount,
           createdBy: key.createdBy,
-          isExpired: key.expiresAt < new Date()
+          isExpired: key.expiresAt ? key.expiresAt < new Date() : false
         }))
       }
     });
