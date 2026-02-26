@@ -4,7 +4,8 @@ export interface IApiKey extends Document {
   key: string;
   name: string;
   description?: string;
-  warehouseId: mongoose.Types.ObjectId;
+  warehouseId?: mongoose.Types.ObjectId;
+  courierCode?: string;
   permissions: string[];
   isActive: boolean;
   expiresAt?: Date;
@@ -60,8 +61,12 @@ const apiKeySchema = new Schema<IApiKey>({
   },
   warehouseId: {
     type: Schema.Types.ObjectId,
-    ref: 'Warehouse',
-    required: [true, 'Warehouse ID is required']
+    ref: 'Warehouse'
+  },
+  courierCode: {
+    type: String,
+    trim: true,
+    uppercase: true
   },
   permissions: [{
     type: String,
@@ -107,6 +112,7 @@ apiKeySchema.methods.canUse = function(): boolean {
 // Indexes
 apiKeySchema.index({ key: 1 });
 apiKeySchema.index({ warehouseId: 1 });
+apiKeySchema.index({ courierCode: 1 });
 apiKeySchema.index({ isActive: 1 });
 apiKeySchema.index({ expiresAt: 1 });
 apiKeySchema.index({ createdBy: 1 });

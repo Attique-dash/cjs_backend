@@ -4,7 +4,7 @@ import { Manifest } from '../../models/Manifest';
 import { Package } from '../../models/Package';
 import { Warehouse } from '../../models/Warehouse';
 import { User } from '../../models/User';
-import { successResponse, errorResponse, getPaginationData } from '../../utils/helpers';
+import { successResponse, errorResponse, getPaginationData, parseQueryParam } from '../../utils/helpers';
 import { PAGINATION } from '../../utils/constants';
 import { logger } from '../../utils/logger';
 
@@ -12,8 +12,8 @@ export const getManifests = async (req: AuthRequest, res: Response): Promise<voi
   try {
     logger.info('getManifests called with query:', req.query);
     
-    const page = parseInt(req.query.page as string) || PAGINATION.DEFAULT_PAGE;
-    const limit = parseInt(req.query.limit as string) || PAGINATION.DEFAULT_LIMIT;
+    const page = parseQueryParam(req.query, 'page', PAGINATION.DEFAULT_PAGE);
+    const limit = parseQueryParam(req.query, 'limit', PAGINATION.DEFAULT_LIMIT);
     const skip = (page - 1) * limit;
 
     const filter: any = {};

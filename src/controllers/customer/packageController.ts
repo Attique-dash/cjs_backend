@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../../middleware/auth';
 import { Package } from '../../models/Package';
-import { successResponse, errorResponse, getPaginationData } from '../../utils/helpers';
+import { successResponse, errorResponse, getPaginationData, parseQueryParam } from '../../utils/helpers';
 import { PAGINATION } from '../../utils/constants';
 import { logger } from '../../utils/logger';
 
@@ -12,8 +12,8 @@ export const getCustomerPackages = async (req: AuthRequest, res: Response): Prom
       return;
     }
 
-    const page = parseInt(req.query.page as string) || PAGINATION.DEFAULT_PAGE;
-    const limit = parseInt(req.query.limit as string) || PAGINATION.DEFAULT_LIMIT;
+    const page = parseQueryParam(req.query, 'page', PAGINATION.DEFAULT_PAGE);
+    const limit = parseQueryParam(req.query, 'limit', PAGINATION.DEFAULT_LIMIT);
     const skip = (page - 1) * limit;
 
     const filter: any = {
@@ -71,7 +71,7 @@ export const getPackageById = async (req: AuthRequest, res: Response): Promise<v
   }
 };
 
-export const trackPackage = async (req: Request, res: Response): Promise<void> => {
+export const trackPackage = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     // Public endpoint - no authentication required
     const trackingNumber = (req as any).params.trackingNumber?.toUpperCase();

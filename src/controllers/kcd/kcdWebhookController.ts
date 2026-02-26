@@ -3,6 +3,7 @@ import { AuthRequest } from '../../middleware/auth';
 import { Package } from '../../models/Package';
 import { Manifest } from '../../models/Manifest';
 import { User } from '../../models/User';
+import { ApiKey } from '../../models/ApiKey';
 import { successResponse, errorResponse } from '../../utils/helpers';
 import { logger } from '../../utils/logger';
 
@@ -38,9 +39,10 @@ export class KCDWebhookController {
         return;
       }
 
-      // Verify courier code matches our configured code
-      if (courierCode !== 'CLEAN') {
-        errorResponse(res, `Invalid courier code. Expected: CLEAN, Received: ${courierCode}`, 400);
+      // Verify courier code matches the authenticated API key's courier code
+      const authenticatedCourierCode = (req as any).apiKey?.courierCode;
+      if (!authenticatedCourierCode || courierCode !== authenticatedCourierCode) {
+        errorResponse(res, `Invalid courier code. Expected: ${authenticatedCourierCode}, Received: ${courierCode}`, 400);
         return;
       }
 
@@ -74,12 +76,12 @@ export class KCDWebhookController {
       // Create new package
       const newPackage = new Package({
         trackingNumber,
-        userCode: packageData.userCode || 'CLEAN',
+        userCode: packageData.userCode || authenticatedCourierCode,
         userId: customer._id,
         status: 'received',
         dateReceived: new Date(timestamp || Date.now()),
         source: 'kcd-packing-system',
-        courierCode: 'CLEAN',
+        courierCode: authenticatedCourierCode,
         processedAt: new Date(),
         ...packageData
       });
@@ -221,9 +223,10 @@ export class KCDWebhookController {
         return;
       }
 
-      // Verify courier code matches our configured code
-      if (courierCode !== 'CLEAN') {
-        errorResponse(res, `Invalid courier code. Expected: CLEAN, Received: ${courierCode}`, 400);
+      // Verify courier code matches the authenticated API key's courier code
+      const authenticatedCourierCode = (req as any).apiKey?.courierCode;
+      if (!authenticatedCourierCode || courierCode !== authenticatedCourierCode) {
+        errorResponse(res, `Invalid courier code. Expected: ${authenticatedCourierCode}, Received: ${courierCode}`, 400);
         return;
       }
 
@@ -260,9 +263,10 @@ export class KCDWebhookController {
         return;
       }
 
-      // Verify courier code
-      if (courierCode !== 'CLEAN') {
-        errorResponse(res, `Invalid courier code. Expected: CLEAN, Received: ${courierCode}`, 400);
+      // Verify courier code matches the authenticated API key's courier code
+      const authenticatedCourierCode = (req as any).apiKey?.courierCode;
+      if (!authenticatedCourierCode || courierCode !== authenticatedCourierCode) {
+        errorResponse(res, `Invalid courier code. Expected: ${authenticatedCourierCode}, Received: ${courierCode}`, 400);
         return;
       }
 

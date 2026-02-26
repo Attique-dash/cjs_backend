@@ -127,3 +127,17 @@ export const calculateAge = (birthdate: Date): number => {
   
   return age;
 };
+
+// Safe query parameter parser
+export const parseQueryParam = (query: any, key: string, defaultValue?: number): number => {
+  const value = query[key];
+  if (value === undefined || value === null) {
+    return defaultValue || 0;
+  }
+  
+  // Handle string or string array
+  const stringValue = Array.isArray(value) ? value[0] : String(value);
+  const parsedValue = parseInt(stringValue, 10);
+  
+  return isNaN(parsedValue) ? (defaultValue || 0) : parsedValue;
+};

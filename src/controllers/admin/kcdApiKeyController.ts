@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import crypto from 'crypto';
-import { KcdApiKey } from '../../models/KcdApiKey';
+import { ApiKey } from '../../models/ApiKey';
 import { AuthRequest } from '../../middleware/auth';
 import { generateApiKey } from '../../middleware/authKcd';
 import { logger } from '../../utils/logger';
@@ -60,15 +60,16 @@ export const generateKCDApiKey = async (req: AuthRequest, res: Response): Promis
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + expiresIn);
 
-    const kcdKey = await KcdApiKey.create({
-      apiKey,
-      courierCode: courierCode.trim().toUpperCase(),
+    const kcdKey = await ApiKey.create({
+      key: apiKey,
+      name: `KCD ${courierCode.trim().toUpperCase()} Integration`,
       description: description?.trim() || 'KCD Logistics Integration API Key',
+      courierCode: courierCode.trim().toUpperCase(),
+      permissions: ['kcd_integration'],
       expiresAt,
       isActive: true,
       createdBy: adminUser._id,
-      usageCount: 0,
-      lastUsed: null
+      usageCount: 0
     });
 
     logger.info(`KCD API key generated for ${courierCode}`, {
@@ -82,7 +83,7 @@ export const generateKCDApiKey = async (req: AuthRequest, res: Response): Promis
       success: true,
       message: '✅ KCD API key generated. Copy the key NOW — it will NOT be shown again.',
       data: {
-        apiKey: kcdKey.apiKey,
+        apiKey: kcdKey.key,
         courierCode: kcdKey.courierCode,
         description: kcdKey.description,
         expiresAt: kcdKey.expiresAt,
@@ -123,8 +124,10 @@ export const listApiKeys = async (req: Request, res: Response): Promise<void> =>
       userAgent: req.get('User-Agent')
     });
 
-    const keys = await KcdApiKey.find({})
-      .select('-apiKey')   // NEVER return actual key in list
+    const keys = await ApiKey.find({ 
+      courierCode: { $exists: true } // Only show KCD API keys
+    })
+      .select('-key')   // NEVER return actual key in list
       .populate('createdBy', 'firstName lastName email')
       .sort({ createdAt: -1 });
 
@@ -183,15 +186,14 @@ export const deactivateApiKey = async (req: AuthRequest, res: Response): Promise
       ip: req.ip
     });
 
-    const key = await KcdApiKey.findByIdAndUpdate(
+    const key = await ApiKey.findByIdAndUpdate(
       keyId,
       { 
         isActive: false,
-        deactivatedAt: new Date(),
-        deactivatedBy: req.user?._id
+        updatedAt: new Date()
       },
       { new: true }
-    ).select('-apiKey');
+    ).select('-key');
 
     if (!key) {
       logger.warn('API key not found for deactivation', { keyId });
@@ -249,15 +251,14 @@ export const activateApiKey = async (req: AuthRequest, res: Response): Promise<v
       ip: req.ip
     });
 
-    const key = await KcdApiKey.findByIdAndUpdate(
+    const key = await ApiKey.findByIdAndUpdate(
       keyId,
       { 
         isActive: true,
-        deactivatedAt: null,
-        deactivatedBy: null
+        updatedAt: new Date()
       },
       { new: true }
-    ).select('-apiKey');
+    ).select('-key');
 
     if (!key) {
       logger.warn('API key not found for activation', { keyId });
@@ -315,7 +316,7 @@ export const deleteApiKey = async (req: AuthRequest, res: Response): Promise<voi
       ip: req.ip
     });
 
-    const key = await KcdApiKey.findByIdAndDelete(keyId);
+    const key = await ApiKey.findByIdAndDelete(keyId);
 
     if (!key) {
       logger.warn('API key not found for deletion', { keyId });
@@ -371,7 +372,10 @@ export const getKCDConnectionInfo = async (req: Request, res: Response): Promise
       host: req.get('host')
     });
 
-    const activeKeys = await KcdApiKey.find({ isActive: true }).select('-apiKey').sort({ createdAt: -1 });
+    const activeKeys = await ApiKey.find({ 
+      isActive: true,
+      courierCode: { $exists: true } 
+    }).select('-key').sort({ createdAt: -1 });
 
     const info = {
       hasActiveKey: activeKeys.length > 0,
@@ -394,10 +398,10 @@ export const getKCDConnectionInfo = async (req: Request, res: Response): Promise
         endpoints: {
           getCustomers:   `${base}/api/kcd/customers`,
           addPackage:     `${base}/api/kcd/packages/add`,
-          updatePackage:  `${base}/api/kcd/packages/update`,
-          deletePackage:  `${base}/api/webhooks/kcd/package-deleted`,
-          updateManifest: `${base}/api/webhooks/kcd/manifest-created`,
-          description: 'Copy the above 5 endpoints into KCD portal - first 3 go in "Courier System API" tab, last 2 go in "Packing System API" tab'
+          updatePackage:  `${base}/api/kcd/packages/{trackingNumber}`,
+          deletePackage:  `${base}/api/kcd/packages/{trackingNumber}`,
+          updateManifest: `${base}/api/kcd/packages/{trackingNumber}/manifest`,
+          description: 'Copy the above 5 endpoints into KCD portal "Courier System API" tab'
         }
       },
       createdKeys: activeKeys.map(k => ({

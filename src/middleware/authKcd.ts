@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { KcdApiKey } from '../models/KcdApiKey';
+import { ApiKey } from '../models/ApiKey';
 import { User } from '../models/User';
 
 export interface AuthenticatedKcdRequest extends Request {
@@ -9,13 +9,12 @@ export interface AuthenticatedKcdRequest extends Request {
 
 // Generate API key
 export const generateApiKey = (): string => {
-  const prefix = 'kcd_live_';
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
-  for (let i = 0; i < 32; i++) {
+  for (let i = 0; i < 48; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
-  return prefix + result;
+  return result;
 };
 
 // Authenticate KCD API key
@@ -88,11 +87,20 @@ export const authKcdApiKey = async (
       return;
     }
 
-    // Find API key in database (first check if it exists at all, then check if active)
+    // Find API key in database - try plain token first, then with prefix for backward compatibility
     const trimmedKey = apiKey.trim();
-    const kcdKeyRecord = await KcdApiKey.findOne({
-      apiKey: trimmedKey
+    let kcdKeyRecord = await ApiKey.findOne({
+      key: trimmedKey,
+      courierCode: { $exists: true } // Ensure it's a KCD API key
     }).populate('createdBy');
+
+    // If not found, try with kcd_live_ prefix for backward compatibility
+    if (!kcdKeyRecord && !trimmedKey.startsWith('kcd_live_')) {
+      kcdKeyRecord = await ApiKey.findOne({
+        key: `kcd_live_${trimmedKey}`,
+        courierCode: { $exists: true }
+      }).populate('createdBy');
+    }
 
     // If key doesn't exist at all
     if (!kcdKeyRecord) {
@@ -117,8 +125,7 @@ export const authKcdApiKey = async (
         method: req.method,
         path: req.path,
         apiKeyId: kcdKeyRecord._id,
-        courierCode: kcdKeyRecord.courierCode,
-        deactivatedAt: kcdKeyRecord.deactivatedAt
+        courierCode: kcdKeyRecord.courierCode
       });
       res.status(401).json({
         success: false,
@@ -150,9 +157,10 @@ export const authKcdApiKey = async (
     }
 
     // Update usage statistics
-    kcdKey.lastUsed = new Date();
-    kcdKey.usageCount = (kcdKey.usageCount || 0) + 1;
-    await kcdKey.save();
+    await ApiKey.findByIdAndUpdate(kcdKey._id, {
+      $inc: { usageCount: 1 },
+      lastUsed: new Date(),
+    });
 
     // Attach API key info to request
     req.kcdApiKey = kcdKey;

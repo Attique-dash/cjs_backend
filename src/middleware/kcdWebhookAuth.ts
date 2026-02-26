@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { KcdApiKey } from '../models/KcdApiKey';
+import { ApiKey } from '../models/ApiKey';
 import { logger } from '../utils/logger';
 import { errorResponse } from '../utils/helpers';
 
@@ -21,9 +21,10 @@ export const validateKCDWebhook = async (req: Request, res: Response, next: Next
       return;
     }
 
-    const keyRecord = await KcdApiKey.findOne({ 
-      apiKey: apiKey.trim(), 
-      isActive: true 
+    const keyRecord = await ApiKey.findOne({ 
+      key: apiKey.trim(), 
+      isActive: true,
+      courierCode: { $exists: true } // Ensure it's a KCD API key
     });
 
     if (!keyRecord) {
@@ -38,10 +39,12 @@ export const validateKCDWebhook = async (req: Request, res: Response, next: Next
     }
 
     // Track usage
-    keyRecord.usageCount = (keyRecord.usageCount || 0) + 1;
-    keyRecord.lastUsed = new Date();
-    await keyRecord.save();
+    await ApiKey.findByIdAndUpdate(keyRecord._id, {
+      $inc: { usageCount: 1 },
+      lastUsed: new Date(),
+    });
 
+    // Attach the full API key record to request for use in controllers
     (req as any).apiKey = keyRecord;
     next();
   } catch (error) {

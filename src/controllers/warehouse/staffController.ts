@@ -2,15 +2,15 @@ import { Response } from 'express';
 import { AuthRequest } from '../../middleware/auth';
 import { User, IUser } from '../../models/User';
 import { Warehouse } from '../../models/Warehouse';
-import { successResponse, errorResponse, getPaginationData } from '../../utils/helpers';
+import { successResponse, errorResponse, getPaginationData, parseQueryParam } from '../../utils/helpers';
 import { PAGINATION, USER_ROLES } from '../../utils/constants';
 import { logger } from '../../utils/logger';
 import bcrypt from 'bcryptjs';
 
 export const getStaff = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const page = parseInt(req.query.page as string) || PAGINATION.DEFAULT_PAGE;
-    const limit = parseInt(req.query.limit as string) || PAGINATION.DEFAULT_LIMIT;
+    const page = parseQueryParam(req.query, 'page', PAGINATION.DEFAULT_PAGE);
+    const limit = parseQueryParam(req.query, 'limit', PAGINATION.DEFAULT_LIMIT);
     const skip = (page - 1) * limit;
 
     const filter: any = {

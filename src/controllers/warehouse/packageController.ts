@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../../middleware/auth';
 import { Package } from '../../models/Package';
 import { User } from '../../models/User';
-import { successResponse, errorResponse, getPaginationData } from '../../utils/helpers';
+import { successResponse, errorResponse, getPaginationData, parseQueryParam } from '../../utils/helpers';
 import { logger } from '../../utils/logger';
 import { TasokoService } from '../../services/tasokoService';
 
@@ -20,8 +20,8 @@ interface PackageRequest extends AuthRequest {
 // Search Packages (API SPEC)
 export const searchPackages = async (req: PackageRequest, res: Response): Promise<void> => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 50;
+    const page = parseQueryParam(req.query, 'page', 1);
+    const limit = parseQueryParam(req.query, 'limit', 50);
     const skip = (page - 1) * limit;
 
     const filter: any = {};

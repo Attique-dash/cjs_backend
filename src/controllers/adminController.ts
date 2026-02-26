@@ -4,7 +4,7 @@ import { User, IUser } from '../models/User';
 import { Package } from '../models/Package';
 import { Inventory } from '../models/Inventory';
 import { Warehouse } from '../models/Warehouse';
-import { successResponse, errorResponse, getPaginationData } from '../utils/helpers';
+import { successResponse, errorResponse, getPaginationData, parseQueryParam } from '../utils/helpers';
 import { PAGINATION } from '../utils/constants';
 import { logger } from '../utils/logger';
 
@@ -46,8 +46,8 @@ interface AdminRequest extends AuthRequest {
 // Get all users (customers + staff)
 export const getAllUsers = async (req: AdminRequest, res: Response): Promise<void> => {
   try {
-    const page = parseInt(req.query.page as string) || PAGINATION.DEFAULT_PAGE;
-    const limit = parseInt(req.query.limit as string) || PAGINATION.DEFAULT_LIMIT;
+    const page = parseQueryParam(req.query, 'page', PAGINATION.DEFAULT_PAGE);
+    const limit = parseQueryParam(req.query, 'limit', PAGINATION.DEFAULT_LIMIT);
     const skip = (page - 1) * limit;
 
     const filter: any = {};
@@ -89,8 +89,8 @@ export const getAllUsers = async (req: AdminRequest, res: Response): Promise<voi
 // Get all customers specifically
 export const getAllCustomers = async (req: AdminRequest, res: Response): Promise<void> => {
   try {
-    const page = parseInt(req.query.page as string) || PAGINATION.DEFAULT_PAGE;
-    const limit = parseInt(req.query.limit as string) || PAGINATION.DEFAULT_LIMIT;
+    const page = parseQueryParam(req.query, 'page', PAGINATION.DEFAULT_PAGE);
+    const limit = parseQueryParam(req.query, 'limit', PAGINATION.DEFAULT_LIMIT);
     const skip = (page - 1) * limit;
 
     const filter: any = { role: 'customer' };
@@ -126,8 +126,8 @@ export const getAllCustomers = async (req: AdminRequest, res: Response): Promise
 // Get all staff (warehouse) specifically
 export const getAllStaff = async (req: AdminRequest, res: Response): Promise<void> => {
   try {
-    const page = parseInt(req.query.page as string) || PAGINATION.DEFAULT_PAGE;
-    const limit = parseInt(req.query.limit as string) || PAGINATION.DEFAULT_LIMIT;
+    const page = parseQueryParam(req.query, 'page', PAGINATION.DEFAULT_PAGE);
+    const limit = parseQueryParam(req.query, 'limit', PAGINATION.DEFAULT_LIMIT);
     const skip = (page - 1) * limit;
 
     const filter: any = { role: 'warehouse' };
@@ -163,8 +163,8 @@ export const getAllStaff = async (req: AdminRequest, res: Response): Promise<voi
 // Get all packages with admin access
 export const getAllPackages = async (req: AdminRequest, res: Response): Promise<void> => {
   try {
-    const page = parseInt(req.query.page as string) || PAGINATION.DEFAULT_PAGE;
-    const limit = parseInt(req.query.limit as string) || PAGINATION.DEFAULT_LIMIT;
+    const page = parseQueryParam(req.query, 'page', PAGINATION.DEFAULT_PAGE);
+    const limit = parseQueryParam(req.query, 'limit', PAGINATION.DEFAULT_LIMIT);
     const skip = (page - 1) * limit;
 
     const filter: any = {};
@@ -205,8 +205,8 @@ export const getAllPackages = async (req: AdminRequest, res: Response): Promise<
 // Get all inventory with admin access
 export const getAllInventory = async (req: AdminRequest, res: Response): Promise<void> => {
   try {
-    const page = parseInt(req.query.page as string) || PAGINATION.DEFAULT_PAGE;
-    const limit = parseInt(req.query.limit as string) || PAGINATION.DEFAULT_LIMIT;
+    const page = parseQueryParam(req.query, 'page', PAGINATION.DEFAULT_PAGE);
+    const limit = parseQueryParam(req.query, 'limit', PAGINATION.DEFAULT_LIMIT);
     const skip = (page - 1) * limit;
 
     const filter: any = {};
@@ -460,8 +460,8 @@ export const addWarehouseStaff = async (req: AdminRequest, res: Response): Promi
 // Get all shipping addresses
 export const getAllShippingAddresses = async (req: AdminRequest, res: Response): Promise<void> => {
   try {
-    const page = parseInt(req.query.page as string) || PAGINATION.DEFAULT_PAGE;
-    const limit = parseInt(req.query.limit as string) || PAGINATION.DEFAULT_LIMIT;
+    const page = parseQueryParam(req.query, 'page', PAGINATION.DEFAULT_PAGE);
+    const limit = parseQueryParam(req.query, 'limit', PAGINATION.DEFAULT_LIMIT);
     const skip = (page - 1) * limit;
     const { type } = req.query;
 

@@ -88,7 +88,7 @@ router.use(authenticate);
  */
 // Get All Customers (API SPEC) - authenticateWarehouse already applied via router.use()
 router.get('/', 
-  customerController.getCustomers
+  asyncHandler(customerController.getCustomers)
 );
 
 /**
@@ -155,7 +155,7 @@ router.get('/',
  */
 // Get Customer Details by userCode (API SPEC) - authenticateWarehouse already applied via router.use()
 router.get('/:userCode', 
-  customerController.getCustomerByUserCode
+  asyncHandler(customerController.getCustomerByUserCode)
 );
 
 /**
@@ -212,7 +212,7 @@ router.get('/:userCode',
  */
 // Delete Customer (API SPEC) - authenticateWarehouse already applied via router.use()
 router.delete('/', 
-  customerController.deleteCustomer
+  asyncHandler(customerController.deleteCustomer)
 );
 
 export default router;

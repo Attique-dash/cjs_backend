@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authenticate, authorize, AuthRequest } from '../../middleware/auth';
 import { asyncHandler } from '../../middleware/errorHandler';
-import { KcdApiKey } from '../../models/KcdApiKey';
+import { ApiKey } from '../../models/ApiKey';
 
 const router = Router();
 
@@ -11,8 +11,13 @@ router.get('/get-kcd-key',
   authorize('admin'), 
   asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      // Get the actual API key value (include apiKey field)
-      const activeKey = await KcdApiKey.findOne({ isActive: true }).sort({ createdAt: -1 });
+      // Get the active API key but mask the actual key value
+      const activeKey = await ApiKey.findOne({ 
+        isActive: true,
+        courierCode: { $exists: true }
+      })
+        .select('-key')  // Exclude the actual API key
+        .sort({ createdAt: -1 });
       
       if (!activeKey) {
         res.status(404).json({
@@ -24,15 +29,16 @@ router.get('/get-kcd-key',
 
       res.status(200).json({
         success: true,
-        message: 'Active KCD API key retrieved',
+        message: 'Active KCD API key info retrieved (key value masked for security)',
         data: {
-          apiKey: activeKey.apiKey, // Include the actual key
+          apiKey: '***MASKED***', // Mask the actual key
           courierCode: activeKey.courierCode,
           createdAt: activeKey.createdAt,
           expiresAt: activeKey.expiresAt,
           usageCount: activeKey.usageCount,
           lastUsed: activeKey.lastUsed,
-          isActive: activeKey.isActive
+          isActive: activeKey.isActive,
+          note: 'API key value is masked for security. Use POST /api/admin/api-keys/kcd to generate a new key if you need the actual value.'
         }
       });
 
