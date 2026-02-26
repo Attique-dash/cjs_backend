@@ -35,8 +35,8 @@ export class apiKeyController {
         resolvedWarehouseId = warehouse._id.toString();
       }
 
-      // Generate API key with kcd_ prefix and proper length
-      const apiKey = `kcd_${crypto.randomBytes(24).toString('hex')}`;
+      // Generate API key without kcd prefix
+      const apiKey = crypto.randomBytes(32).toString('hex');
       
       const newApiKey = new ApiKey({
         key: apiKey,

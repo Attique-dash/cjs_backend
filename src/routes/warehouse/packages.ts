@@ -308,11 +308,6 @@ router.get('/:id',
  *       401:
  *         description: Unauthorized
  */
-router.post('/', 
-  validateAddPackage,
-  packageController.addPackage
-);
-
 router.post('/add', 
   validateAddPackage,
   packageController.addPackage
