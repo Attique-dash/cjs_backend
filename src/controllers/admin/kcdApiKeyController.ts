@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import crypto from 'crypto';
 import { ApiKey } from '../../models/ApiKey';
 import { AuthRequest } from '../../middleware/auth';
 import { generateApiKey } from '../../middleware/authKcd';
@@ -7,61 +6,37 @@ import { logger } from '../../utils/logger';
 
 // ─────────────────────────────────────────────────────────────
 // POST /api/admin/api-keys/kcd
-// Generates a new API key for KCD Logistics
-// The key is shown ONLY ONCE — copy it into KCD portal
+// Generates a NEW plain 48-char API key for KCD Logistics
+// ⚠️  Shown ONLY ONCE — copy it immediately into the KCD portal
 // ─────────────────────────────────────────────────────────────
 export const generateKCDApiKey = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const adminUser = req.user;
     if (!adminUser) {
-      logger.warn('Unauthorized attempt to generate API key', {
-        ip: req.ip,
-        userAgent: req.get('User-Agent')
-      });
-      res.status(401).json({
-        success: false,
-        message: 'Not authenticated'
-      });
+      res.status(401).json({ success: false, message: 'Not authenticated' });
       return;
     }
 
     const {
       courierCode = 'CLEAN',
-      expiresIn = 365, // days
+      expiresIn = 365,
       description = 'KCD Logistics Integration API Key'
     } = req.body;
 
     if (!courierCode || typeof courierCode !== 'string' || courierCode.trim().length === 0) {
-      res.status(400).json({
-        success: false,
-        message: 'Courier code is required and must be a non-empty string'
-      });
+      res.status(400).json({ success: false, message: 'Courier code is required' });
       return;
     }
 
-    if (expiresIn && (typeof expiresIn !== 'number' || expiresIn < 1 || expiresIn > 3650)) {
-      res.status(400).json({
-        success: false,
-        message: 'Expiration period must be a number between 1 and 3650 days'
-      });
-      return;
-    }
+    // Generate plain 48-char alphanumeric key — NO PREFIX
+    // KCD portal expects a plain token, not "kcd_live_xxx" or any other prefix
+    const rawApiKey = generateApiKey();
 
-    logger.info('Generating KCD API key', {
-      courierCode,
-      expiresIn,
-      description,
-      requestedBy: adminUser.email,
-      ip: req.ip
-    });
-
-    // Generate API key
-    const apiKey = generateApiKey();
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + expiresIn);
 
-    const kcdKey = await ApiKey.create({
-      key: apiKey,
+    const kcdKeyRecord = await ApiKey.create({
+      key: rawApiKey,               // ← stored as-is, no prefix
       name: `KCD ${courierCode.trim().toUpperCase()} Integration`,
       description: description?.trim() || 'KCD Logistics Integration API Key',
       courierCode: courierCode.trim().toUpperCase(),
@@ -72,39 +47,36 @@ export const generateKCDApiKey = async (req: AuthRequest, res: Response): Promis
       usageCount: 0
     });
 
-    logger.info(`KCD API key generated for ${courierCode}`, {
-      apiKeyId: kcdKey._id,
-      expiresAt: kcdKey.expiresAt,
+    logger.info(`KCD API key generated`, {
+      courierCode: kcdKeyRecord.courierCode,
+      keyId: kcdKeyRecord._id,
       createdBy: adminUser.email
     });
 
-    // ⚠️ Return the raw key NOW — this is the ONLY time it is shown
+    // ⚠️ Return the raw key ONCE ONLY
     res.status(201).json({
       success: true,
       message: '✅ KCD API key generated. Copy the key NOW — it will NOT be shown again.',
       data: {
-        apiKey: kcdKey.key,
-        courierCode: kcdKey.courierCode,
-        description: kcdKey.description,
-        expiresAt: kcdKey.expiresAt,
-        createdAt: kcdKey.createdAt,
+        apiKey: rawApiKey,   // plain 48-char token, no prefix — paste this directly into KCD portal
+        courierCode: kcdKeyRecord.courierCode,
+        description: kcdKeyRecord.description,
+        expiresAt: kcdKeyRecord.expiresAt,
+        createdAt: kcdKeyRecord.createdAt,
+        keyLength: rawApiKey.length,
+        note: 'Paste this key as-is into the KCD portal "API Access Token" field. Do NOT add "Bearer " or any prefix.',
         nextSteps: [
-          '1. Copy the API key above',
+          '1. Copy the apiKey value above (plain token, no prefix)',
           '2. Go to https://pack.kcdlogistics.com',
           '3. Admin → Couriers → CLEAN → Edit',
-          '4. Fill "API Access Token" field with the key above',
-          '5. Configure endpoints as shown below'
+          '4. Go to "Courier System API" tab',
+          '5. Paste the key into the "API Access Token" field',
+          '6. Save and test'
         ]
       }
     });
   } catch (error: any) {
-    logger.error('generateKCDApiKey error:', {
-      error: error.message,
-      stack: error.stack,
-      requestedBy: req.user?.email,
-      ip: req.ip,
-      body: req.body
-    });
+    logger.error('generateKCDApiKey error:', error.message);
     res.status(500).json({
       success: false,
       message: 'Failed to generate API key',
@@ -115,25 +87,17 @@ export const generateKCDApiKey = async (req: AuthRequest, res: Response): Promis
 
 // ─────────────────────────────────────────────────────────────
 // GET /api/admin/api-keys/list
-// Lists all KCD API keys (hides the actual key string)
+// Lists all KCD API keys (key value is NEVER returned here)
 // ─────────────────────────────────────────────────────────────
 export const listApiKeys = async (req: Request, res: Response): Promise<void> => {
   try {
-    logger.info('Listing API keys', {
-      requestedBy: req.ip,
-      userAgent: req.get('User-Agent')
-    });
-
-    const keys = await ApiKey.find({ 
-      courierCode: { $exists: true } // Only show KCD API keys
-    })
+    const keys = await ApiKey.find({ courierCode: { $exists: true } })
       .select('-key')   // NEVER return actual key in list
       .populate('createdBy', 'firstName lastName email')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
-      message: 'API keys retrieved successfully',
       data: {
         total: keys.length,
         active: keys.filter(k => k.isActive).length,
@@ -152,16 +116,8 @@ export const listApiKeys = async (req: Request, res: Response): Promise<void> =>
       }
     });
   } catch (error: any) {
-    logger.error('listApiKeys error:', {
-      error: error.message,
-      stack: error.stack,
-      requestedBy: req.ip
-    });
-    res.status(500).json({
-      success: false,
-      message: 'Failed to list API keys',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
+    logger.error('listApiKeys error:', error.message);
+    res.status(500).json({ success: false, message: 'Failed to list API keys' });
   }
 };
 
@@ -171,44 +127,16 @@ export const listApiKeys = async (req: Request, res: Response): Promise<void> =>
 export const deactivateApiKey = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { keyId } = req.params;
-    
-    if (!keyId || keyId.length !== 24) {
-      res.status(400).json({
-        success: false,
-        message: 'Valid key ID is required'
-      });
-      return;
-    }
-
-    logger.info('Attempting to deactivate API key', {
-      keyId,
-      requestedBy: req.user?.email,
-      ip: req.ip
-    });
-
     const key = await ApiKey.findByIdAndUpdate(
       keyId,
-      { 
-        isActive: false,
-        updatedAt: new Date()
-      },
+      { isActive: false },
       { new: true }
     ).select('-key');
 
     if (!key) {
-      logger.warn('API key not found for deactivation', { keyId });
-      res.status(404).json({
-        success: false,
-        message: 'API key not found'
-      });
+      res.status(404).json({ success: false, message: 'API key not found' });
       return;
     }
-
-    logger.info(`API key deactivated: ${key.courierCode}`, {
-      keyId: key._id,
-      deactivatedBy: req.user?.email,
-      deactivatedAt: new Date()
-    });
 
     res.status(200).json({
       success: true,
@@ -216,17 +144,7 @@ export const deactivateApiKey = async (req: AuthRequest, res: Response): Promise
       data: key
     });
   } catch (error: any) {
-    logger.error('deactivateApiKey error:', {
-      error: error.message,
-      stack: error.stack,
-      keyId: req.params.keyId,
-      requestedBy: req.user?.email
-    });
-    res.status(500).json({
-      success: false,
-      message: 'Failed to deactivate API key',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
+    res.status(500).json({ success: false, message: 'Failed to deactivate API key' });
   }
 };
 
@@ -236,62 +154,20 @@ export const deactivateApiKey = async (req: AuthRequest, res: Response): Promise
 export const activateApiKey = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { keyId } = req.params;
-    
-    if (!keyId || keyId.length !== 24) {
-      res.status(400).json({
-        success: false,
-        message: 'Valid key ID is required'
-      });
-      return;
-    }
-
-    logger.info('Attempting to activate API key', {
-      keyId,
-      requestedBy: req.user?.email,
-      ip: req.ip
-    });
-
     const key = await ApiKey.findByIdAndUpdate(
       keyId,
-      { 
-        isActive: true,
-        updatedAt: new Date()
-      },
+      { isActive: true },
       { new: true }
     ).select('-key');
 
     if (!key) {
-      logger.warn('API key not found for activation', { keyId });
-      res.status(404).json({
-        success: false,
-        message: 'API key not found'
-      });
+      res.status(404).json({ success: false, message: 'API key not found' });
       return;
     }
 
-    logger.info(`API key activated: ${key.courierCode}`, {
-      keyId: key._id,
-      activatedBy: req.user?.email,
-      activatedAt: new Date()
-    });
-
-    res.status(200).json({ 
-      success: true, 
-      message: 'API key reactivated successfully',
-      data: key 
-    });
+    res.status(200).json({ success: true, message: 'API key reactivated', data: key });
   } catch (error: any) {
-    logger.error('activateApiKey error:', {
-      error: error.message,
-      stack: error.stack,
-      keyId: req.params.keyId,
-      requestedBy: req.user?.email
-    });
-    res.status(500).json({
-      success: false,
-      message: 'Failed to activate API key',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
+    res.status(500).json({ success: false, message: 'Failed to activate API key' });
   }
 };
 
@@ -301,141 +177,77 @@ export const activateApiKey = async (req: AuthRequest, res: Response): Promise<v
 export const deleteApiKey = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { keyId } = req.params;
-    
-    if (!keyId || keyId.length !== 24) {
-      res.status(400).json({
-        success: false,
-        message: 'Valid key ID is required'
-      });
-      return;
-    }
-
-    logger.info('Attempting to delete API key', {
-      keyId,
-      requestedBy: req.user?.email,
-      ip: req.ip
-    });
-
     const key = await ApiKey.findByIdAndDelete(keyId);
 
     if (!key) {
-      logger.warn('API key not found for deletion', { keyId });
-      res.status(404).json({
-        success: false,
-        message: 'API key not found'
-      });
+      res.status(404).json({ success: false, message: 'API key not found' });
       return;
     }
 
-    logger.info(`API key deleted: ${key.courierCode}`, {
-      keyId: key._id,
-      deletedBy: req.user?.email,
-      deletedAt: new Date()
-    });
-
-    res.status(200).json({ 
-      success: true, 
-      message: 'API key permanently deleted successfully',
-      data: {
-        deletedKeyId: key._id,
-        courierCode: key.courierCode
-      }
+    res.status(200).json({
+      success: true,
+      message: 'API key permanently deleted',
+      data: { deletedKeyId: key._id, courierCode: key.courierCode }
     });
   } catch (error: any) {
-    logger.error('deleteApiKey error:', {
-      error: error.message,
-      stack: error.stack,
-      keyId: req.params.keyId,
-      requestedBy: req.user?.email
-    });
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete API key',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
+    res.status(500).json({ success: false, message: 'Failed to delete API key' });
   }
 };
 
 // ─────────────────────────────────────────────────────────────
-// GET /api/admin/api-keys/info
+// GET /api/admin/api-keys/kcd-info
 // Returns the exact URLs to paste into the KCD portal
 // ─────────────────────────────────────────────────────────────
 export const getKCDConnectionInfo = async (req: Request, res: Response): Promise<void> => {
   try {
-    // Fix for Vercel: ensure HTTPS protocol is used
+    // Build base URL (works on Vercel and locally)
     const proto = req.headers['x-forwarded-proto'] || req.protocol;
     const base = `${proto}://${req.get('host')}`;
-    
-    logger.info('Retrieving KCD connection info', {
-      requestedBy: req.ip,
-      userAgent: req.get('User-Agent'),
-      host: req.get('host')
-    });
 
-    const activeKeys = await ApiKey.find({ 
+    const activeKeys = await ApiKey.find({
       isActive: true,
-      courierCode: { $exists: true } 
+      courierCode: { $exists: true }
     }).select('-key').sort({ createdAt: -1 });
-
-    const info = {
-      hasActiveKey: activeKeys.length > 0,
-      activeKeyCount: activeKeys.length,
-      instruction: activeKeys.length === 0
-        ? '❌ No active key. Call POST /api/admin/api-keys/kcd to generate one.'
-        : '✅ Active key exists. Regenerate via POST /api/admin/api-keys/kcd if you need the value.',
-      // ── Paste these directly into the KCD portal "Courier System API" tab ──
-      kcdPortalConfiguration: {
-        portalUrl: 'https://pack.kcdlogistics.com/',
-        steps: [
-          'Login with: Username: CleanJShip, Password: CleanJ$h!p',
-          'Navigate to Admin → Couriers → CLEAN → Edit',
-          'Fill "Courier System API" tab with values below',
-          'Fill "Packing System API" tab with API token and these endpoints'
-        ],
-        apiToken: activeKeys.length > 0
-          ? '✅ Use the key from POST /api/admin/api-keys/kcd response'
-          : '❌ Generate a key first via POST /api/admin/api-keys/kcd',
-        endpoints: {
-          getCustomers:   `${base}/api/kcd/customers`,
-          addPackage:     `${base}/api/kcd/packages/add`,
-          updatePackage:  `${base}/api/kcd/packages/{trackingNumber}`,
-          deletePackage:  `${base}/api/kcd/packages/{trackingNumber}`,
-          updateManifest: `${base}/api/kcd/packages/{trackingNumber}/manifest`,
-          description: 'Copy the above 5 endpoints into KCD portal "Courier System API" tab'
-        }
-      },
-      createdKeys: activeKeys.map(k => ({
-        _id: k._id,
-        courierCode: k.courierCode,
-        createdAt: k.createdAt,
-        expiresAt: k.expiresAt,
-        usageCount: k.usageCount,
-        lastUsed: k.lastUsed
-      }))
-    };
-
-    logger.info('KCD connection info retrieved', {
-      activeKeyCount: activeKeys.length,
-      hasActiveKey: activeKeys.length > 0,
-      requestedBy: req.ip
-    });
 
     res.status(200).json({
       success: true,
-      message: 'KCD connection information retrieved successfully',
-      data: info
+      data: {
+        hasActiveKey: activeKeys.length > 0,
+        activeKeyCount: activeKeys.length,
+        instruction: activeKeys.length === 0
+          ? '❌ No active key. Generate one via POST /api/admin/api-keys/kcd'
+          : '✅ Active key exists. Get the value by generating a new one via POST /api/admin/api-keys/kcd',
+        kcdPortalConfiguration: {
+          portalUrl: 'https://pack.kcdlogistics.com/',
+          loginCredentials: { username: 'CleanJShip', password: 'CleanJ$h!p' },
+          steps: [
+            'Login → Admin → Couriers → CLEAN → Edit',
+            'Go to "Courier System API" tab',
+            'Paste plain API token (48 chars, no prefix) into "API Access Token" field',
+            'Fill in the endpoint URLs below',
+            'Click Save, then test each endpoint'
+          ],
+          apiTokenNote: 'Use the plain key from POST /api/admin/api-keys/kcd — NO "Bearer" prefix, NO "kcd_live_" prefix',
+          endpoints: {
+            getCustomers:   `${base}/api/kcd/customers`,
+            addPackage:     `${base}/api/kcd/packages/add`,
+            updatePackage:  `${base}/api/kcd/packages/{trackingNumber}`,
+            deletePackage:  `${base}/api/kcd/packages/{trackingNumber}/delete`,
+            updateManifest: `${base}/api/kcd/packages/{trackingNumber}/manifest`,
+          }
+        },
+        activeKeys: activeKeys.map(k => ({
+          _id: k._id,
+          courierCode: k.courierCode,
+          createdAt: k.createdAt,
+          expiresAt: k.expiresAt,
+          usageCount: k.usageCount,
+          lastUsed: k.lastUsed
+        }))
+      }
     });
   } catch (error: any) {
-    logger.error('getKCDConnectionInfo error:', {
-      error: error.message,
-      stack: error.stack,
-      requestedBy: req.ip,
-      host: req.get('host')
-    });
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get KCD connection info',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
+    logger.error('getKCDConnectionInfo error:', error.message);
+    res.status(500).json({ success: false, message: 'Failed to get KCD connection info' });
   }
 };

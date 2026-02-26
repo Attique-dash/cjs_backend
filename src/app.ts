@@ -8,7 +8,6 @@ import { logger } from './utils/logger';
 import routes from './routes';
 import { specs } from './config/swagger';
 import { xssProtection, mongoSanitize } from './middleware/security';
-import { logKcdApiCall } from './middleware/authKcd';
 import path from 'path';
 
 const app: Application = express();
