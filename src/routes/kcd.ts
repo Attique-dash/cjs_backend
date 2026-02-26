@@ -41,19 +41,16 @@ router.get('/customers',
 
       const total = await User.countDocuments(query);
 
-      res.json({
-        success: true,
-        data: customers.map(customer => ({
-          UserCode: customer.userCode,
-          FirstName: customer.firstName,
-          LastName: customer.lastName,
-          Email: customer.email,
-          Phone: customer.phone || '',
-          Branch: 'Down Town', // Default branch as expected by portal
-          MailboxNumber: customer.mailboxNumber,
-          Address: customer.address
-        }))
-      });
+      res.json(customers.map(customer => ({
+        UserCode: customer.userCode,
+        FirstName: customer.firstName,
+        LastName: customer.lastName,
+        Email: customer.email,
+        Phone: customer.phone || '',
+        Branch: 'Down Town',
+        MailboxNumber: customer.mailboxNumber,
+        Address: customer.address
+      })));
     } catch (error: any) {
       console.error('Get customers error:', error);
       res.status(500).json({

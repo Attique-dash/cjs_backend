@@ -85,7 +85,7 @@ export const authKcdApiKey = async (
 
     const kcdKey = await ApiKey.findOne({
       key: apiKey,
-      courierCode: { $exists: true, $ne: null }
+      isActive: true
     });
 
     if (!kcdKey) {
