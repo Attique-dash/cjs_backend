@@ -87,20 +87,12 @@ export const authKcdApiKey = async (
       return;
     }
 
-    // Find API key in database - try plain token first, then with prefix for backward compatibility
+    // Find API key in database - only exact match
     const trimmedKey = apiKey.trim();
     let kcdKeyRecord = await ApiKey.findOne({
       key: trimmedKey,
       courierCode: { $exists: true } // Ensure it's a KCD API key
     }).populate('createdBy');
-
-    // If not found, try with kcd_live_ prefix for backward compatibility
-    if (!kcdKeyRecord && !trimmedKey.startsWith('kcd_live_')) {
-      kcdKeyRecord = await ApiKey.findOne({
-        key: `kcd_live_${trimmedKey}`,
-        courierCode: { $exists: true }
-      }).populate('createdBy');
-    }
 
     // If key doesn't exist at all
     if (!kcdKeyRecord) {
