@@ -5,6 +5,7 @@ import { User } from '../../models/User';
 import { successResponse, errorResponse, getPaginationData, parseQueryParam } from '../../utils/helpers';
 import { logger } from '../../utils/logger';
 import { TasokoService } from '../../services/tasokoService';
+import { EmailService } from '../../services/emailService';
 
 interface PackageRequest extends AuthRequest {
   query: {
@@ -256,6 +257,27 @@ export const addPackage = async (req: PackageRequest, res: Response): Promise<vo
     const newPackage = await Package.create(packageData);
     await newPackage.populate('userId', 'firstName lastName email phone mailboxNumber');
 
+    // Send email notification to customer about package arrival
+    if (user.email) {
+      try {
+        await EmailService.sendPackagePreAlert(
+          user.email,
+          {
+            trackingNumber: newPackage.trackingNumber,
+            shipper: newPackage.shipper || 'Unknown',
+            weight: newPackage.weight || 0,
+            mailboxNumber: user.mailboxNumber || 'N/A',
+            customerName: `${user.firstName} ${user.lastName}`,
+            receivedDate: newPackage.dateReceived || new Date()
+          }
+        );
+        logger.info(`Package pre-alert email sent to ${user.email} for ${newPackage.trackingNumber}`);
+      } catch (emailError) {
+        logger.warn(`Failed to send package pre-alert email to ${user.email}:`, emailError);
+        // Don't fail the request if email fails
+      }
+    }
+
     // Send to Tasoko - check return value and log errors
     const tasokoResult = await TasokoService.sendPackageCreated(newPackage);
     if (!tasokoResult) {
@@ -315,6 +337,24 @@ export const updatePackage = async (req: PackageRequest, res: Response): Promise
 
     // Send update to Tasoko
     await TasokoService.sendPackageUpdated(updatedPackage);
+
+    // Send email notification for status update
+    if (updatedPackage.userId && (updatedPackage.userId as any).email) {
+      try {
+        const customer = updatedPackage.userId as any;
+        const statusText = updatedPackage.status.replace(/_/g, ' ').toUpperCase();
+        await EmailService.sendPackageUpdateEmail(
+          customer.email,
+          updatedPackage.trackingNumber,
+          statusText,
+          updatedPackage.warehouseLocation || 'Main Warehouse'
+        );
+        logger.info(`Package status update email sent to ${customer.email} for ${updatedPackage.trackingNumber}`);
+      } catch (emailError) {
+        logger.warn(`Failed to send package status update email:`, emailError);
+        // Don't fail the request if email fails
+      }
+    }
 
     successResponse(res, {
       package: updatedPackage,

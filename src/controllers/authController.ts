@@ -23,6 +23,7 @@ interface RegisterRequest {
     password: string;
     phone?: string;
     role?: string;
+    branch?: string;
     address?: {
       street: string;
       city: string;
@@ -189,7 +190,7 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
 // Customer & Staff Registration (no admin registration)
 export const register = async (req: RegisterRequest, res: Response): Promise<void> => {
   try {
-    const { firstName, lastName, email, password, phone, role, address } = req.body;
+    const { firstName, lastName, email, password, phone, role, branch, address } = req.body;
 
     // Validate required fields
     if (!firstName || !lastName || !email || !password) {
@@ -224,6 +225,7 @@ export const register = async (req: RegisterRequest, res: Response): Promise<voi
       passwordHash: password, // Will be hashed by pre-save hook
       phone,
       role: userRole,
+      branch,
       address,
       userCode: cleanCode,
       mailboxNumber: cleanCode, // Same as userCode
@@ -264,6 +266,7 @@ export const register = async (req: RegisterRequest, res: Response): Promise<voi
         email: newUser.email,
         phone: newUser.phone,
         role: newUser.role,
+        branch: newUser.branch,
         address: newUser.address,
         userCode: newUser.userCode,
         mailboxNumber: newUser.mailboxNumber,

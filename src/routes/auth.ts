@@ -23,6 +23,7 @@ const router = Router();
  *             password: "SecurePassword123!"
  *             phone: "+1234567890"
  *             role: "customer"
+ *             branch: "Down Town"
  *             address:
  *               street: "123 Main St"
  *               city: "New York"

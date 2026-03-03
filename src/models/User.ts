@@ -307,6 +307,7 @@ userSchema.methods.getPublicProfile = function() {
     email: this.email,
     phone: this.phone,
     role: this.role,
+    branch: this.branch,
     address: this.address,
     mailboxNumber: this.mailboxNumber,
     accountStatus: this.accountStatus,

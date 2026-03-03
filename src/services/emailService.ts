@@ -51,6 +51,89 @@ export class EmailService {
     }
   }
 
+  static async sendPackagePreAlert(to: string, packageData: {
+    trackingNumber: string;
+    shipper: string;
+    weight: number;
+    airwayBill?: string;
+    mailboxNumber: string;
+    customerName: string;
+    receivedDate: Date;
+  }): Promise<boolean> {
+    try {
+      const subject = `New Package Received - ${packageData.trackingNumber}`;
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <h2 style="color: #333; margin: 0 0 15px 0;">📦 New Package Received</h2>
+            <p style="margin: 0; color: #666;">A new package has been received at our warehouse and is ready for processing.</p>
+          </div>
+          
+          <div style="background: white; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px;">
+            <h3 style="color: #333; margin: 0 0 15px 0;">Package Information</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #555;">Tracking Number:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333; font-weight: bold;">${packageData.trackingNumber}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #555;">Shipper:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333;">${packageData.shipper}</td>
+              </tr>
+              ${packageData.airwayBill ? `
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #555;">Airway Bill:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333;">${packageData.airwayBill}</td>
+              </tr>
+              ` : ''}
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #555;">Weight:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333;">${packageData.weight} kg</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #555;">Mailbox #:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333; font-weight: bold;">${packageData.mailboxNumber}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #555;">Status:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333;">
+                  <span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">AT OVERSEAS WAREHOUSE</span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; font-weight: bold; color: #555;">Received Date:</td>
+                <td style="padding: 8px 0; color: #333;">${packageData.receivedDate.toLocaleDateString()} at ${packageData.receivedDate.toLocaleTimeString()}</td>
+              </tr>
+            </table>
+          </div>
+          
+          <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 15px; margin: 20px 0;">
+            <h4 style="color: #856404; margin: 0 0 10px 0;">📋 Important Reminder</h4>
+            <ul style="margin: 0; padding-left: 20px; color: #856404;">
+              <li>Jamaica Customs requires an invoice for all packages. Packages without invoices will result in delays.</li>
+              <li>Always send us a pre-alert with an attached invoice for all incoming packages. This will reduce delays.</li>
+              <li>Always make sure your Mailbox # ${packageData.mailboxNumber} is included in the shipping address. This will reduce delays.</li>
+            </ul>
+          </div>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="#" style="background: #dc3545; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Provide Invoice(s) Now</a>
+          </div>
+          
+          <div style="text-align: center; color: #666; font-size: 12px; margin-top: 30px;">
+            <p>This is an automated notification from our warehouse management system.</p>
+            <p>If you have any questions, please contact our support team.</p>
+          </div>
+        </div>
+      `;
+
+      return await this.sendEmail(to, subject, html);
+    } catch (error) {
+      logger.error('Error sending package pre-alert email:', error);
+      return false;
+    }
+  }
+
   static async sendDeliveryConfirmationEmail(to: string, trackingNumber: string, deliveredAt: Date): Promise<boolean> {
     try {
       const subject = `Package Delivered: ${trackingNumber}`;

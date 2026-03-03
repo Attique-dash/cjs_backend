@@ -61,7 +61,11 @@ export const getCustomers = async (req: CustomerRequest, res: Response): Promise
         userCode: customer.userCode,
         firstName: customer.firstName,
         lastName: customer.lastName,
-        email: customer.email
+        email: customer.email,
+        phone: customer.phone || '',
+        branch: customer.branch || 'Down Town',
+        mailboxNumber: customer.mailboxNumber || customer.userCode,
+        address: customer.address || {}
       };
     });
 
@@ -97,8 +101,9 @@ export const getCustomerByUserCode = async (req: CustomerRequest, res: Response)
         lastName: customer.lastName,
         email: customer.email,
         phone: customer.phone || '',
+        branch: customer.branch || 'Down Town',
+        mailboxNumber: customer.mailboxNumber || customer.userCode,
         address: customer.address || {},
-        mailboxNumber: customer.mailboxNumber || '',
         accountStatus: customer.accountStatus,
         emailVerified: customer.emailVerified,
         createdAt: customer.createdAt
