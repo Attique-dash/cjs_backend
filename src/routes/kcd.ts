@@ -34,7 +34,7 @@ router.get('/customers',
       }
 
       const customers = await User.find(query)
-        .select('userCode firstName lastName email phone address mailboxNumber shippingAddresses')
+        .select('userCode firstName lastName email phone address mailboxNumber branch shippingAddresses')
         .limit(Number(limit))
         .skip(Number(offset))
         .sort({ createdAt: -1 });
@@ -47,7 +47,7 @@ router.get('/customers',
         LastName: customer.lastName,
         Email: customer.email,
         Phone: customer.phone || '',
-        Branch: 'Down Town',
+        Branch: customer.branch || 'Down Town',
         MailboxNumber: customer.mailboxNumber,
         Address: customer.address
       })));
@@ -166,6 +166,7 @@ router.post('/packages/add',
         dateReceived: entryDate ? new Date(entryDate) : new Date(),
         source: 'kcd-packing-system',
         courierCode: authenticatedCourierCode,
+        branch: customer.branch || 'Down Town',
         processedAt: new Date()
       };
 
@@ -202,7 +203,7 @@ router.post('/packages/add',
           EntryStaff: newPackage.entryStaff || '',
           EntryDate: newPackage.dateReceived?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
           EntryDateTime: newPackage.entryDateTime || newPackage.dateReceived?.toISOString() || new Date().toISOString(),
-          Branch: newPackage.branch || 'Down Town',
+          Branch: customer.branch || 'Down Town',
           Claimed: newPackage.claimed || false,
           APIToken: authenticatedCourierCode,
           ShowControls: newPackage.showControls || false,
