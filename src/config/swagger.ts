@@ -76,6 +76,7 @@ const options = {
             password: { type: 'string', minLength: 8, example: 'password123' },
             phone: { type: 'string', example: '+1234567890' },
             role: { type: 'string', enum: ['admin', 'customer', 'warehouse'], example: 'customer' },
+            branch: { type: 'string', example: 'Down Town' },
             mailboxNumber: { type: 'string', example: 'CLEAN-0001' },
             accountStatus: { type: 'string', enum: ['pending', 'active', 'inactive'], example: 'active' },
             emailVerified: { type: 'boolean', example: true },
@@ -109,6 +110,7 @@ const options = {
             password: { type: 'string', minLength: 8, example: 'Password123!' },
             phone: { type: 'string', example: '+1234567890' },
             role: { type: 'string', enum: ['customer', 'warehouse'], example: 'customer' },
+            branch: { type: 'string', example: 'Down Town' },
             address: {
               type: 'object',
               properties: {
@@ -379,6 +381,7 @@ const options = {
                   firstName: 'John', lastName: 'Doe',
                   email: 'john@example.com', password: 'Password123!',
                   phone: '+1234567890', role: 'customer',
+                  branch: 'Down Town',
                   address: {
                     street: '123 Main St',
                     city: 'New York',
