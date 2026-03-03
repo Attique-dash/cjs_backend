@@ -14,17 +14,22 @@ export const generateMailboxCode = async (warehouseId?: string): Promise<string>
     // Get company abbreviation from warehouse or use default
     let abbreviation = 'CLEAN'; // Default for Clean J Shipping
     
-    if (warehouseId) {
-      const warehouse = await Warehouse.findById(warehouseId);
-      if (warehouse && warehouse.companyAbbreviation) {
-        abbreviation = warehouse.companyAbbreviation;
+    try {
+      if (warehouseId) {
+        const warehouse = await Warehouse.findById(warehouseId);
+        if (warehouse && warehouse.companyAbbreviation) {
+          abbreviation = warehouse.companyAbbreviation;
+        }
+      } else {
+        // Get default warehouse
+        const defaultWarehouse = await Warehouse.findOne({ isDefault: true });
+        if (defaultWarehouse && defaultWarehouse.companyAbbreviation) {
+          abbreviation = defaultWarehouse.companyAbbreviation;
+        }
       }
-    } else {
-      // Get default warehouse
-      const defaultWarehouse = await Warehouse.findOne({ isDefault: true });
-      if (defaultWarehouse && defaultWarehouse.companyAbbreviation) {
-        abbreviation = defaultWarehouse.companyAbbreviation;
-      }
+    } catch (warehouseError) {
+      logger.warn('Error fetching warehouse, using default abbreviation:', warehouseError);
+      // Continue with default abbreviation
     }
 
     // Find all users with this abbreviation and get the highest number

@@ -198,6 +198,12 @@ export const register = async (req: RegisterRequest, res: Response): Promise<voi
       return;
     }
 
+    // Validate password length
+    if (password.length < 8) {
+      errorResponse(res, 'Password must be at least 8 characters long', 400);
+      return;
+    }
+
     // Restrict roles - no admin registration allowed
     const allowedRoles = ['customer', 'warehouse'];
     const userRole = role || 'customer';
@@ -238,17 +244,21 @@ export const register = async (req: RegisterRequest, res: Response): Promise<voi
       // Fetch warehouse addresses
       const warehouse = await Warehouse.findOne({ isActive: true, isDefault: true });
       
-      await EmailService.sendWelcomeWithShippingInfo(
-        newUser.email,
-        newUser.firstName,
-        newUser.userCode,
-        newUser.address,
-        cleanCode, // Using cleanCode as courier code for now
-        warehouse?.airAddress,  // pass warehouse air address
-        warehouse?.seaAddress,  // pass warehouse sea address
-        warehouse?.chinaAddress // pass warehouse china address
-      );
-      logger.info(`Welcome email sent to: ${newUser.email}`);
+      if (warehouse) {
+        await EmailService.sendWelcomeWithShippingInfo(
+          newUser.email,
+          newUser.firstName,
+          newUser.userCode,
+          newUser.address,
+          cleanCode, // Using cleanCode as courier code for now
+          warehouse.airAddress,  // pass warehouse air address
+          warehouse.seaAddress,  // pass warehouse sea address
+          warehouse.chinaAddress // pass warehouse china address
+        );
+        logger.info(`Welcome email sent to: ${newUser.email}`);
+      } else {
+        logger.warn('No default warehouse found, skipping welcome email');
+      }
     } catch (emailError) {
       logger.error('Failed to send welcome email:', emailError);
       // Continue with registration even if email fails
@@ -278,6 +288,31 @@ export const register = async (req: RegisterRequest, res: Response): Promise<voi
 
   } catch (error) {
     logger.error('Registration error:', error);
-    errorResponse(res, 'Registration failed');
+    
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes('duplicate key') || error.message.includes('E11000')) {
+        errorResponse(res, 'Email already registered', 409);
+        return;
+      }
+      
+      if (error.message.includes('validation') || error.message.includes('Password must be at least')) {
+        errorResponse(res, `Validation error: ${error.message}`, 400);
+        return;
+      }
+      
+      if (error.message.includes('database') || error.message.includes('connection')) {
+        errorResponse(res, 'Database connection error. Please try again later', 503);
+        return;
+      }
+      
+      if (error.name === 'ValidationError') {
+        const validationErrors = Object.values((error as any).errors).map((err: any) => err.message).join(', ');
+        errorResponse(res, `Validation error: ${validationErrors}`, 400);
+        return;
+      }
+    }
+    
+    errorResponse(res, 'Registration failed. Please try again later', 500);
   }
 };
