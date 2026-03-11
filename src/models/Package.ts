@@ -100,9 +100,10 @@ export interface IPackage extends Document {
   history?: Array<{ status: string; at: Date; note: string }>;
   
   // Tasoko API fields
-  controlNumber?: string;        // EP0096513 format
-  courierId?: string;           // UUID from Tasoko
-  collectionId?: string;        // Collection reference
+  PackageID?: string;           // UUID from Tasoko
+  CourierID?: string;          // UUID from Tasoko
+  TrackingNumber?: string;     // Alternative tracking number field
+  ControlNumber?: string;       // EP0096513 format
   entryStaff?: string;         // Staff who entered package
   entryDate?: Date;            // Entry date (date only)
   entryDateTime?: Date;        // Full timestamp
@@ -124,6 +125,37 @@ export interface IPackage extends Document {
   coloadIndicator?: string;   // Co-load indicator
   packageStatus?: number;     // 0-4 status code
   packagePayments?: string;   // Payment reference
+  
+  // Additional Tasoko fields from JSON example
+  FirstName?: string;         // First name from Tasoko
+  LastName?: string;          // Last name from Tasoko
+  UserCode?: string;         // User code from Tasoko (alternative field)
+  Weight?: number;           // Weight from Tasoko (alternative field)
+  Shipper?: string;          // Shipper from Tasoko (alternative field)
+  EntryStaff?: string;        // Entry staff from Tasoko
+  EntryDate?: Date;          // Entry date from Tasoko
+  EntryDateTime?: Date;       // Entry datetime from Tasoko
+  Branch?: string;            // Branch from Tasoko
+  APIToken?: string;         // API token from Tasoko
+  ShowControls?: boolean;    // Show controls from Tasoko
+  ManifestCode?: string;     // Manifest code from Tasoko
+  CollectionCode?: string;   // Collection code from Tasoko
+  Description?: string;      // Description from Tasoko
+  HSCode?: string;          // HS code from Tasoko
+  Unknown?: boolean;         // Unknown flag from Tasoko
+  AIProcessed?: boolean;     // AI processed from Tasoko
+  OriginalHouseNumber?: string; // Original house number from Tasoko
+  Cubes?: number;           // Cubes from Tasoko
+  Length?: number;          // Length from Tasoko
+  Width?: number;           // Width from Tasoko
+  Height?: number;          // Height from Tasoko
+  Pieces?: number;          // Pieces from Tasoko
+  Discrepancy?: boolean;    // Discrepancy from Tasoko
+  DiscrepancyDescription?: string; // Discrepancy description from Tasoko
+  ServiceTypeID?: string;   // Service type ID from Tasoko
+  HazmatCodeID?: string;    // Hazmat code ID from Tasoko
+  Coloaded?: boolean;       // Coloaded from Tasoko
+  ColoadIndicator?: string; // Coload indicator from Tasoko
   
   createdAt: Date;
   updatedAt: Date;
@@ -470,84 +502,165 @@ const packageSchema = new Schema<IPackage>({
   }],
   
   // Tasoko API fields
-  controlNumber: {
+  PackageID: {
+    type: String,
+    trim: true
+  },
+  CourierID: {
+    type: String,
+    trim: true
+  },
+  TrackingNumber: {
+    type: String,
+    trim: true,
+    uppercase: true,
+    maxlength: [50, 'Tracking number cannot exceed 50 characters']
+  },
+  ControlNumber: {
     type: String,
     trim: true,
     uppercase: true,
     maxlength: [50, 'Control number cannot exceed 50 characters']
   },
-  courierId: {
+  FirstName: {
     type: String,
-    trim: true
+    trim: true,
+    maxlength: [100, 'First name cannot exceed 100 characters']
   },
-  collectionId: {
+  LastName: {
     type: String,
-    trim: true
+    trim: true,
+    maxlength: [100, 'Last name cannot exceed 100 characters']
   },
-  entryStaff: {
+  UserCode: {
+    type: String,
+    trim: true,
+    uppercase: true,
+    maxlength: [50, 'User code cannot exceed 50 characters']
+  },
+  Weight: {
+    type: Number,
+    min: [0, 'Weight must be positive']
+  },
+  Shipper: {
+    type: String,
+    trim: true,
+    maxlength: [100, 'Shipper cannot exceed 100 characters']
+  },
+  EntryStaff: {
     type: String,
     trim: true,
     maxlength: [100, 'Entry staff name cannot exceed 100 characters']
   },
-  entryDate: {
+  EntryDate: {
     type: Date
   },
-  entryDateTime: {
+  EntryDateTime: {
     type: Date
   },
-  branch: {
+  Branch: {
     type: String,
     trim: true,
     maxlength: [100, 'Branch name cannot exceed 100 characters']
   },
-  claimed: {
-    type: Boolean,
-    default: false
-  },
-  apiToken: {
+  APIToken: {
     type: String,
-    trim: true
+    trim: true,
+    maxlength: [500, 'API token cannot exceed 500 characters']
   },
-  showControls: {
+  ShowControls: {
     type: Boolean,
     default: false
   },
-  hsCode: {
+  ManifestCode: {
+    type: String,
+    trim: true,
+    maxlength: [100, 'Manifest code cannot exceed 100 characters']
+  },
+  CollectionCode: {
+    type: String,
+    trim: true,
+    maxlength: [100, 'Collection code cannot exceed 100 characters']
+  },
+  Description: {
+    type: String,
+    trim: true,
+    maxlength: [500, 'Description cannot exceed 500 characters']
+  },
+  HSCode: {
     type: String,
     trim: true,
     maxlength: [20, 'HS Code cannot exceed 20 characters']
   },
-  unknown: {
+  Unknown: {
     type: Boolean,
     default: false
   },
-  aiProcessed: {
+  AIProcessed: {
     type: Boolean,
     default: false
   },
-  originalHouseNumber: {
+  OriginalHouseNumber: {
     type: String,
-    trim: true
+    trim: true,
+    maxlength: [100, 'Original house number cannot exceed 100 characters']
   },
-  cubes: {
+  Cubes: {
     type: Number,
     min: [0, 'Cubes must be positive'],
     default: 0
   },
-  pieces: {
+  Length: {
+    type: Number,
+    min: [0, 'Length must be positive'],
+    default: 0
+  },
+  Width: {
+    type: Number,
+    min: [0, 'Width must be positive'],
+    default: 0
+  },
+  Height: {
+    type: Number,
+    min: [0, 'Height must be positive'],
+    default: 0
+  },
+  Pieces: {
     type: Number,
     min: [1, 'Pieces must be at least 1'],
     default: 1
   },
-  discrepancy: {
+  Discrepancy: {
     type: Boolean,
     default: false
   },
-  discrepancyDescription: {
+  DiscrepancyDescription: {
     type: String,
     trim: true,
     maxlength: [500, 'Discrepancy description cannot exceed 500 characters']
   },
+  ServiceTypeID: {
+    type: String,
+    trim: true,
+    maxlength: [100, 'Service type ID cannot exceed 100 characters']
+  },
+  HazmatCodeID: {
+    type: String,
+    trim: true,
+    maxlength: [100, 'Hazmat code ID cannot exceed 100 characters']
+  },
+  Coloaded: {
+    type: Boolean,
+    default: false
+  },
+  ColoadIndicator: {
+    type: String,
+    trim: true,
+    maxlength: [50, 'Coload indicator cannot exceed 50 characters']
+  },
+  
+  // Legacy Tasoko fields (for backward compatibility)
+  // Note: Most legacy fields are now handled by the main Tasoko API fields above
   serviceTypeId: {
     type: String,
     trim: true,
@@ -616,7 +729,7 @@ packageSchema.index({ source: 1, createdAt: -1 });
 export const Package = mongoose.model<IPackage>('Package', packageSchema);
 
 // Virtual for volume
-packageSchema.virtual('volume').get(function() {
+packageSchema.virtual('volume').get(function(this: IPackage) {
   if (!this.dimensions) return 0;
   return this.dimensions.length * this.dimensions.width * this.dimensions.height;
 });

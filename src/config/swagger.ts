@@ -125,8 +125,9 @@ const options = {
         },
         Package: {
           type: 'object',
-          required: ['trackingNumber', 'userCode', 'weight'],
+          required: ['UserCode', 'Weight'],
           properties: {
+            // Legacy fields
             trackingNumber: { type: 'string', example: 'TRK123456789' },
             userCode: { type: 'string', example: 'CLEAN-0001' },
             weight: { type: 'number', example: 5.5 },
@@ -193,7 +194,41 @@ const options = {
             customerCode: { type: 'string', example: 'CLEAN-0001' },
             source: { type: 'string', enum: ['web', 'kcd-packing-system', 'api'], example: 'web' },
             
-            // Tasoko API fields
+            // Tasoko API fields (REQUIRED for KCD integration)
+            PackageID: { type: 'string', description: 'UUID from Tasoko system', example: '83383d43-a368-4fc1-a216-9e54e8ae7227' },
+            CourierID: { type: 'string', description: 'UUID from Tasoko system', example: '15fff123-f237-4571-b92a-ae69427d7a56' },
+            TrackingNumber: { type: 'string', description: 'Alternative tracking number field', example: 'DROPOFF-20240902-225642-547' },
+            ControlNumber: { type: 'string', description: 'EP0096513 format control number', example: 'EP0096513' },
+            FirstName: { type: 'string', description: 'First name from Tasoko', example: 'Courtney' },
+            LastName: { type: 'string', description: 'Last name from Tasoko', example: 'Patterson' },
+            UserCode: { type: 'string', description: 'User code from Tasoko (REQUIRED)', example: 'EPXUUYE' },
+            Weight: { type: 'number', description: 'Weight from Tasoko (REQUIRED)', example: 1 },
+            Shipper: { type: 'string', description: 'Shipper from Tasoko', example: 'Amazon' },
+            EntryStaff: { type: 'string', description: 'Staff who entered package', example: 'warehouse_staff_01' },
+            EntryDate: { type: 'string', format: 'date', description: 'Entry date (date only)', example: '2024-09-02' },
+            EntryDateTime: { type: 'string', format: 'date-time', description: 'Full timestamp', example: '2024-09-02T21:55:51.1806146-05:00' },
+            Branch: { type: 'string', description: 'Branch name', example: 'Down Town' },
+            Claimed: { type: 'boolean', description: 'Package claimed status', example: false },
+            APIToken: { type: 'string', description: 'API token reference', example: '<API-TOKEN>' },
+            ShowControls: { type: 'boolean', description: 'UI control flag', example: false },
+            ManifestCode: { type: 'string', description: 'Manifest code from Tasoko', example: '' },
+            CollectionCode: { type: 'string', description: 'Collection code from Tasoko', example: '' },
+            Description: { type: 'string', description: 'Description from Tasoko', example: 'Merchandise from Amazon' },
+            HSCode: { type: 'string', description: 'HS tariff code', example: '' },
+            Unknown: { type: 'boolean', description: 'Unknown package flag', example: false },
+            AIProcessed: { type: 'boolean', description: 'AI processing status', example: false },
+            OriginalHouseNumber: { type: 'string', description: 'Original tracking', example: '' },
+            Cubes: { type: 'number', description: 'Volume in cubic units', example: 0 },
+            Length: { type: 'number', description: 'Length from Tasoko', example: 0 },
+            Width: { type: 'number', description: 'Width from Tasoko', example: 0 },
+            Height: { type: 'number', description: 'Height from Tasoko', example: 0 },
+            Pieces: { type: 'number', description: 'Number of pieces', example: 1 },
+            Discrepancy: { type: 'boolean', description: 'Discrepancy flag', example: false },
+            DiscrepancyDescription: { type: 'string', description: 'Discrepancy description', example: '' },
+            ServiceTypeID: { type: 'string', description: 'Service type ID from Tasoko spec', example: '' },
+            HazmatCodeID: { type: 'string', description: 'Hazmat code ID from Tasoko spec', example: '' },
+            Coloaded: { type: 'boolean', description: 'Co-loading flag', example: false },
+            ColoadIndicator: { type: 'string', description: 'Co-load indicator', example: '' },
             controlNumber: { type: 'string', example: 'EP0096513' },
             entryStaff: { type: 'string', example: 'warehouse_staff_01' },
             branch: { type: 'string', example: 'Down Town' },
@@ -1423,6 +1458,76 @@ const options = {
           }
         }
       },
+      '/api/kcd/packages': {
+        get: {
+          summary: 'Get All Packages for KCD Courier',
+          description: 'Retrieve all packages for authenticated courier with filtering and pagination. Authenticate using X-KCD-API-Key header with your plain API key.',
+          tags: ['KCD API'],
+          security: [{ kcdApiKeyAuth: [] }],
+          parameters: [
+            { in: 'query', name: 'limit', schema: { type: 'integer', default: 50 }, description: 'Number of packages to return' },
+            { in: 'query', name: 'offset', schema: { type: 'integer', default: 0 }, description: 'Number of packages to skip' },
+            { in: 'query', name: 'status', schema: { type: 'string', enum: ['received', 'in_transit', 'out_for_delivery', 'delivered', 'pending', 'customs', 'returned', 'at_warehouse', 'processing', 'ready_for_pickup'] }, description: 'Filter by package status' },
+            { in: 'query', name: 'userCode', schema: { type: 'string' }, description: 'Filter by user code' },
+            { in: 'query', name: 'startDate', schema: { type: 'string', format: 'date' }, description: 'Filter by start date (YYYY-MM-DD)' },
+            { in: 'query', name: 'endDate', schema: { type: 'string', format: 'date' }, description: 'Filter by end date (YYYY-MM-DD)' }
+          ],
+          responses: {
+            200: {
+              description: 'Packages retrieved successfully',
+              content: {
+                'application/json': {
+                  example: {
+                    success: true,
+                    message: 'Packages retrieved successfully',
+                    data: {
+                      packages: [
+                        {
+                          PackageID: '69b1441f215c9cac726d7cb2',
+                          CourierID: '69b1441f215c9cac726d7cb2',
+                          TrackingNumber: 'TRK123456789012345',
+                          ControlNumber: 'EP0096513',
+                          UserCode: 'CLEAN-0007',
+                          Weight: 2.5,
+                          Shipper: 'Amazon',
+                          EntryDate: '2024-03-11',
+                          EntryDateTime: '2024-03-11T10:29:51.706Z',
+                          Branch: 'Down Town',
+                          Status: 'received',
+                          Description: 'Electronics package',
+                          Length: 30,
+                          Width: 20,
+                          Height: 15,
+                          Pieces: 1,
+                          Cubes: 0,
+                          customer: {
+                            id: '69a7644e2a309f17a7ff835d',
+                            firstName: 'Veniece',
+                            lastName: 'Davis',
+                            email: 'veniecedavis18@gmail.com',
+                            phone: '18764623318',
+                            mailboxNumber: 'CLEAN-0007'
+                          },
+                          createdAt: '2024-03-11T10:29:51.722Z',
+                          updatedAt: '2024-03-11T10:29:51.722Z'
+                        }
+                      ],
+                      pagination: {
+                        total: 1,
+                        limit: 50,
+                        offset: 0,
+                        hasMore: false
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            401: { description: 'Unauthorized - Invalid API key', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            500: { description: 'Internal server error', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        }
+      },
       '/api/kcd/packages/add': {
         post: {
           summary: 'Add Package for KCD Courier',
@@ -1501,6 +1606,59 @@ const options = {
       // FIX: Changed path param from {id} (MongoDB ObjectId) to {trackingNumber}
       // This matches what KCD portal sends and what was discussed with the client
       '/api/kcd/packages/{trackingNumber}': {
+        get: {
+          summary: 'Get Package for KCD Courier',
+          description: 'Retrieve a specific package by tracking number. Authenticate using X-KCD-API-Key header with your plain API key.',
+          tags: ['KCD API'],
+          security: [{ kcdApiKeyAuth: [] }],
+          parameters: [
+            { in: 'path', name: 'trackingNumber', required: true, schema: { type: 'string' }, description: 'Package tracking number (e.g. TRK123456789)', example: 'TRK123456789' }
+          ],
+          responses: {
+            200: {
+              description: 'Package retrieved successfully',
+              content: {
+                'application/json': {
+                  example: {
+                    success: true,
+                    message: 'Package retrieved successfully',
+                    data: {
+                      trackingNumber: 'TRK123456789012345',
+                      userCode: 'CLEAN-0007',
+                      customer: {
+                        id: '69a7644e2a309f17a7ff835d',
+                        firstName: 'Veniece',
+                        lastName: 'Davis',
+                        email: 'veniecedavis18@gmail.com',
+                        phone: '18764623318',
+                        mailboxNumber: 'CLEAN-0007'
+                      },
+                      status: 'received',
+                      weight: 2.5,
+                      dimensions: { length: 30, width: 20, height: 15, unit: 'cm' },
+                      warehouseLocation: 'Main Warehouse',
+                      dateReceived: '2024-03-11T10:29:51.706Z',
+                      trackingHistory: [
+                        {
+                          timestamp: '2024-03-11T10:29:51.706Z',
+                          status: 'received',
+                          location: 'Warehouse',
+                          description: 'Package received from CLEAN'
+                        }
+                      ],
+                      createdAt: '2024-03-11T10:29:51.722Z',
+                      updatedAt: '2024-03-11T10:29:51.722Z'
+                    }
+                  }
+                }
+              }
+            },
+            401: { description: 'Unauthorized - Invalid API key', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            403: { description: 'Forbidden - Package does not belong to this courier', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            404: { description: 'Package not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+            500: { description: 'Internal server error', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+          }
+        },
         post: {
           summary: 'Update Package for KCD Courier',
           description: 'Update an existing package by tracking number. Authenticate using the X-KCD-API-Key header with your plain API key. All fields are optional — only include what you want to change.',

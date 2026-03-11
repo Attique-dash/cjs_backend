@@ -161,6 +161,41 @@ export const getPackageById = async (req: AuthRequest, res: Response): Promise<v
 export const addPackage = async (req: PackageRequest, res: Response): Promise<void> => {
   try {
     const {
+      // New Tasoko API fields
+      PackageID,
+      CourierID,
+      TrackingNumber,
+      ControlNumber,
+      FirstName,
+      LastName,
+      UserCode,
+      Weight,
+      Shipper,
+      EntryStaff,
+      EntryDate,
+      EntryDateTime,
+      Branch,
+      APIToken,
+      ShowControls,
+      ManifestCode,
+      CollectionCode,
+      Description,
+      HSCode,
+      Unknown,
+      AIProcessed,
+      OriginalHouseNumber,
+      Cubes,
+      Length,
+      Width,
+      Height,
+      Pieces,
+      Discrepancy,
+      DiscrepancyDescription,
+      ServiceTypeID,
+      HazmatCodeID,
+      Coloaded,
+      ColoadIndicator,
+      // Legacy fields for backward compatibility
       trackingNumber,
       userCode,
       weight,
@@ -186,34 +221,50 @@ export const addPackage = async (req: PackageRequest, res: Response): Promise<vo
       customsStatus
     } = req.body;
 
+    // Use new Tasoko fields if provided, otherwise fall back to legacy fields
+    const finalUserCode = UserCode || userCode;
+    const finalWeight = Weight || weight || 0;
+    const finalShipper = Shipper || shipper || 'Amazon';
+    const finalDescription = Description || description || '';
+    const finalTrackingNumber = TrackingNumber || trackingNumber;
+    const finalFirstName = FirstName || '';
+    const finalLastName = LastName || '';
+    const finalControlNumber = ControlNumber || '';
+    const finalEntryDate = EntryDate || entryDate;
+    const finalEntryDateTime = EntryDateTime || new Date();
+    const finalBranch = Branch || 'Main Warehouse';
+
     // Check if tracking number already exists
-    const existingPackage = await Package.findOne({ trackingNumber });
-    if (existingPackage) {
-      errorResponse(res, 'A package with this tracking number already exists', 409);
-      return;
+    if (finalTrackingNumber) {
+      const existingPackage = await Package.findOne({ 
+        $or: [
+          { trackingNumber: finalTrackingNumber },
+          { TrackingNumber: finalTrackingNumber }
+        ]
+      });
+      if (existingPackage) {
+        errorResponse(res, 'A package with this tracking number already exists', 409);
+        return;
+      }
     }
 
-    // Set default shipper to Amazon if not provided
-    // No whitelist restriction - allow any shipper name
-    const finalShipper = shipper || 'Amazon';
-
     // Find user by userCode
-    const user = await User.findOne({ userCode: userCode.toUpperCase() });
+    const user = await User.findOne({ userCode: finalUserCode.toUpperCase() });
     if (!user) {
-      errorResponse(res, `User not found with provided userCode: ${userCode}. Please verify the user code or contact support.`, 400);
+      errorResponse(res, `User not found with provided userCode: ${finalUserCode}. Please verify the user code or contact support.`, 400);
       return;
     }
 
     // Validate that user is a customer
     if (user.role !== 'customer') {
-      errorResponse(res, `User ${userCode} is not a customer. User role: ${user.role}`, 400);
+      errorResponse(res, `User ${finalUserCode} is not a customer. User role: ${user.role}`, 400);
       return;
     }
 
     // Generate tracking number if not provided (must match /^[A-Z0-9]{10,20}$/)
     // Format: TRK + timestamp (13 digits) + random (4 chars) = 20 chars total
     // Ensure it's always uppercase and within 10-20 character limit
-    const finalTrackingNumber = trackingNumber || (() => {
+    const generatedTrackingNumber = finalTrackingNumber || (() => {
       const timestamp = Date.now().toString(); // 13 digits
       const random = Math.random().toString(36).substring(2, 6).toUpperCase(); // 4 uppercase chars
       const generated = `TRK${timestamp}${random}`;
@@ -221,18 +272,62 @@ export const addPackage = async (req: PackageRequest, res: Response): Promise<vo
       return generated.substring(0, 20).toUpperCase();
     })();
 
+    // Create dimensions object if individual dimensions are provided
+    const finalDimensions = dimensions || {
+      length: Length || 0,
+      width: Width || 0,
+      height: Height || 0,
+      unit: 'cm'
+    };
+
     const packageData = {
-      trackingNumber: finalTrackingNumber,
-      userCode: userCode.toUpperCase(),
+      // Core Tasoko API fields
+      PackageID: PackageID || '',
+      CourierID: CourierID || '',
+      TrackingNumber: generatedTrackingNumber,
+      ControlNumber: finalControlNumber,
+      FirstName: finalFirstName,
+      LastName: finalLastName,
+      UserCode: finalUserCode.toUpperCase(),
+      Weight: finalWeight,
+      Shipper: finalShipper,
+      EntryStaff: EntryStaff || '',
+      EntryDate: finalEntryDate ? new Date(finalEntryDate) : new Date(),
+      EntryDateTime: finalEntryDateTime ? new Date(finalEntryDateTime) : new Date(),
+      Branch: finalBranch,
+      APIToken: APIToken || '<API-TOKEN>',
+      ShowControls: ShowControls || false,
+      ManifestCode: ManifestCode || '',
+      CollectionCode: CollectionCode || '',
+      Description: finalDescription,
+      HSCode: HSCode || '',
+      Unknown: Unknown || false,
+      AIProcessed: AIProcessed || false,
+      OriginalHouseNumber: OriginalHouseNumber || '',
+      Cubes: Cubes || 0,
+      Length: Length || 0,
+      Width: Width || 0,
+      Height: Height || 0,
+      Pieces: Pieces || 1,
+      Discrepancy: Discrepancy || false,
+      DiscrepancyDescription: DiscrepancyDescription || '',
+      ServiceTypeID: ServiceTypeID || '',
+      HazmatCodeID: HazmatCodeID || '',
+      Coloaded: Coloaded || false,
+      ColoadIndicator: ColoadIndicator || '',
+      
+      // Legacy fields for backward compatibility
+      trackingNumber: generatedTrackingNumber,
+      userCode: finalUserCode.toUpperCase(),
       userId: user._id,
-      weight: weight || 0,
+      weight: finalWeight,
       shipper: finalShipper,
-      description: description || '',
+      description: finalDescription,
       itemDescription: itemDescription || '',
       serviceMode,
       status,
-      dimensions: dimensions || { length: 0, width: 0, height: 0, unit: 'cm' },
-      senderName: senderName || finalShipper,
+      dimensions: finalDimensions,
+      senderName: senderName || finalFirstName || finalShipper,
       senderEmail: senderEmail || '',
       senderPhone: senderPhone || '',
       senderAddress: senderAddress || '',
@@ -251,7 +346,7 @@ export const addPackage = async (req: PackageRequest, res: Response): Promise<vo
       requiresSignature: requiresSignature || false,
       customsRequired: customsRequired || false,
       customsStatus: customsStatus || 'not_required',
-      dateReceived: entryDate ? new Date(entryDate) : new Date()
+      dateReceived: finalEntryDate ? new Date(finalEntryDate) : new Date()
     };
 
     const newPackage = await Package.create(packageData);

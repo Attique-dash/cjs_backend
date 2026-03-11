@@ -11,6 +11,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:kcd": "ts-node scripts/test-kcd-endpoints.ts",
+    "test:kcd-simple": "ts-node scripts/test-kcd-simple.ts",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "seed": "ts-node scripts/safe-seed.ts",

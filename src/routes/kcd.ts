@@ -192,9 +192,9 @@ router.post('/packages/add',
           PackageID: newPackage._id.toString(),
           CourierID: newPackage._id.toString(),
           ManifestID: newPackage.manifestId?.toString() || '',
-          CollectionID: newPackage.collectionId || '',
+          CollectionID: newPackage.CollectionCode || '',
           TrackingNumber: newPackage.trackingNumber,
-          ControlNumber: newPackage.controlNumber || `EP${Math.random().toString().slice(2, 10)}`,
+          ControlNumber: newPackage.ControlNumber || `EP${Math.random().toString().slice(2, 10)}`,
           FirstName: newPackage.recipient?.name?.split(' ')[0] || customer.firstName,
           LastName: newPackage.recipient?.name?.split(' ')[1] || customer.lastName,
           UserCode: newPackage.userCode,
@@ -208,7 +208,7 @@ router.post('/packages/add',
           APIToken: authenticatedCourierCode,
           ShowControls: newPackage.showControls || false,
           ManifestCode: newPackage.manifestId?.toString() || '',
-          CollectionCode: newPackage.collectionId || '',
+          CollectionCode: newPackage.CollectionCode || '',
           Description: newPackage.description || '',
           HSCode: newPackage.hsCode || '',
           Unknown: newPackage.unknown || false,
@@ -232,6 +232,90 @@ router.post('/packages/add',
       res.status(500).json({
         success: false,
         message: 'Failed to add package',
+        error: error.message
+      });
+    }
+  }
+);
+
+// ─────────────────────────────────────────────────────────────
+// GET /api/kcd/packages
+// Get all packages for courier
+// ─────────────────────────────────────────────────────────────
+router.get('/packages',
+  authKcdApiKey,
+  async (req: AuthenticatedKcdRequest, res: Response): Promise<void> => {
+    try {
+      const { 
+        limit = 50, 
+        offset = 0, 
+        status,
+        userCode,
+        startDate,
+        endDate 
+      } = req.query as any;
+      
+      const authenticatedCourierCode = req.courierCode;
+
+      // Build query
+      const query: any = { courierCode: authenticatedCourierCode };
+      
+      // Add filters
+      if (status) query.status = status;
+      if (userCode) query.userCode = userCode.toUpperCase();
+      if (startDate || endDate) {
+        query.dateReceived = {};
+        if (startDate) query.dateReceived.$gte = new Date(startDate as string);
+        if (endDate) query.dateReceived.$lte = new Date(endDate as string);
+      }
+
+      const packages = await Package.find(query)
+        .populate('userId', 'userCode firstName lastName email phone mailboxNumber')
+        .limit(Number(limit))
+        .skip(Number(offset))
+        .sort({ dateReceived: -1 });
+
+      const total = await Package.countDocuments(query);
+
+      res.json({
+        success: true,
+        message: 'Packages retrieved successfully',
+        data: {
+          packages: packages.map(pkg => ({
+            PackageID: pkg._id.toString(),
+            CourierID: pkg._id.toString(),
+            TrackingNumber: pkg.trackingNumber,
+            ControlNumber: pkg.ControlNumber || '',
+            UserCode: pkg.userCode,
+            Weight: pkg.weight,
+            Shipper: pkg.shipper || '',
+            EntryDate: pkg.dateReceived?.toISOString().split('T')[0] || '',
+            EntryDateTime: pkg.dateReceived?.toISOString() || '',
+            Branch: pkg.branch || 'Down Town',
+            Status: pkg.status,
+            Description: pkg.description || '',
+            Length: pkg.dimensions?.length || 0,
+            Width: pkg.dimensions?.width || 0,
+            Height: pkg.dimensions?.height || 0,
+            Pieces: pkg.pieces || 1,
+            Cubes: pkg.cubes || 0,
+            customer: pkg.userId,
+            createdAt: pkg.createdAt,
+            updatedAt: pkg.updatedAt
+          })),
+          pagination: {
+            total,
+            limit: Number(limit),
+            offset: Number(offset),
+            hasMore: (Number(offset) + Number(limit)) < total
+          }
+        }
+      });
+    } catch (error: any) {
+      console.error('Get packages error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get packages',
         error: error.message
       });
     }
