@@ -257,8 +257,14 @@ router.get('/packages',
       
       const authenticatedCourierCode = req.courierCode;
 
-      // Build query
-      const query: any = { courierCode: authenticatedCourierCode };
+      // Build query - include both KCD packages and admin packages
+      const query: any = { 
+        $or: [
+          { courierCode: authenticatedCourierCode },
+          { courierCode: 'ADMIN' },
+          { courierCode: { $exists: false } }
+        ]
+      };
       
       // Add filters
       if (status) query.status = status;
@@ -347,8 +353,10 @@ router.post('/packages/:trackingNumber',
         return;
       }
 
-      // Verify the package belongs to the authenticated courier
-      if (packageDoc.courierCode && packageDoc.courierCode !== authenticatedCourierCode) {
+      // Verify the package belongs to the authenticated courier or is admin package
+      if (packageDoc.courierCode && 
+          packageDoc.courierCode !== authenticatedCourierCode && 
+          packageDoc.courierCode !== 'ADMIN') {
         res.status(403).json({
           success: false,
           message: 'Access denied: Package does not belong to this courier'
@@ -441,8 +449,10 @@ router.get('/packages/:trackingNumber',
         return;
       }
 
-      // Verify package belongs to authenticated courier
-      if (packageDoc.courierCode && packageDoc.courierCode !== authenticatedCourierCode) {
+      // Verify package belongs to authenticated courier or is admin package
+      if (packageDoc.courierCode && 
+          packageDoc.courierCode !== authenticatedCourierCode && 
+          packageDoc.courierCode !== 'ADMIN') {
         res.status(403).json({
           success: false,
           message: 'Access denied: Package does not belong to this courier'
@@ -546,7 +556,8 @@ router.post('/packages/:trackingNumber/delete',
       }
 
       // Verify the package belongs to the authenticated courier
-      if (packageDoc.courierCode !== authenticatedCourierCode) {
+      if (packageDoc.courierCode !== authenticatedCourierCode &&
+          packageDoc.courierCode !== 'ADMIN') {
         res.status(403).json({
           success: false,
           message: 'Access denied: Package does not belong to this courier'
@@ -697,7 +708,8 @@ router.post('/packages/:trackingNumber/manifest',
       }
 
       // Verify the package belongs to the authenticated courier
-      if (packageDoc.courierCode !== authenticatedCourierCode) {
+      if (packageDoc.courierCode !== authenticatedCourierCode &&
+          packageDoc.courierCode !== 'ADMIN') {
         res.status(403).json({
           success: false,
           message: 'Access denied: Package does not belong to this courier'
