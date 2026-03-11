@@ -26,6 +26,69 @@ interface AdminRequest extends AuthRequest {
     id?: string;
   };
   body: {
+    // Tasoko API fields
+    PackageID?: string;
+    CourierID?: string;
+    TrackingNumber?: string;
+    ControlNumber?: string;
+    FirstName?: string;
+    LastName?: string;
+    UserCode?: string;
+    Weight?: number;
+    Shipper?: string;
+    EntryStaff?: string;
+    EntryDate?: string;
+    EntryDateTime?: string;
+    Branch?: string;
+    Claimed?: boolean;
+    APIToken?: string;
+    ShowControls?: boolean;
+    ManifestCode?: string;
+    CollectionCode?: string;
+    Description?: string;
+    HSCode?: string;
+    Unknown?: boolean;
+    AIProcessed?: boolean;
+    OriginalHouseNumber?: string;
+    Cubes?: number;
+    Length?: number;
+    Width?: number;
+    Height?: number;
+    Pieces?: number;
+    Discrepancy?: boolean;
+    DiscrepancyDescription?: string;
+    ServiceTypeID?: string;
+    HazmatCodeID?: string;
+    Coloaded?: boolean;
+    ColoadIndicator?: string;
+    
+    // Legacy fields for backward compatibility
+    trackingNumber?: string;
+    userCode?: string;
+    weight?: number;
+    shipper?: string;
+    description?: string;
+    itemDescription?: string;
+    serviceMode?: string;
+    status?: string;
+    dimensions?: any;
+    senderName?: string;
+    senderEmail?: string;
+    senderPhone?: string;
+    senderAddress?: string;
+    senderCountry?: string;
+    recipient?: any;
+    itemValue?: number;
+    specialInstructions?: string;
+    isFragile?: boolean;
+    isHazardous?: boolean;
+    requiresSignature?: boolean;
+    customsRequired?: boolean;
+    customsStatus?: string;
+    entryDate?: string;
+    userId?: string;
+    
+    // User management fields
     address?: any;
     role?: string;
     accountStatus?: string;
@@ -38,7 +101,6 @@ interface AdminRequest extends AuthRequest {
     assignedWarehouse?: string;
     permissions?: string[];
     name?: string;
-    description?: string;
     warehouseId?: string;
   };
 }
@@ -850,5 +912,232 @@ export const deletePackage = async (req: AdminRequest, res: Response): Promise<v
   } catch (error) {
     logger.error('Error deleting package:', error);
     errorResponse(res, 'Failed to delete package');
+  }
+};
+
+// Add package (admin only) - same as KCD add package
+export const addPackage = async (req: AdminRequest, res: Response): Promise<void> => {
+  try {
+    const {
+      // Tasoko API fields (same as KCD)
+      PackageID,
+      CourierID,
+      TrackingNumber,
+      ControlNumber,
+      FirstName,
+      LastName,
+      UserCode,
+      Weight,
+      Shipper,
+      EntryStaff,
+      EntryDate,
+      EntryDateTime,
+      Branch,
+      Claimed,
+      APIToken,
+      ShowControls,
+      ManifestCode,
+      CollectionCode,
+      Description,
+      HSCode,
+      Unknown,
+      AIProcessed,
+      OriginalHouseNumber,
+      Cubes,
+      Length,
+      Width,
+      Height,
+      Pieces,
+      Discrepancy,
+      DiscrepancyDescription,
+      ServiceTypeID,
+      HazmatCodeID,
+      Coloaded,
+      ColoadIndicator,
+      
+      // Legacy fields for backward compatibility
+      trackingNumber,
+      userCode,
+      weight,
+      shipper,
+      description,
+      itemDescription,
+      serviceMode = 'local',
+      status = 'received',
+      dimensions,
+      senderName,
+      senderEmail,
+      senderPhone,
+      senderAddress,
+      senderCountry,
+      recipient,
+      itemValue,
+      specialInstructions,
+      isFragile,
+      isHazardous,
+      requiresSignature,
+      customsRequired,
+      customsStatus,
+      entryDate,
+      userId
+    } = req.body;
+
+    // Find customer by UserCode (support both UserCode and userCode)
+    const customerCode = UserCode || userCode;
+    if (!customerCode) {
+      errorResponse(res, 'UserCode is required', 400);
+      return;
+    }
+
+    const customer = await User.findOne({ 
+      userCode: customerCode.toUpperCase(), 
+      role: 'customer' 
+    });
+
+    if (!customer) {
+      errorResponse(res, 'Customer not found with provided UserCode', 404);
+      return;
+    }
+
+    // Generate tracking number if not provided
+    const finalTrackingNumber = TrackingNumber || trackingNumber || (() => {
+      const timestamp = Date.now().toString();
+      const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+      const generated = `TRK${timestamp}${random}`;
+      return generated.substring(0, 20).toUpperCase();
+    })();
+
+    // Check if tracking number already exists
+    const existingPackage = await Package.findOne({ trackingNumber: finalTrackingNumber });
+    if (existingPackage) {
+      errorResponse(res, 'Package with this tracking number already exists', 409);
+      return;
+    }
+
+    // Create package with complete admin fields (same as KCD)
+    const packageData: any = {
+      // Tasoko API fields
+      PackageID,
+      CourierID,
+      TrackingNumber: finalTrackingNumber,
+      ControlNumber: ControlNumber || `EP${Math.random().toString().slice(2, 10)}`,
+      FirstName,
+      LastName,
+      UserCode: customerCode,
+      Weight: Weight || 0,
+      Shipper: Shipper || 'Amazon',
+      EntryStaff: EntryStaff || '',
+      EntryDate: EntryDate ? new Date(EntryDate) : new Date(),
+      EntryDateTime: EntryDateTime || new Date(),
+      Branch: Branch || customer.branch || 'Down Town',
+      Claimed: Claimed || false,
+      APIToken: APIToken || 'ADMIN',
+      ShowControls: ShowControls || false,
+      ManifestCode: ManifestCode || '',
+      CollectionCode: CollectionCode || '',
+      Description: Description || '',
+      HSCode: HSCode || '',
+      Unknown: Unknown || false,
+      AIProcessed: AIProcessed || false,
+      OriginalHouseNumber: OriginalHouseNumber || '',
+      Cubes: Cubes || 0,
+      Length: Length || 0,
+      Width: Width || 0,
+      Height: Height || 0,
+      Pieces: Pieces || 1,
+      Discrepancy: Discrepancy || false,
+      DiscrepancyDescription: DiscrepancyDescription || '',
+      ServiceTypeID: ServiceTypeID || '',
+      HazmatCodeID: HazmatCodeID || '',
+      Coloaded: Coloaded || false,
+      ColoadIndicator: ColoadIndicator || '',
+      
+      // Legacy fields
+      trackingNumber: finalTrackingNumber,
+      userCode: customerCode,
+      userId: userId || customer._id,
+      weight: Weight || 0,
+      shipper: Shipper || 'Amazon',
+      description: Description || '',
+      itemDescription: itemDescription || '',
+      serviceMode: serviceMode || 'local',
+      status: status || 'received',
+      dimensions: dimensions || { length: 0, width: 0, height: 0, unit: 'cm' },
+      senderName: senderName || Shipper || 'Amazon',
+      senderEmail: senderEmail || '',
+      senderPhone: senderPhone || '',
+      senderAddress: senderAddress || '',
+      senderCountry: senderCountry || '',
+      recipient: recipient || {
+        name: `${customer.firstName} ${customer.lastName}`,
+        email: customer.email,
+        phone: customer.phone || '',
+        shippingId: customer.userCode,
+        address: customer.address?.street || ''
+      },
+      totalAmount: itemValue || 0,
+      specialInstructions: specialInstructions || '',
+      isFragile: isFragile || false,
+      isHazardous: isHazardous || false,
+      requiresSignature: requiresSignature || false,
+      customsRequired: customsRequired || false,
+      customsStatus: customsStatus || 'not_required',
+      dateReceived: entryDate ? new Date(entryDate) : new Date(),
+      source: 'web',
+      courierCode: 'ADMIN',
+      branch: customer.branch || 'Down Town',
+      processedAt: new Date()
+    };
+
+    const newPackage = await Package.create(packageData);
+    await newPackage.populate('userId', 'firstName lastName email phone mailboxNumber');
+
+    // Add to tracking history
+    const historyEntry = {
+      timestamp: new Date(),
+      status: status || 'received',
+      location: 'Warehouse',
+      description: `Package received by admin`
+    };
+    
+    newPackage.trackingHistory = newPackage.trackingHistory || [];
+    newPackage.trackingHistory.push(historyEntry);
+    await newPackage.save();
+
+    logger.info(`Admin added package: ${newPackage.trackingNumber}`);
+
+    successResponse(res, {
+      message: 'Package added successfully',
+      data: {
+        package: {
+          // Return both legacy and Tasoko fields
+          trackingNumber: newPackage.trackingNumber,
+          userCode: newPackage.userCode,
+          PackageID: newPackage.PackageID || newPackage._id.toString(),
+          CourierID: newPackage.CourierID || newPackage._id.toString(),
+          TrackingNumber: newPackage.TrackingNumber,
+          ControlNumber: newPackage.ControlNumber,
+          UserCode: newPackage.UserCode,
+          Weight: newPackage.Weight,
+          Shipper: newPackage.Shipper,
+          EntryDate: newPackage.EntryDate?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
+          EntryDateTime: newPackage.EntryDateTime || newPackage.dateReceived?.toISOString() || new Date().toISOString(),
+          Branch: newPackage.Branch,
+          Status: newPackage.status,
+          Description: newPackage.Description,
+          Length: newPackage.Length,
+          Width: newPackage.Width,
+          Height: newPackage.Height,
+          Pieces: newPackage.Pieces,
+          Cubes: newPackage.Cubes,
+          customer: newPackage.userId,
+          createdAt: newPackage.createdAt,
+          updatedAt: newPackage.updatedAt
+        }
+      }
+    });
+  } catch (error: any) {
+    logger.error('Error adding package:', error);
+    errorResponse(res, 'Failed to add package', 500);
   }
 };

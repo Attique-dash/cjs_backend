@@ -412,6 +412,349 @@ router.delete('/packages/:id',
 
 /**
  * @swagger
+ * /api/admin/packages:
+ *   post:
+ *     summary: Add Package (Admin)
+ *     description: Add a new package to the warehouse system. Supports both Tasoko API fields and legacy fields. Requires admin privileges.
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: trackingNumber
+ *         schema:
+ *           type: string
+ *         description: Package tracking number (optional - will be auto-generated if not provided)
+ *       - in: query
+ *         name: userCode
+ *         schema:
+ *           type: string
+ *         description: Customer user code (required if TrackingNumber not provided)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               // Tasoko API fields
+ *               PackageID:
+ *                 type: string
+ *                 description: UUID from Tasoko system
+ *                 example: "83383d43-a368-4fc1-a216-9e54e8ae7227"
+ *               CourierID:
+ *                 type: string
+ *                 description: UUID from Tasoko system
+ *                 example: "15fff123-f237-4571-b92a-ae69427d7a56"
+ *               TrackingNumber:
+ *                 type: string
+ *                 description: Alternative tracking number field
+ *                 example: "DROPOFF-20240902-225642-547"
+ *               ControlNumber:
+ *                 type: string
+ *                 description: EP0096513 format control number
+ *                 example: "EP0096513"
+ *               FirstName:
+ *                 type: string
+ *                 description: First name from Tasoko
+ *                 example: "Courtney"
+ *               LastName:
+ *                 type: string
+ *                 description: Last name from Tasoko
+ *                 example: "Patterson"
+ *               UserCode:
+ *                 type: string
+ *                 description: User code from Tasoko (REQUIRED)
+ *                 example: "EPXUUYE"
+ *               Weight:
+ *                 type: number
+ *                 description: Weight from Tasoko (REQUIRED)
+ *                 example: 1
+ *               Shipper:
+ *                 type: string
+ *                 description: Shipper from Tasoko
+ *                 example: "Amazon"
+ *               EntryStaff:
+ *                 type: string
+ *                 description: Staff who entered package
+ *                 example: "warehouse_staff_01"
+ *               EntryDate:
+ *                 type: string
+ *                 format: date
+ *                 description: Entry date (date only)
+ *                 example: "2024-09-02"
+ *               EntryDateTime:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Full timestamp
+ *                 example: "2024-09-02T21:55:51.1806146-05:00"
+ *               Branch:
+ *                 type: string
+ *                 description: Branch name
+ *                 example: "Down Town"
+ *               Claimed:
+ *                 type: boolean
+ *                 description: Package claimed status
+ *                 example: false
+ *               APIToken:
+ *                 type: string
+ *                 description: API token reference
+ *                 example: "<API-TOKEN>"
+ *               ShowControls:
+ *                 type: boolean
+ *                 description: UI control flag
+ *                 example: false
+ *               ManifestCode:
+ *                 type: string
+ *                 description: Manifest code from Tasoko
+ *                 example: ""
+ *               CollectionCode:
+ *                 type: string
+ *                 description: Collection code from Tasoko
+ *                 example: ""
+ *               Description:
+ *                 type: string
+ *                 description: Description from Tasoko
+ *                 example: "Merchandise from Amazon"
+ *               HSCode:
+ *                 type: string
+ *                 description: HS tariff code
+ *                 example: ""
+ *               Unknown:
+ *                 type: boolean
+ *                 description: Unknown package flag
+ *                 example: false
+ *               AIProcessed:
+ *                 type: boolean
+ *                 description: AI processing status
+ *                 example: false
+ *               OriginalHouseNumber:
+ *                 type: string
+ *                 description: Original tracking
+ *                 example: ""
+ *               Cubes:
+ *                 type: number
+ *                 description: Volume in cubic units
+ *                 example: 0
+ *               Length:
+ *                 type: number
+ *                 description: Length from Tasoko
+ *                 example: 0
+ *               Width:
+ *                 type: number
+ *                 description: Width from Tasoko
+ *                 example: 0
+ *               Height:
+ *                 type: number
+ *                 description: Height from Tasoko
+ *                 example: 0
+ *               Pieces:
+ *                 type: number
+ *                 description: Number of pieces
+ *                 example: 1
+ *               Discrepancy:
+ *                 type: boolean
+ *                 description: Discrepancy flag
+ *                 example: false
+ *               DiscrepancyDescription:
+ *                 type: string
+ *                 description: Discrepancy description
+ *                 example: ""
+ *               ServiceTypeID:
+ *                 type: string
+ *                 description: Service type ID from Tasoko spec
+ *                 example: ""
+ *               HazmatCodeID:
+ *                 type: string
+ *                 description: Hazmat code ID from Tasoko spec
+ *                 example: ""
+ *               Coloaded:
+ *                 type: boolean
+ *                 description: Co-loading flag
+ *                 example: false
+ *               ColoadIndicator:
+ *                 type: string
+ *                 description: Co-load indicator
+ *                 example: ""
+ *               
+ *               // Legacy fields (backward compatible)
+ *               trackingNumber:
+ *                 type: string
+ *                 description: Legacy tracking number field
+ *                 example: "TRK123456789"
+ *               userCode:
+ *                 type: string
+ *                 description: Legacy user code field
+ *                 example: "CLEAN-0001"
+ *               weight:
+ *                 type: number
+ *                 description: Package weight
+ *                 example: 5.5
+ *               dimensions:
+ *                 type: object
+ *                 properties:
+ *                   length:
+ *                     type: number
+ *                     example: 10
+ *                   width:
+ *                     type: number
+ *                     example: 5
+ *                   height:
+ *                     type: number
+ *                     example: 3
+ *                   unit:
+ *                     type: string
+ *                     enum: [cm, in]
+ *                     example: "cm"
+ *               serviceMode:
+ *                 type: string
+ *                 enum: [air, ocean, local]
+ *                 example: "air"
+ *               status:
+ *                 type: string
+ *                 enum: [received, in_transit, out_for_delivery, delivered, pending, customs, returned, at_warehouse, processing, ready_for_pickup]
+ *                 example: "received"
+ *               shipper:
+ *                 type: string
+ *                 example: "DHL"
+ *               description:
+ *                 type: string
+ *                 example: "Electronics package"
+ *               itemDescription:
+ *                 type: string
+ *                 example: "Laptop computer"
+ *               senderName:
+ *                 type: string
+ *                 example: "John Smith"
+ *               senderEmail:
+ *                 type: string
+ *                 example: "sender@example.com"
+ *               senderPhone:
+ *                 type: string
+ *                 example: "+1234567890"
+ *               senderAddress:
+ *                 type: string
+ *                 example: "123 Sender St, Sender City"
+ *               senderCountry:
+ *                 type: string
+ *                 example: "USA"
+ *               recipient:
+ *                 type: object
+ *                 properties:
+ *                   name:
+ *                     type: string
+ *                     example: "Jane Doe"
+ *                   email:
+ *                     type: string
+ *                     example: "jane@example.com"
+ *                   shippingId:
+ *                     type: string
+ *                     example: "SHIP001"
+ *                   phone:
+ *                     type: string
+ *                     example: "+0987654321"
+ *                   address:
+ *                     type: string
+ *                     example: "456 Recipient Ave, Recipient City"
+ *               warehouseLocation:
+ *                 type: string
+ *                 example: "New York Warehouse"
+ *               warehouseAddress:
+ *                 type: string
+ *                 example: "789 Warehouse Blvd, NY"
+ *               location:
+ *                 type: string
+ *                 example: "In transit - New York"
+ *               estimatedDelivery:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2024-02-15T10:00:00Z"
+ *               customsRequired:
+ *                 type: boolean
+ *                 example: false
+ *               customsStatus:
+ *                 type: string
+ *                 enum: [not_required, pending, cleared]
+ *                 example: "not_required"
+ *               shippingCost:
+ *                 type: number
+ *                 example: 25.50
+ *               totalAmount:
+ *                 type: number
+ *                 example: 125.50
+ *               paymentStatus:
+ *                 type: string
+ *                 enum: [pending, paid, partially_paid]
+ *                 example: "pending"
+ *               isFragile:
+ *                 type: boolean
+ *                 example: false
+ *               isHazardous:
+ *                 type: boolean
+ *                 example: false
+ *               requiresSignature:
+ *                 type: boolean
+ *                 example: true
+ *               specialInstructions:
+ *                 type: string
+ *                 example: "Handle with care"
+ *               notes:
+ *                 type: string
+ *                 example: "Customer requested expedited shipping"
+ *               entryDate:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2024-02-10T09:00:00Z"
+ *               itemValue:
+ *                 type: number
+ *                 example: 125.50
+ *     responses:
+ *       201:
+ *         description: Package added successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Package added successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     package:
+ *                       type: object
+ *                       description: "Created package with all fields populated"
+ *       400:
+ *         description: Bad request - Invalid data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Unauthorized - Admin access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Customer not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.post('/packages', 
+  authenticate, 
+  authorize('admin'), 
+  asyncHandler(adminController.addPackage)
+);
+
+/**
+ * @swagger
  * /api/admin/inventory:
  *   get:
  *     summary: Get all inventory (admin only)

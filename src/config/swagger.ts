@@ -801,7 +801,82 @@ const options = {
           parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
           requestBody: {
             required: true,
-            content: { 'application/json': { example: { weight: 3.0, warehouseLocation: 'New York, NY' } } }
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Package' },
+                example: {
+                  // === REQUIRED FIELDS ===
+                  "UserCode": "CLEAN-0007",
+                  "Weight": 2.5,
+                  
+                  // === TASOKO API FIELDS (Primary) ===
+                  "PackageID": "83383d43-a368-4fc1-a216-9e54e8ae7227",
+                  "CourierID": "15fff123-f237-4571-b92a-ae69427d7a56",
+                  "TrackingNumber": "DROPOFF-20240902-225642-547",
+                  "ControlNumber": "EP0096513",
+                  "FirstName": "Courtney",
+                  "LastName": "Patterson",
+                  "Shipper": "Amazon",
+                  "EntryDate": "2024-09-02",
+                  "EntryDateTime": "2024-09-02T21:55:51.1806146-05:00",
+                  "Branch": "Down Town",
+                  
+                  // === OPTIONAL TASOKO FIELDS ===
+                  "Description": "Merchandise from Amazon",
+                  "ManifestCode": "",
+                  "CollectionCode": "",
+                  "HSCode": "",
+                  "Unknown": false,
+                  "AIProcessed": false,
+                  "OriginalHouseNumber": "",
+                  "Cubes": 0,
+                  "Length": 25,
+                  "Width": 18,
+                  "Height": 12,
+                  "Pieces": 2,
+                  "Discrepancy": false,
+                  "DiscrepancyDescription": "",
+                  "ServiceTypeID": "",
+                  "HazmatCodeID": "",
+                  "Coloaded": false,
+                  "ColoadIndicator": "",
+                  
+                  // === LEGACY FIELDS (Backward Compatible) ===
+                  "trackingNumber": "TRK123456789012345",
+                  "userCode": "CLEAN-0007",
+                  "shipper": "Amazon",
+                  "description": "Electronics package",
+                  "itemDescription": "Laptop computer",
+                  "serviceMode": "air",
+                  "status": "received",
+                  "dimensions": {
+                    "length": 30,
+                    "width": 20,
+                    "height": 15,
+                    "unit": "cm"
+                  },
+                  "senderName": "John Smith",
+                  "senderEmail": "sender@example.com",
+                  "senderPhone": "+1234567890",
+                  "senderAddress": "123 Sender St, Sender City",
+                  "senderCountry": "USA",
+                  "recipient": {
+                    "name": "Jane Doe",
+                    "email": "jane@example.com",
+                    "shippingId": "SHIP001",
+                    "phone": "+0987654321",
+                    "address": "456 Recipient Ave, Recipient City"
+                  },
+                  "isFragile": true,
+                  "requiresSignature": true,
+                  "customsRequired": false,
+                  "customsStatus": "not_required",
+                  "itemValue": 125.50,
+                  "specialInstructions": "Handle with care",
+                  "notes": "Customer requested expedited shipping"
+                }
+              }
+            }
           },
           responses: {
             200: { description: 'Package updated', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } } },
