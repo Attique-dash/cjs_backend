@@ -41,8 +41,7 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
 
     // Find any user with the email (all roles) and include password
     const user = await User.findOne({ 
-      email: email.toLowerCase(),
-      accountStatus: 'active'
+      email: email.toLowerCase()
     }).select('+passwordHash');
 
     if (!user) {
@@ -235,8 +234,8 @@ export const register = async (req: RegisterRequest, res: Response): Promise<voi
       address,
       userCode: cleanCode,
       mailboxNumber: cleanCode, // Same as userCode
-      accountStatus: 'pending', // Requires email verification
-      emailVerified: false
+      accountStatus: 'active', // Auto-activate users
+      emailVerified: true
     });
 
     // Send welcome email with shipping information
