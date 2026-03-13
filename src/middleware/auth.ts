@@ -29,9 +29,9 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
       logger.error('Missing Authorization header in request');
       res.status(401).json({
         success: false,
-        message: 'Authentication required. Please provide a valid Bearer token in the Authorization header.',
+        message: 'Authentication required. Please provide a valid token.',
         error: 'Missing Authorization header',
-        hint: 'Include header: Authorization: Bearer <your-token>',
+        hint: 'Include header: Authorization: <token> or Authorization: Bearer <token>',
         timestamp: new Date().toISOString()
       });
       return;
@@ -59,9 +59,9 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     if (!token || token.length === 0) {
       res.status(401).json({
         success: false,
-        message: 'Invalid token format. Please provide a valid Bearer token.',
+        message: 'Invalid token format. Please provide a valid token.',
         error: 'Empty token',
-        hint: 'Token format: Authorization: Bearer <your-token>',
+        hint: 'Token format: Authorization: <token> or Authorization: Bearer <token>',
         timestamp: new Date().toISOString()
       });
       return;
