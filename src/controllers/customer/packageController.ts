@@ -16,29 +16,43 @@ export const getCustomerPackages = async (req: AuthRequest, res: Response): Prom
     const limit = parseQueryParam(req.query, 'limit', PAGINATION.DEFAULT_LIMIT);
     const skip = (page - 1) * limit;
 
+    logger.info('Getting packages for user:', {
+      userCode: req.user.userCode,
+      userId: req.user._id,
+      page,
+      limit
+    });
+
     const filter: any = {
       $or: [
-        { userId: req.user._id },
-        { recipientId: req.user._id }
+        { userCode: req.user.userCode },
+        { customerCode: req.user.userCode }
       ]
     };
 
     if (req.query.status) filter.status = req.query.status;
 
+    logger.info('Package filter:', filter);
+
     const packages = await Package.find(filter)
-      .populate('senderId recipientId', 'name email')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
 
     const total = await Package.countDocuments(filter);
 
+    logger.info('Found packages:', { count: packages.length, total });
+
     successResponse(res, {
       packages,
       pagination: getPaginationData(page, limit, total)
     });
-  } catch (error) {
-    logger.error('Error getting customer packages:', error);
+  } catch (error: any) {
+    logger.error('Error getting customer packages:', {
+      error: error.message,
+      stack: error.stack,
+      user: req.user?.userCode
+    });
     errorResponse(res, 'Failed to get packages');
   }
 };
@@ -53,11 +67,11 @@ export const getPackageById = async (req: AuthRequest, res: Response): Promise<v
     const packageData = await Package.findOne({
       _id: req.params.id,
       $or: [
-        { userId: req.user._id },
-        { recipientId: req.user._id }
+        { userCode: req.user.userCode },
+        { customerCode: req.user.userCode }
       ]
     })
-      .populate('senderId recipientId', 'name email phone');
+      .populate('userId', 'firstName lastName email phone');
 
     if (!packageData) {
       errorResponse(res, 'Package not found', 404);
