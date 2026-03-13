@@ -1198,4 +1198,191 @@ router.use('/api-keys', getKcdKeyRoute);
 // Mount API key management routes
 router.use('/api-keys', apiKeyRoutes);
 
+/**
+ * @swagger
+ * /api/admin/warehouses:
+ *   get:
+ *     summary: Get all warehouses (admin only)
+ *     description: Retrieves a comprehensive list of all warehouses in the system. Requires admin privileges.
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Warehouses retrieved successfully
+ *       401:
+ *         description: Unauthorized - Admin access required
+ *       403:
+ *         description: Forbidden - Insufficient permissions
+ */
+router.get('/warehouses', 
+  authenticate, 
+  authorize('admin'), 
+  asyncHandler(adminController.getAllWarehouses)
+);
+
+/**
+ * @swagger
+ * /api/admin/warehouses:
+ *   post:
+ *     summary: Create new warehouse (admin only)
+ *     description: Creates a new warehouse with complete Air/Sea/China addresses. Requires admin privileges.
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - code
+ *               - name
+ *               - address
+ *               - city
+ *               - state
+ *               - zipCode
+ *               - country
+ *             properties:
+ *               code:
+ *                 type: string
+ *                 example: "CLEAN"
+ *               name:
+ *                 type: string
+ *                 example: "Clean J Shipping Main Warehouse"
+ *               address:
+ *                 type: string
+ *                 example: "123 Shipping Lane"
+ *               city:
+ *                 type: string
+ *                 example: "Karachi"
+ *               state:
+ *                 type: string
+ *                 example: "Sindh"
+ *               zipCode:
+ *                 type: string
+ *                 example: "75300"
+ *               country:
+ *                 type: string
+ *                 example: "Pakistan"
+ *               isActive:
+ *                 type: boolean
+ *                 example: true
+ *               isDefault:
+ *                 type: boolean
+ *                 example: true
+ *               airAddress:
+ *                 type: object
+ *               seaAddress:
+ *                 type: object
+ *               chinaAddress:
+ *                 type: object
+ *     responses:
+ *       201:
+ *         description: Warehouse created successfully
+ *       400:
+ *         description: Invalid request data
+ *       401:
+ *         description: Unauthorized - Admin access required
+ *       409:
+ *         description: Warehouse code already exists
+ */
+router.post('/warehouses', 
+  authenticate, 
+  authorize('admin'), 
+  asyncHandler(adminController.createWarehouse)
+);
+
+/**
+ * @swagger
+ * /api/admin/warehouses/{id}:
+ *   put:
+ *     summary: Update warehouse (admin only)
+ *     description: Updates an existing warehouse's information. Requires admin privileges.
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Warehouse ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               city:
+ *                 type: string
+ *               state:
+ *                 type: string
+ *               zipCode:
+ *                 type: string
+ *               country:
+ *                 type: string
+ *               isActive:
+ *                 type: boolean
+ *               isDefault:
+ *                 type: boolean
+ *               airAddress:
+ *                 type: object
+ *               seaAddress:
+ *                 type: object
+ *               chinaAddress:
+ *                 type: object
+ *     responses:
+ *       200:
+ *         description: Warehouse updated successfully
+ *       404:
+ *         description: Warehouse not found
+ *       401:
+ *         description: Unauthorized - Admin access required
+ */
+router.put('/warehouses/:id', 
+  authenticate, 
+  authorize('admin'), 
+  validateMongoId,
+  asyncHandler(adminController.updateWarehouse)
+);
+
+/**
+ * @swagger
+ * /api/admin/warehouses/{id}:
+ *   delete:
+ *     summary: Delete warehouse (admin only)
+ *     description: Deletes a warehouse from the system. Requires admin privileges.
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Warehouse ID
+ *     responses:
+ *       200:
+ *         description: Warehouse deleted successfully
+ *       404:
+ *         description: Warehouse not found
+ *       401:
+ *         description: Unauthorized - Admin access required
+ */
+router.delete('/warehouses/:id', 
+  authenticate, 
+  authorize('admin'), 
+  validateMongoId,
+  asyncHandler(adminController.deleteWarehouse)
+);
+
 export default router;

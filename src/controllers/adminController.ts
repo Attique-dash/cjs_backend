@@ -102,6 +102,48 @@ interface AdminRequest extends AuthRequest {
     permissions?: string[];
     name?: string;
     warehouseId?: string;
+    
+    // Warehouse management fields
+    code?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+    isActive?: boolean;
+    isDefault?: boolean;
+    airAddress?: {
+      name?: string;
+      street?: string;
+      city?: string;
+      state?: string;
+      zipCode?: string;
+      country?: string;
+      phone?: string;
+      email?: string;
+      instructions?: string;
+    };
+    seaAddress?: {
+      name?: string;
+      street?: string;
+      city?: string;
+      state?: string;
+      zipCode?: string;
+      country?: string;
+      phone?: string;
+      email?: string;
+      instructions?: string;
+    };
+    chinaAddress?: {
+      name?: string;
+      street?: string;
+      city?: string;
+      state?: string;
+      zipCode?: string;
+      country?: string;
+      phone?: string;
+      email?: string;
+      instructions?: string;
+    };
   };
 }
 
@@ -1139,5 +1181,337 @@ export const addPackage = async (req: AdminRequest, res: Response): Promise<void
   } catch (error: any) {
     logger.error('Error adding package:', error);
     errorResponse(res, 'Failed to add package', 500);
+  }
+};
+
+// Warehouse Management Functions
+
+/**
+ * @swagger
+ * /api/admin/warehouses:
+ *   get:
+ *     summary: Get all warehouses (admin only)
+ *     description: Retrieves a list of all warehouses in the system. Requires admin privileges.
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Warehouses retrieved successfully
+ *       401:
+ *         description: Unauthorized - Admin access required
+ */
+export const getAllWarehouses = async (req: AdminRequest, res: Response): Promise<void> => {
+  try {
+    const warehouses = await Warehouse.find({}).sort({ createdAt: -1 });
+    
+    successResponse(res, {
+      warehouses,
+      count: warehouses.length
+    }, 'Warehouses retrieved successfully');
+  } catch (error) {
+    logger.error('Error fetching warehouses:', error);
+    errorResponse(res, 'Failed to fetch warehouses', 500);
+  }
+};
+
+/**
+ * @swagger
+ * /api/admin/warehouses:
+ *   post:
+ *     summary: Create new warehouse (admin only)
+ *     description: Creates a new warehouse with Air/Sea/China addresses. Requires admin privileges.
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - code
+ *               - name
+ *               - address
+ *               - city
+ *               - state
+ *               - zipCode
+ *               - country
+ *             properties:
+ *               code:
+ *                 type: string
+ *                 example: "CLEAN"
+ *               name:
+ *                 type: string
+ *                 example: "Clean J Shipping Main Warehouse"
+ *               address:
+ *                 type: string
+ *                 example: "123 Shipping Lane"
+ *               city:
+ *                 type: string
+ *                 example: "Karachi"
+ *               state:
+ *                 type: string
+ *                 example: "Sindh"
+ *               zipCode:
+ *                 type: string
+ *                 example: "75300"
+ *               country:
+ *                 type: string
+ *                 example: "Pakistan"
+ *               isActive:
+ *                 type: boolean
+ *                 example: true
+ *               isDefault:
+ *                 type: boolean
+ *                 example: true
+ *               airAddress:
+ *                 type: object
+ *                 properties:
+ *                   name:
+ *                     type: string
+ *                   street:
+ *                     type: string
+ *                   city:
+ *                     type: string
+ *                   state:
+ *                     type: string
+ *                   zipCode:
+ *                     type: string
+ *                   country:
+ *                     type: string
+ *                   phone:
+ *                     type: string
+ *                   email:
+ *                     type: string
+ *                   instructions:
+ *                     type: string
+ *               seaAddress:
+ *                 type: object
+ *                 properties:
+ *                   name:
+ *                     type: string
+ *                   street:
+ *                     type: string
+ *                   city:
+ *                     type: string
+ *                   state:
+ *                     type: string
+ *                   zipCode:
+ *                     type: string
+ *                   country:
+ *                     type: string
+ *                   phone:
+ *                     type: string
+ *                   email:
+ *                     type: string
+ *                   instructions:
+ *                     type: string
+ *               chinaAddress:
+ *                 type: object
+ *                 properties:
+ *                   name:
+ *                     type: string
+ *                   street:
+ *                     type: string
+ *                   city:
+ *                     type: string
+ *                   state:
+ *                     type: string
+ *                   zipCode:
+ *                     type: string
+ *                   country:
+ *                     type: string
+ *                   phone:
+ *                     type: string
+ *                   email:
+ *                     type: string
+ *                   instructions:
+ *                     type: string
+ *     responses:
+ *       201:
+ *         description: Warehouse created successfully
+ *       400:
+ *         description: Invalid request data
+ *       401:
+ *         description: Unauthorized - Admin access required
+ */
+export const createWarehouse = async (req: AdminRequest, res: Response): Promise<void> => {
+  try {
+    const warehouseData = req.body;
+    
+    // Check if warehouse code already exists
+    const existingWarehouse = await Warehouse.findOne({ code: warehouseData.code });
+    if (existingWarehouse) {
+      errorResponse(res, 'Warehouse with this code already exists', 409);
+      return;
+    }
+    
+    // If this is set as default, remove default status from other warehouses
+    if (warehouseData.isDefault) {
+      await Warehouse.updateMany({}, { isDefault: false });
+    }
+    
+    const warehouse = await Warehouse.create(warehouseData);
+    
+    logger.info(`Warehouse created: ${warehouse.code} by admin ${(req as any).user?.email}`);
+    
+    successResponse(res, {
+      warehouse
+    }, 'Warehouse created successfully', 201);
+  } catch (error: any) {
+    logger.error('Error creating warehouse:', error);
+    
+    if (error.name === 'ValidationError') {
+      const validationErrors = Object.values(error.errors).map((err: any) => err.message).join(', ');
+      errorResponse(res, `Validation error: ${validationErrors}`, 400);
+      return;
+    }
+    
+    if (error.code === 11000) {
+      errorResponse(res, 'Warehouse with this code already exists', 409);
+      return;
+    }
+    
+    errorResponse(res, 'Failed to create warehouse', 500);
+  }
+};
+
+/**
+ * @swagger
+ * /api/admin/warehouses/{id}:
+ *   put:
+ *     summary: Update warehouse (admin only)
+ *     description: Updates an existing warehouse. Requires admin privileges.
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Warehouse ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               city:
+ *                 type: string
+ *               state:
+ *                 type: string
+ *               zipCode:
+ *                 type: string
+ *               country:
+ *                 type: string
+ *               isActive:
+ *                 type: boolean
+ *               isDefault:
+ *                 type: boolean
+ *               airAddress:
+ *                 type: object
+ *               seaAddress:
+ *                 type: object
+ *               chinaAddress:
+ *                 type: object
+ *     responses:
+ *       200:
+ *         description: Warehouse updated successfully
+ *       404:
+ *         description: Warehouse not found
+ *       401:
+ *         description: Unauthorized - Admin access required
+ */
+export const updateWarehouse = async (req: AdminRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    // If this is set as default, remove default status from other warehouses
+    if (updateData.isDefault) {
+      await Warehouse.updateMany({ _id: { $ne: id } }, { isDefault: false });
+    }
+    
+    const warehouse = await Warehouse.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+    
+    if (!warehouse) {
+      errorResponse(res, 'Warehouse not found', 404);
+      return;
+    }
+    
+    logger.info(`Warehouse updated: ${warehouse.code} by admin ${(req as any).user?.email}`);
+    
+    successResponse(res, {
+      warehouse
+    }, 'Warehouse updated successfully');
+  } catch (error: any) {
+    logger.error('Error updating warehouse:', error);
+    
+    if (error.name === 'ValidationError') {
+      const validationErrors = Object.values(error.errors).map((err: any) => err.message).join(', ');
+      errorResponse(res, `Validation error: ${validationErrors}`, 400);
+      return;
+    }
+    
+    errorResponse(res, 'Failed to update warehouse', 500);
+  }
+};
+
+/**
+ * @swagger
+ * /api/admin/warehouses/{id}:
+ *   delete:
+ *     summary: Delete warehouse (admin only)
+ *     description: Deletes a warehouse from the system. Requires admin privileges.
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Warehouse ID
+ *     responses:
+ *       200:
+ *         description: Warehouse deleted successfully
+ *       404:
+ *         description: Warehouse not found
+ *       401:
+ *         description: Unauthorized - Admin access required
+ */
+export const deleteWarehouse = async (req: AdminRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    
+    const warehouse = await Warehouse.findByIdAndDelete(id);
+    
+    if (!warehouse) {
+      errorResponse(res, 'Warehouse not found', 404);
+      return;
+    }
+    
+    logger.info(`Warehouse deleted: ${warehouse.code} by admin ${(req as any).user?.email}`);
+    
+    successResponse(res, {
+      warehouse
+    }, 'Warehouse deleted successfully');
+  } catch (error) {
+    logger.error('Error deleting warehouse:', error);
+    errorResponse(res, 'Failed to delete warehouse', 500);
   }
 };
