@@ -1,13 +1,13 @@
 import { Router } from 'express';
-import { authenticate, authorize } from '../../middleware/auth';
+import { authenticateSimple, authorizeCustomer } from '../../middleware/authSimple';
 import { asyncHandler } from '../../middleware/errorHandler';
 import * as shippingAddressesController from '../../controllers/customer/shippingAddressesController';
 
 const router = Router();
 
-// All routes require authentication AND customer role
-router.use(authenticate);
-router.use(authorize('customer'));
+// All routes require simple authentication AND customer role (no Bearer requirement)
+router.use(authenticateSimple);
+router.use(authorizeCustomer);
 
 /**
  * GET /api/customer/shipping-addresses
