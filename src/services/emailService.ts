@@ -134,6 +134,179 @@ export class EmailService {
     }
   }
 
+  static async sendPackageNotificationToRecipient(to: string, packageData: {
+    trackingNumber: string;
+    shipper: string;
+    weight: number;
+    description?: string;
+    itemDescription?: string;
+    senderName?: string;
+    senderEmail?: string;
+    senderPhone?: string;
+    senderAddress?: string;
+    senderCountry?: string;
+    recipientName: string;
+    recipientEmail: string;
+    recipientPhone: string;
+    recipientAddress: string;
+    serviceMode: string;
+    warehouseLocation?: string;
+    estimatedDelivery?: Date;
+    receivedDate: Date;
+    dimensions?: {
+      length: number;
+      width: number;
+      height: number;
+      unit: string;
+    };
+    totalAmount?: number;
+  }): Promise<boolean> {
+    try {
+      const subject = `Package Information - ${packageData.trackingNumber}`;
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <h2 style="color: #333; margin: 0 0 15px 0;">📦 Package Information</h2>
+            <p style="margin: 0; color: #666;">A package has been processed and is being sent to you. Here are the details:</p>
+          </div>
+          
+          <div style="background: white; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+            <h3 style="color: #333; margin: 0 0 15px 0;">Package Details</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #555;">Tracking Number:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333; font-weight: bold;">${packageData.trackingNumber}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #555;">Shipper:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333;">${packageData.shipper}</td>
+              </tr>
+              ${packageData.description ? `
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #555;">Description:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333;">${packageData.description}</td>
+              </tr>
+              ` : ''}
+              ${packageData.itemDescription ? `
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #555;">Item Description:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333;">${packageData.itemDescription}</td>
+              </tr>
+              ` : ''}
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #555;">Weight:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333;">${packageData.weight} kg</td>
+              </tr>
+              ${packageData.dimensions ? `
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #555;">Dimensions:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333;">${packageData.dimensions.length} x ${packageData.dimensions.width} x ${packageData.dimensions.height} ${packageData.dimensions.unit}</td>
+              </tr>
+              ` : ''}
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #555;">Service Mode:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333;">${packageData.serviceMode.toUpperCase()}</td>
+              </tr>
+              ${packageData.totalAmount ? `
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #555;">Total Amount:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333;">$${packageData.totalAmount}</td>
+              </tr>
+              ` : ''}
+              <tr>
+                <td style="padding: 8px 0; font-weight: bold; color: #555;">Received Date:</td>
+                <td style="padding: 8px 0; color: #333;">${packageData.receivedDate.toLocaleDateString()} at ${packageData.receivedDate.toLocaleTimeString()}</td>
+              </tr>
+            </table>
+          </div>
+          
+          ${packageData.senderName ? `
+          <div style="background: white; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+            <h3 style="color: #333; margin: 0 0 15px 0;">Sender Information</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #555;">Name:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333;">${packageData.senderName}</td>
+              </tr>
+              ${packageData.senderEmail ? `
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #555;">Email:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333;">${packageData.senderEmail}</td>
+              </tr>
+              ` : ''}
+              ${packageData.senderPhone ? `
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #555;">Phone:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333;">${packageData.senderPhone}</td>
+              </tr>
+              ` : ''}
+              ${packageData.senderAddress ? `
+              <tr>
+                <td style="padding: 8px 0; font-weight: bold; color: #555;">Address:</td>
+                <td style="padding: 8px 0; color: #333;">${packageData.senderAddress}</td>
+              </tr>
+              ` : ''}
+            </table>
+          </div>
+          ` : ''}
+          
+          <div style="background: white; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+            <h3 style="color: #333; margin: 0 0 15px 0;">Recipient Information</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #555;">Name:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333;">${packageData.recipientName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #555;">Email:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333;">${packageData.recipientEmail}</td>
+              </tr>
+              ${packageData.recipientPhone ? `
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #555;">Phone:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333;">${packageData.recipientPhone}</td>
+              </tr>
+              ` : ''}
+              ${packageData.recipientAddress ? `
+              <tr>
+                <td style="padding: 8px 0; font-weight: bold; color: #555;">Address:</td>
+                <td style="padding: 8px 0; color: #333;">${packageData.recipientAddress}</td>
+              </tr>
+              ` : ''}
+            </table>
+          </div>
+          
+          ${packageData.warehouseLocation || packageData.estimatedDelivery ? `
+          <div style="background: white; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+            <h3 style="color: #333; margin: 0 0 15px 0;">Shipping Information</h3>
+            ${packageData.warehouseLocation ? `
+            <p><strong>Current Location:</strong> ${packageData.warehouseLocation}</p>
+            ` : ''}
+            ${packageData.estimatedDelivery ? `
+            <p><strong>Estimated Delivery:</strong> ${packageData.estimatedDelivery.toLocaleDateString()}</p>
+            ` : ''}
+          </div>
+          ` : ''}
+          
+          <div style="background: #e7f3ff; border: 1px solid #b3d9ff; border-radius: 8px; padding: 15px; margin: 20px 0;">
+            <h4 style="color: #0066cc; margin: 0 0 10px 0;">📞 Need Help?</h4>
+            <p style="margin: 0; color: #0066cc;">If you have any questions about this package, please contact our support team at <a href="mailto:cleanjshipping@gmail.com">cleanjshipping@gmail.com</a> or <a href="mailto:info@cleanshipping.com">info@cleanshipping.com</a>.</p>
+          </div>
+          
+          <div style="text-align: center; color: #666; font-size: 12px; margin-top: 30px;">
+            <p>This is an automated notification from our warehouse management system.</p>
+            <p>Tracking Number: ${packageData.trackingNumber}</p>
+          </div>
+        </div>
+      `;
+
+      return await this.sendEmail(to, subject, html);
+    } catch (error) {
+      logger.error('Error sending package notification to recipient:', error);
+      return false;
+    }
+  }
+
   static async sendDeliveryConfirmationEmail(to: string, trackingNumber: string, deliveredAt: Date): Promise<boolean> {
     try {
       const subject = `Package Delivered: ${trackingNumber}`;

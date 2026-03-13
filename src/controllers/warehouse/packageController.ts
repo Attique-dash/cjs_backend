@@ -211,7 +211,7 @@ export const addPackage = async (req: PackageRequest, res: Response): Promise<vo
       senderPhone,
       senderAddress,
       senderCountry,
-      recipient,
+      recipient: recipientFromBody,
       itemValue,
       specialInstructions,
       isFragile,
@@ -332,7 +332,7 @@ export const addPackage = async (req: PackageRequest, res: Response): Promise<vo
       senderPhone: senderPhone || '',
       senderAddress: senderAddress || '',
       senderCountry: senderCountry || '',
-      recipient: recipient || {
+      recipient: recipientFromBody || {
         name: `${user.firstName} ${user.lastName}`,
         email: user.email,
         phone: user.phone || '',
@@ -366,9 +366,45 @@ export const addPackage = async (req: PackageRequest, res: Response): Promise<vo
             receivedDate: newPackage.dateReceived || new Date()
           }
         );
-        logger.info(`Package pre-alert email sent to ${user.email} for ${newPackage.trackingNumber}`);
+        logger.info(`Package pre-alert email sent to customer ${user.email} for ${newPackage.trackingNumber}`);
       } catch (emailError) {
-        logger.warn(`Failed to send package pre-alert email to ${user.email}:`, emailError);
+        logger.warn(`Failed to send package pre-alert email to customer ${user.email}:`, emailError);
+        // Don't fail the request if email fails
+      }
+    }
+
+    // Send email notification to recipient if different from customer
+    const recipient = newPackage.recipient;
+    if (recipient && recipient.email && recipient.email !== user.email) {
+      try {
+        await EmailService.sendPackageNotificationToRecipient(
+          recipient.email,
+          {
+            trackingNumber: newPackage.trackingNumber,
+            shipper: newPackage.shipper || 'Unknown',
+            weight: newPackage.weight || 0,
+            description: newPackage.description || '',
+            itemDescription: newPackage.itemDescription || '',
+            senderName: newPackage.senderName || '',
+            senderEmail: newPackage.senderEmail || '',
+            senderPhone: newPackage.senderPhone || '',
+            senderAddress: newPackage.senderAddress || '',
+            senderCountry: newPackage.senderCountry || '',
+            recipientName: recipient.name || '',
+            recipientEmail: recipient.email || '',
+            recipientPhone: recipient.phone || '',
+            recipientAddress: recipient.address || '',
+            serviceMode: newPackage.serviceMode || 'standard',
+            warehouseLocation: newPackage.warehouseLocation || '',
+            estimatedDelivery: newPackage.estimatedDelivery,
+            receivedDate: newPackage.dateReceived || new Date(),
+            dimensions: newPackage.dimensions || { length: 0, width: 0, height: 0, unit: 'cm' },
+            totalAmount: newPackage.totalAmount || 0
+          }
+        );
+        logger.info(`Package notification email sent to recipient ${recipient.email} for ${newPackage.trackingNumber}`);
+      } catch (emailError) {
+        logger.warn(`Failed to send package notification email to recipient ${recipient.email}:`, emailError);
         // Don't fail the request if email fails
       }
     }
@@ -444,10 +480,32 @@ export const updatePackage = async (req: PackageRequest, res: Response): Promise
           statusText,
           updatedPackage.warehouseLocation || 'Main Warehouse'
         );
-        logger.info(`Package status update email sent to ${customer.email} for ${updatedPackage.trackingNumber}`);
+        logger.info(`Package status update email sent to customer ${customer.email} for ${updatedPackage.trackingNumber}`);
       } catch (emailError) {
-        logger.warn(`Failed to send package status update email:`, emailError);
+        logger.warn(`Failed to send package status update email to customer:`, emailError);
         // Don't fail the request if email fails
+      }
+    }
+
+    // Send email notification to recipient if different from customer
+    const recipient = updatedPackage.recipient;
+    if (recipient && recipient.email && updatedPackage.userId) {
+      const customer = updatedPackage.userId as any;
+      // Only send to recipient if different from customer
+      if (recipient.email !== customer.email) {
+        try {
+          const statusText = updatedPackage.status.replace(/_/g, ' ').toUpperCase();
+          await EmailService.sendPackageUpdateEmail(
+            recipient.email,
+            updatedPackage.trackingNumber,
+            statusText,
+            updatedPackage.warehouseLocation || 'Main Warehouse'
+          );
+          logger.info(`Package status update email sent to recipient ${recipient.email} for ${updatedPackage.trackingNumber}`);
+        } catch (emailError) {
+          logger.warn(`Failed to send package status update email to recipient:`, emailError);
+          // Don't fail the request if email fails
+        }
       }
     }
 
