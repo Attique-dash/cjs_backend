@@ -175,39 +175,55 @@ export class EmailService {
     }
   }
 
-  static async sendWelcomeWithShippingInfo(to: string, firstName: string, userCode: string, address?: any, courierCode?: string, airAddress?: any, seaAddress?: any, chinaAddress?: any): Promise<boolean> {
+  static async sendWelcomeWithShippingInfo(to: string, firstName: string, lastName: string, userCode: string, phone?: string, branch?: string, address?: any, courierCode?: string, airAddress?: any, seaAddress?: any, chinaAddress?: any): Promise<boolean> {
     try {
       const subject = 'Welcome to Our Shipping Service - Your Account Details';
       
-      // Helper function to format address
-      const formatAddress = (addr: any) => {
-        if (!addr) return '';
-        return `
-          <strong>${addr.name}</strong><br>
-          ${addr.street}<br>
-          ${addr.city}, ${addr.state} ${addr.zipCode}<br>
-          ${addr.country}
-          ${addr.phone ? `<br>Phone: ${addr.phone}` : ''}
-          ${addr.email ? `<br>Email: ${addr.email}` : ''}
-          ${addr.instructions ? `<br><em>Instructions: ${addr.instructions}</em>` : ''}
-        `;
+      // Helper function to format address with user details
+      const formatShippingAddress = (type: string) => {
+        const fullName = `${firstName} ${lastName}`;
+        const mailboxCode = type === 'air' ? `KCDE-${courierCode}` : type === 'sea' ? `KCDX-${courierCode}` : courierCode;
+        
+        if (type === 'china') {
+          return `
+            <strong>${fullName} / ${courierCode}</strong><br>
+            China<br>
+            Guangdong Province, Shenzhen<br>
+            Baoshan No.2 Industrial Zone<br>
+            <strong>Phone:</strong> 1 (876) 578-5945<br>
+            <strong>Email:</strong> cleanjshipping@gmail.com, info@cleanshipping.com
+          `;
+        } else {
+          return `
+            <strong>${fullName}</strong><br>
+            3200 NW 112th Ave<br>
+            ${mailboxCode}<br>
+            Doral, Florida 33172<br>
+            USA<br>
+            <strong>Phone:</strong> 1 (876) 578-5945<br>
+            <strong>Email:</strong> cleanjshipping@gmail.com, info@cleanshipping.com
+          `;
+        }
       };
       
       const html = `
-        <h2>Welcome, ${firstName}!</h2>
+        <h2>Welcome, ${firstName} ${lastName}!</h2>
         <p>Thank you for joining our shipping service. Your account has been successfully created.</p>
         
         <h3>Your Account Details:</h3>
         <ul>
+          <li><strong>Full Name:</strong> ${firstName} ${lastName}</li>
           <li><strong>User Code:</strong> ${userCode}</li>
           <li><strong>Email:</strong> ${to}</li>
+          ${phone ? `<li><strong>Phone:</strong> ${phone}</li>` : ''}
+          ${branch ? `<li><strong>Branch:</strong> ${branch}</li>` : ''}
+          ${courierCode ? `<li><strong>Mailbox Number:</strong> ${courierCode}</li>` : ''}
           ${address ? `
-          <li><strong>Your Shipping Address:</strong><br>
+          <li><strong>Your Address:</strong><br>
             ${address.street}<br>
             ${address.city}, ${address.state} ${address.zipCode}<br>
             ${address.country}
           </li>` : ''}
-          ${courierCode ? `<li><strong>Courier Code:</strong> ${courierCode}</li>` : ''}
         </ul>
         
         ${(airAddress || seaAddress || chinaAddress) ? `
@@ -216,38 +232,31 @@ export class EmailService {
         
         ${airAddress ? `
         <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
-          <h4>🛩️ Air Shipping Address:</h4>
-          ${formatAddress(airAddress)}
+          <h4>🛩️ Standard Air Address</h4>
+          ${formatShippingAddress('air')}
         </div>
         ` : ''}
         
         ${seaAddress ? `
         <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
-          <h4>🚢 Sea Shipping Address:</h4>
-          ${formatAddress(seaAddress)}
+          <h4>🚢 Standard Sea Address</h4>
+          ${formatShippingAddress('sea')}
         </div>
         ` : ''}
         
         ${chinaAddress ? `
         <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
-          <h4>🇨🇳 China Address:</h4>
-          ${formatAddress(chinaAddress)}
+          <h4>🇨🇳 China Warehouse Address</h4>
+          ${formatShippingAddress('china')}
         </div>
         ` : ''}
+        
+        <p><strong>Important:</strong> Always include your mailbox number (${courierCode}) when shipping packages to ensure proper delivery.</p>
         ` : ''}
         
-        <h3>Getting Started:</h3>
-        <p>With your new account, you can:</p>
-        <ul>
-          <li>Track your packages in real-time</li>
-          <li>Manage multiple shipping addresses</li>
-          <li>Receive delivery notifications</li>
-          <li>View your shipping history</li>
-          <li>Create and manage shipments</li>
-        </ul>
+        <p>If you have any questions, please contact our support team at <a href="mailto:cleanjshipping@gmail.com">cleanjshipping@gmail.com</a> or <a href="mailto:info@cleanshipping.com">info@cleanshipping.com</a>.</p>
         
-        <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
-        <p>Welcome aboard!</p>
+        <p>Welcome to Clean J Shipping!</p>
       `;
 
       return await this.sendEmail(to, subject, html);

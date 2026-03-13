@@ -61,6 +61,7 @@ async function testCustomerRegistrationEmail() {
       password: 'TestPassword123!',
       phone: '+1234567890',
       role: 'customer',
+      branch: 'Main Branch',
       address: {
         street: '123 Test Street',
         city: 'Test City',
@@ -85,6 +86,7 @@ async function testCustomerRegistrationEmail() {
       passwordHash: testCustomer.password,
       phone: testCustomer.phone,
       role: testCustomer.role,
+      branch: testCustomer.branch,
       address: testCustomer.address,
       userCode: cleanCode,
       mailboxNumber: cleanCode,
@@ -102,7 +104,10 @@ async function testCustomerRegistrationEmail() {
     const emailSent = await EmailService.sendWelcomeWithShippingInfo(
       newUser.email,
       newUser.firstName,
+      newUser.lastName,
       newUser.userCode,
+      newUser.phone,
+      newUser.branch,
       newUser.address,
       newUser.userCode, // Using userCode as courier code
       warehouse.airAddress,

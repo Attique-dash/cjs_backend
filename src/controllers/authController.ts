@@ -247,7 +247,10 @@ export const register = async (req: RegisterRequest, res: Response): Promise<voi
         await EmailService.sendWelcomeWithShippingInfo(
           newUser.email,
           newUser.firstName,
+          newUser.lastName,
           newUser.userCode,
+          newUser.phone,
+          newUser.branch,
           newUser.address,
           cleanCode, // Using cleanCode as courier code for now
           warehouse.airAddress,  // pass warehouse air address
