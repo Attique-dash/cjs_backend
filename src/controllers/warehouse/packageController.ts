@@ -363,7 +363,29 @@ export const addPackage = async (req: PackageRequest, res: Response): Promise<vo
             weight: newPackage.weight || 0,
             mailboxNumber: user.mailboxNumber || 'N/A',
             customerName: `${user.firstName} ${user.lastName}`,
-            receivedDate: newPackage.dateReceived || new Date()
+            receivedDate: newPackage.dateReceived || new Date(),
+            // Add all detailed fields
+            dimensions: newPackage.dimensions,
+            description: newPackage.description,
+            itemDescription: newPackage.itemDescription,
+            serviceMode: newPackage.serviceMode,
+            status: newPackage.status,
+            senderName: newPackage.senderName,
+            senderEmail: newPackage.senderEmail,
+            senderPhone: newPackage.senderPhone,
+            senderAddress: newPackage.senderAddress,
+            senderCountry: newPackage.senderCountry,
+            recipient: newPackage.recipient,
+            totalAmount: newPackage.totalAmount,
+            paymentStatus: newPackage.paymentStatus,
+            customsRequired: newPackage.customsRequired,
+            customsStatus: newPackage.customsStatus,
+            warehouseLocation: newPackage.warehouseLocation,
+            specialInstructions: newPackage.specialInstructions,
+            isFragile: newPackage.isFragile,
+            isHazardous: newPackage.isHazardous,
+            requiresSignature: newPackage.requiresSignature,
+            estimatedDelivery: newPackage.estimatedDelivery
           }
         );
         logger.info(`Package pre-alert email sent to customer ${user.email} for ${newPackage.trackingNumber}`);
