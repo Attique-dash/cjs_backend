@@ -3,6 +3,7 @@ import { AuthRequest } from '../../middleware/auth';
 import { User } from '../../models/User';
 import { successResponse, errorResponse } from '../../utils/helpers';
 import { logger } from '../../utils/logger';
+import { ShippingAddressService } from '../../services/shippingAddressService';
 
 export const getProfile = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -11,8 +12,24 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<void>
       return;
     }
 
-    const user = await User.findById(req.user._id).select('-passwordHash');
-    successResponse(res, user);
+    const user = await User.findById(req.user._id)
+      .select('-passwordHash')
+      .populate('shippingAddresses');
+    
+    if (!user) {
+      errorResponse(res, 'User not found', 404);
+      return;
+    }
+    
+    // Get formatted shipping addresses with mailbox information
+    const shippingAddresses = await ShippingAddressService.getShippingAddresses(req.user._id);
+    
+    const profileData = {
+      ...user.toObject(),
+      shippingAddresses
+    };
+    
+    successResponse(res, profileData);
   } catch (error) {
     logger.error('Error getting profile:', error);
     errorResponse(res, 'Failed to get profile');

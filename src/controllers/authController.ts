@@ -7,6 +7,7 @@ import { config } from '../config/env';
 import { logger } from '../utils/logger';
 import { generateMailboxCode } from '../utils/mailboxCodeGenerator';
 import { EmailService } from '../services/emailService';
+import { ShippingAddressService } from '../services/shippingAddressService';
 
 interface AuthRequest {
   body: {
@@ -264,6 +265,15 @@ export const register = async (req: RegisterRequest, res: Response): Promise<voi
     } catch (emailError) {
       logger.error('Failed to send welcome email:', emailError);
       // Continue with registration even if email fails
+    }
+
+    // Create default shipping addresses for the new customer
+    try {
+      await ShippingAddressService.createDefaultShippingAddresses(newUser._id);
+      logger.info(`Default shipping addresses created for: ${newUser.email}`);
+    } catch (addressError) {
+      logger.error('Failed to create default shipping addresses:', addressError);
+      // Continue with registration even if address creation fails
     }
 
     // Remove password from response
