@@ -46,6 +46,5 @@ router.use('/packages', packageRoutes);
 router.use('/shipping', shippingRoutes);
 router.use('/profile', profileRoutes);
 router.use('/shipping-addresses', shippingAddressesRoutes);
-router.use('/shipping-addresses', shippingAddressesRoutes);
 
 export default router;

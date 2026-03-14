@@ -17,6 +17,7 @@
     { "source": "/docs", "destination": "/api/docs" },
     { "source": "/docs/(.*)", "destination": "/api/docs" },
     { "source": "/api-docs", "destination": "/api/api-docs" },
+    { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/api/index" }
   ],
   "headers": [

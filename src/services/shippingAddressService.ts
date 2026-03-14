@@ -118,7 +118,17 @@ export class ShippingAddressService {
 
       // Format shipping addresses with mailbox information
       const formattedAddresses: FormattedShippingAddress[] = user.shippingAddresses?.map(addr => {
-        let formattedAddr: FormattedShippingAddress = { ...addr };
+        let formattedAddr: FormattedShippingAddress = {
+          _id: addr._id,
+          street: addr.street,
+          city: addr.city,
+          state: addr.state,
+          zipCode: addr.zipCode,
+          country: addr.country,
+          type: addr.type,
+          isDefault: addr.isDefault,
+          createdAt: addr.createdAt
+        };
         
         // Add mailbox information to address
         formattedAddr.fullName = fullName;

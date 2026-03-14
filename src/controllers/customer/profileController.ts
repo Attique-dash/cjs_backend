@@ -24,9 +24,30 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<void>
     // Get formatted shipping addresses with mailbox information
     const shippingAddresses = await ShippingAddressService.getShippingAddresses(req.user._id);
     
+    // Create clean profile data without MongoDB internals
     const profileData = {
-      ...user.toObject(),
-      shippingAddresses
+      _id: user._id,
+      userCode: user.userCode,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      mailboxNumber: user.mailboxNumber,
+      accountStatus: user.accountStatus,
+      emailVerified: user.emailVerified,
+      isActive: user.isActive,
+      lastLogin: user.lastLogin,
+      assignedWarehouse: user.assignedWarehouse,
+      permissions: user.permissions,
+      createdBy: user.createdBy,
+      passwordResetAt: user.passwordResetAt,
+      branch: user.branch,
+      address: user.address,
+      preferences: user.preferences,
+      shippingAddresses: shippingAddresses,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
     };
     
     successResponse(res, profileData);
