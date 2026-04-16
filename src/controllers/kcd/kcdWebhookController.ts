@@ -237,9 +237,11 @@ export class KCDWebhookController {
         message: 'Package created successfully'
       }, 'Package created from KCD webhook');
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error processing KCD package created webhook:', error);
-      errorResponse(res, 'Failed to process package creation', 500);
+      logger.error('Error details:', error?.message || 'Unknown error');
+      logger.error('Error stack:', error?.stack || 'No stack trace');
+      errorResponse(res, `Failed to process package creation: ${error?.message || 'Unknown error'}`, 500);
     }
   }
 
