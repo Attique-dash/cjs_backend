@@ -29,7 +29,7 @@ export interface IPackage extends Document {
   courierCode?: string;
   customerId?: mongoose.Types.ObjectId;
   customerCode?: string;
-  source?: 'web' | 'kcd-packing-system' | 'api';
+  source?: 'web' | 'kcd-packing-system' | 'api' | 'kcd_webhook';
   warehouseAddress?: string;
   location?: string;
   estimatedDelivery?: Date;
@@ -285,7 +285,7 @@ const packageSchema = new Schema<IPackage>({
   },
   source: {
     type: String,
-    enum: ['web', 'kcd-packing-system', 'api'],
+    enum: ['web', 'kcd-packing-system', 'api', 'kcd_webhook'],
     default: 'web',
     index: true
   },
