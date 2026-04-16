@@ -96,6 +96,16 @@ interface KCDWebhookRequest extends AuthRequest {
     packagePayments?: string;
     apiToken?: string;
     token?: string;
+    // Additional PascalCase fields for manifest and status updates
+    Status?: string;
+    Location?: string;
+    Notes?: string;
+    Timestamp?: string;
+    CourierCode?: string;
+    Packages?: string[];
+    DepartureDate?: string;
+    ArrivalDate?: string;
+    manifestID?: string;
   };
 }
 
@@ -248,7 +258,12 @@ export class KCDWebhookController {
   // Handle package status updates from KCD
   static async packageUpdated(req: KCDWebhookRequest, res: Response): Promise<void> {
     try {
-      const { trackingNumber, status, location, notes, timestamp } = req.body;
+      // Support both camelCase and PascalCase (PDF format)
+      const trackingNumber = req.body.trackingNumber || req.body.TrackingNumber;
+      const status = req.body.status || req.body.Status;
+      const location = req.body.location || req.body.Location;
+      const notes = req.body.notes || req.body.Notes;
+      const timestamp = req.body.timestamp || req.body.Timestamp;
 
       if (!trackingNumber || !status) {
         errorResponse(res, 'Missing required fields: trackingNumber, status', 400);
@@ -358,7 +373,10 @@ export class KCDWebhookController {
   // Handle package deletion from KCD
   static async packageDeleted(req: KCDWebhookRequest, res: Response): Promise<void> {
     try {
-      const { trackingNumber, courierCode, timestamp } = req.body;
+      // Support both camelCase and PascalCase (PDF format)
+      const trackingNumber = req.body.trackingNumber || req.body.TrackingNumber;
+      const courierCode = req.body.courierCode || req.body.CourierCode;
+      const timestamp = req.body.timestamp || req.body.Timestamp;
 
       if (!trackingNumber || !courierCode) {
         errorResponse(res, 'Missing required fields: trackingNumber, courierCode', 400);
@@ -398,7 +416,13 @@ export class KCDWebhookController {
   // Handle manifest creation from KCD
   static async manifestCreated(req: KCDWebhookRequest, res: Response): Promise<void> {
     try {
-      const { manifestId, courierCode, packages, departureDate, arrivalDate, timestamp } = req.body;
+      // Support both camelCase and PascalCase (PDF format)
+      const manifestId = req.body.manifestId || req.body.ManifestID || req.body.manifestID;
+      const courierCode = req.body.courierCode || req.body.CourierCode || req.body.CourierID;
+      const packages = req.body.packages || req.body.Packages;
+      const departureDate = req.body.departureDate || req.body.DepartureDate;
+      const arrivalDate = req.body.arrivalDate || req.body.ArrivalDate;
+      const timestamp = req.body.timestamp || req.body.Timestamp;
 
       if (!manifestId || !courierCode || !packages || !Array.isArray(packages)) {
         errorResponse(res, 'Missing required fields: manifestId, courierCode, packages', 400);
