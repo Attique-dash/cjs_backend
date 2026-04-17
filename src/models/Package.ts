@@ -250,7 +250,7 @@ const packageSchema = new Schema<IPackage>({
     unique: true,
     trim: true,
     uppercase: true,
-    match: [/^[A-Z0-9]{10,20}$/, 'Tracking number must be 10-20 alphanumeric characters']
+    match: [/^[A-Z0-9-]{5,30}$/, 'Tracking number must be 5-30 alphanumeric characters (hyphens allowed)']
   },
   userCode: {
     type: String,
