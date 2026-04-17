@@ -306,9 +306,10 @@ export class KCDWebhookController {
         timestamp: historyEntry.at
       }, 'Package status updated successfully');
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error processing KCD package updated webhook:', error);
-      errorResponse(res, 'Failed to process package update', 500);
+      logger.error('Error details:', error?.message || 'Unknown error');
+      errorResponse(res, `Failed to process package update: ${error?.message || 'Unknown error'}`, 500);
     }
   }
 
@@ -407,9 +408,10 @@ export class KCDWebhookController {
         message: 'Package deleted successfully'
       }, 'Package deleted successfully');
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error processing package deletion webhook:', error);
-      errorResponse(res, 'Failed to process package deletion', 500);
+      logger.error('Error details:', error?.message || 'Unknown error');
+      errorResponse(res, `Failed to process package deletion: ${error?.message || 'Unknown error'}`, 500);
     }
   }
 
@@ -482,9 +484,10 @@ export class KCDWebhookController {
         manifestDbId: newManifest._id
       }, 'Manifest created successfully');
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error processing KCD manifest created webhook:', error);
-      errorResponse(res, 'Failed to process manifest creation', 500);
+      logger.error('Error details:', error?.message || 'Unknown error');
+      errorResponse(res, `Failed to process manifest creation: ${error?.message || 'Unknown error'}`, 500);
     }
   }
 
