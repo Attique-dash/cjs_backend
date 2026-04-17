@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { Types } from 'mongoose';
 import { authKcdApiKey, AuthenticatedKcdRequest } from '../middleware/authKcd';
 import { 
@@ -11,6 +11,49 @@ import { Package } from '../models/Package';
 import { User } from '../models/User';
 
 const router = Router();
+
+// Middleware to normalize PascalCase (PDF format) fields to camelCase
+const normalizePdfFields = (req: Request, res: Response, next: NextFunction) => {
+  if (req.body && typeof req.body === 'object') {
+    const fieldMappings: Record<string, string> = {
+      'PackageID': 'packageId',
+      'TrackingNumber': 'trackingNumber',
+      'ControlNumber': 'controlNumber',
+      'HouseNumber': 'houseNumber',
+      'FirstName': 'firstName',
+      'LastName': 'lastName',
+      'UserCode': 'userCode',
+      'Weight': 'weight',
+      'Shipper': 'shipper',
+      'EntryDate': 'entryDate',
+      'EntryDateTime': 'entryDateTime',
+      'EntryStaff': 'entryStaff',
+      'Branch': 'branch',
+      'Description': 'description',
+      'Pieces': 'pieces',
+      'Cubes': 'cubes',
+      'Length': 'length',
+      'Width': 'width',
+      'Height': 'height',
+      'PackageStatus': 'status',
+      'Status': 'status',
+      'CourierID': 'courierId',
+      'ManifestID': 'manifestId',
+      'CollectionID': 'collectionId',
+      'Location': 'location',
+      'Notes': 'notes',
+      'CourierCode': 'courierCode',
+      'APIToken': 'apiToken'
+    };
+    
+    for (const [pascalCase, camelCase] of Object.entries(fieldMappings)) {
+      if (req.body[pascalCase] !== undefined && req.body[camelCase] === undefined) {
+        req.body[camelCase] = req.body[pascalCase];
+      }
+    }
+  }
+  next();
+};
 
 // ─────────────────────────────────────────────────────────────
 // GET /api/kcd/customers
@@ -68,6 +111,7 @@ router.get('/customers',
 // ─────────────────────────────────────────────────────────────
 router.post('/packages/add',
   authKcdApiKey,
+  normalizePdfFields,
   addPackageValidation,
   handleValidationErrors,
   async (req: AuthenticatedKcdRequest, res: Response): Promise<void> => {
