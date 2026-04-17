@@ -36,9 +36,9 @@ export const addPackageValidation = [
     .matches(/^[A-Z]{2,6}-\d{2,5}$/)
     .withMessage('Customer code must be in format CLEAN-XXXX (2-5 digits)'),
   
-  // Support both weight (camelCase) and Weight (PDF PascalCase)
+  // Support both weight (camelCase) and Weight (PDF PascalCase) - optional
   body(['weight', 'Weight'])
-    .optional()
+    .optional({ checkFalsy: true })
     .isFloat({ min: 0 })
     .withMessage('Weight must be a positive number'),
   

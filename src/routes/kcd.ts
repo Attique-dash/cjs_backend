@@ -72,33 +72,44 @@ router.post('/packages/add',
   handleValidationErrors,
   async (req: AuthenticatedKcdRequest, res: Response): Promise<void> => {
     try {
-      const {
-        trackingNumber,
-        userCode,
-        weight,
-        shipper,
-        description,
-        itemDescription,
-        serviceMode = 'local',
-        status = 'received',
-        dimensions,
-        senderName,
-        senderEmail,
-        senderPhone,
-        senderAddress,
-        senderCountry,
-        recipient,
-        itemValue,
-        specialInstructions,
-        isFragile,
-        isHazardous,
-        requiresSignature,
-        customsRequired,
-        customsStatus,
-        entryDate
-      } = req.body;
+      // Support both camelCase and PascalCase (PDF format) fields
+      const body = req.body;
+      
+      const trackingNumber = body.trackingNumber || body.TrackingNumber;
+      const userCode = body.userCode || body.UserCode;
+      const weight = body.weight || body.Weight;
+      const shipper = body.shipper || body.Shipper;
+      const description = body.description || body.Description;
+      const itemDescription = body.itemDescription || body.ItemDescription;
+      const serviceMode = body.serviceMode || body.ServiceMode || 'local';
+      const status = body.status || body.PackageStatus || body.Status || 'received';
+      const dimensions = body.dimensions || body.Dimensions;
+      const senderName = body.senderName || body.SenderName;
+      const senderEmail = body.senderEmail || body.SenderEmail;
+      const senderPhone = body.senderPhone || body.SenderPhone;
+      const senderAddress = body.senderAddress || body.SenderAddress;
+      const senderCountry = body.senderCountry || body.SenderCountry;
+      const recipient = body.recipient || body.Recipient;
+      const itemValue = body.itemValue || body.ItemValue;
+      const specialInstructions = body.specialInstructions || body.SpecialInstructions;
+      const isFragile = body.isFragile || body.IsFragile;
+      const isHazardous = body.isHazardous || body.IsHazardous;
+      const requiresSignature = body.requiresSignature || body.RequiresSignature;
+      const customsRequired = body.customsRequired || body.CustomsRequired;
+      const customsStatus = body.customsStatus || body.CustomsStatus;
+      const entryDate = body.entryDate || body.EntryDate || body.EntryDateTime;
 
       const authenticatedCourierCode = req.courierCode;
+
+      // Validate required fields
+      if (!userCode) {
+        res.status(400).json({
+          success: false,
+          message: 'Validation failed',
+          errors: [{ field: 'userCode', message: 'Customer code is required (userCode or UserCode)' }]
+        });
+        return;
+      }
 
       // Find the customer
       const customer = await User.findOne({ 
