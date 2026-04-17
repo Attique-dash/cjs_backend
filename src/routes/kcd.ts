@@ -9,6 +9,7 @@ import {
 } from '../validators/kcdValidators';
 import { Package } from '../models/Package';
 import { User } from '../models/User';
+import { EmailService } from '../services/emailService';
 
 const router = Router();
 
@@ -239,6 +240,30 @@ router.post('/packages/add',
       newPackage.trackingHistory = newPackage.trackingHistory || [];
       newPackage.trackingHistory.push(historyEntry);
       await newPackage.save();
+
+      // Send email notification to customer
+      try {
+        if (customer.email) {
+          await EmailService.sendPackagePreAlert(customer.email, {
+            trackingNumber: finalTrackingNumber,
+            shipper: shipper || 'Amazon',
+            weight: weight || 0,
+            mailboxNumber: customer.mailboxNumber || customer.userCode,
+            customerName: `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || 'Customer',
+            receivedDate: entryDate ? new Date(entryDate) : new Date(),
+            description: description || '',
+            itemDescription: itemDescription || '',
+            serviceMode: serviceMode || 'air',
+            status: status || 'received',
+            dimensions: dimensions || { length: 0, width: 0, height: 0, unit: 'cm' },
+            warehouseLocation: 'KCD Main Warehouse'
+          });
+          console.log(`[KCD Webhook] Email sent to ${customer.email} for package ${finalTrackingNumber}`);
+        }
+      } catch (emailError) {
+        console.error('[KCD Webhook] Failed to send email:', emailError);
+        // Don't fail the request if email fails
+      }
 
       res.status(201).json({
         success: true,
