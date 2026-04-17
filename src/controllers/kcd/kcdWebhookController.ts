@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import mongoose from 'mongoose';
 import { AuthRequest } from '../../middleware/auth';
 import { Package } from '../../models/Package';
 import { Manifest } from '../../models/Manifest';
@@ -421,12 +422,12 @@ export class KCDWebhookController {
       // Support both camelCase and PascalCase (PDF format)
       const manifestId = req.body.manifestId || req.body.ManifestID || req.body.manifestID;
       const courierCode = req.body.courierCode || req.body.CourierCode || req.body.CourierID;
-      const packages = req.body.packages || req.body.Packages;
+      const packageTrackingNumbers = req.body.packages || req.body.Packages;
       const departureDate = req.body.departureDate || req.body.DepartureDate;
       const arrivalDate = req.body.arrivalDate || req.body.ArrivalDate;
       const timestamp = req.body.timestamp || req.body.Timestamp;
 
-      if (!manifestId || !courierCode || !packages || !Array.isArray(packages)) {
+      if (!manifestId || !courierCode || !packageTrackingNumbers || !Array.isArray(packageTrackingNumbers)) {
         errorResponse(res, 'Missing required fields: manifestId, courierCode, packages', 400);
         return;
       }
@@ -438,32 +439,53 @@ export class KCDWebhookController {
         return;
       }
 
-      // Check if manifest already exists
-      const existingManifest = await Manifest.findOne({ manifestId });
+      // Check if manifest already exists (using manifestNumber field)
+      const existingManifest = await Manifest.findOne({ manifestNumber: manifestId });
       if (existingManifest) {
         errorResponse(res, `Manifest already exists: ${manifestId}`, 409);
         return;
       }
 
-      // Create new manifest
+      // Find packages by tracking numbers to get their ObjectIds
+      const packageDocs = await Package.find({ trackingNumber: { $in: packageTrackingNumbers } });
+      
+      if (packageDocs.length === 0) {
+        errorResponse(res, 'No packages found with the provided tracking numbers', 404);
+        return;
+      }
+
+      // Format packages for manifest (as array of objects with packageId and trackingNumber)
+      const manifestPackages = packageDocs.map(pkg => ({
+        packageId: pkg._id,
+        trackingNumber: pkg.trackingNumber,
+        status: 'pending' as const
+      }));
+
+      // Get API key record for createdBy
+      const apiKeyRecord = (req as any).apiKey;
+      const createdById = apiKeyRecord?.createdBy || new mongoose.Types.ObjectId();
+
+      // Create new manifest with proper structure
       const newManifest = new Manifest({
-        manifestId,
-        courierCode,
-        packages,
-        departureDate: departureDate ? new Date(departureDate) : new Date(),
-        arrivalDate: arrivalDate ? new Date(arrivalDate) : null,
-        status: 'created',
-        createdAt: new Date(timestamp || Date.now())
+        manifestNumber: manifestId,
+        warehouseId: new mongoose.Types.ObjectId(), // Create a new ObjectId for warehouse
+        packages: manifestPackages,
+        status: 'draft', // Use valid enum value
+        scheduledDate: departureDate ? new Date(departureDate) : new Date(),
+        totalPackages: manifestPackages.length,
+        deliveredPackages: 0,
+        createdBy: createdById,
+        createdAt: new Date(timestamp || Date.now()),
+        updatedAt: new Date()
       });
 
       await newManifest.save();
 
       // Update all packages in manifest to link them
       await Package.updateMany(
-        { trackingNumber: { $in: packages } },
+        { trackingNumber: { $in: packageTrackingNumbers } },
         { 
-          manifestId: newManifest._id,
-          status: 'in_transit',
+          $set: { manifestId: newManifest._id },
           $push: {
             history: {
               status: 'in_transit',
@@ -474,11 +496,12 @@ export class KCDWebhookController {
         }
       );
 
-      logger.info(`Manifest created from KCD webhook: ${manifestId} with ${packages.length} packages`);
+      logger.info(`Manifest created from KCD webhook: ${manifestId} with ${manifestPackages.length} packages`);
 
       successResponse(res, {
         manifestId,
-        packageCount: packages.length,
+        manifestNumber: manifestId,
+        packageCount: manifestPackages.length,
         departureDate,
         arrivalDate,
         manifestDbId: newManifest._id
