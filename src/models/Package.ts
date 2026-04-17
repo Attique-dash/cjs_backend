@@ -362,7 +362,7 @@ const packageSchema = new Schema<IPackage>({
   },
   status: {
     type: String,
-    enum: ['received', 'in_transit', 'out_for_delivery', 'delivered', 'pending', 'customs', 'returned', 'at_warehouse', 'processing', 'ready_for_pickup'],
+    enum: ['received', 'in_transit', 'out_for_delivery', 'delivered', 'pending', 'customs', 'returned', 'at_warehouse', 'processing', 'ready_for_pickup', 'processed'],
     default: 'received'
   },
   
