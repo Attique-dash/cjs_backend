@@ -1,13 +1,30 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiKey } from '../models/ApiKey';
-import { extractKcdToken, hashApiKey } from '../lib/kcd-token';
+import {
+  extractKcdToken,
+  hashApiKey,
+  isRealApiToken,
+} from '../lib/kcd-token';
 
 export interface AuthenticatedKcdRequest extends Request {
   kcdApiKey?: any;
   courierCode?: string;
+  kcdResolvedToken?: string;
 }
 
 // Generate API key — plain 48-char alphanumeric, NO prefix ever
+function injectResolvedTokenIntoBody(
+  req: AuthenticatedKcdRequest,
+  token: string
+): void {
+  if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) return;
+  const body = req.body as Record<string, unknown>;
+  if (!isRealApiToken(body.APIToken) && !isRealApiToken(body.apiToken)) {
+    body.APIToken = token;
+    body.apiToken = token;
+  }
+}
+
 export const generateApiKey = (): string => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
@@ -38,7 +55,8 @@ export const authKcdApiKey = async (
   try {
     if (req.method === 'OPTIONS') return next();
 
-    const { token, candidates, rejectedPlaceholders } = extractKcdToken(req);
+    const { token, candidates, rejectedPlaceholders, usedEnvFallback } =
+      extractKcdToken(req);
     const authChecked = candidates.map((c) => c.source);
 
     if (!token) {
@@ -64,12 +82,16 @@ export const authKcdApiKey = async (
         authChecked: [
           'query.id',
           'query.apiKey',
+          'query.apiToken',
+          'query.token',
+          'query.content',
           'header.authorization',
           'header.x-kcd-api-key',
           'header.x-api-key',
+          'body.token',
           'body.APIToken',
           'body.apiToken',
-          'body.token',
+          'env.KCD_API_KEY',
         ],
         errors,
         rejectedPlaceholders: rejectedPlaceholders.length
@@ -83,7 +105,9 @@ export const authKcdApiKey = async (
 
     const tokenSource = candidates[0]?.source ?? 'unknown';
     console.log(
-      `[KCD Auth] Token from ${tokenSource} (${token.substring(0, 8)}… len=${token.length})`
+      `[KCD Auth] Token from ${tokenSource} (${token.substring(0, 8)}… len=${token.length})${
+        usedEnvFallback ? ' [KCD_API_KEY env fallback for Askenish proxy]' : ''
+      }`
     );
 
     const envApiKey = process.env.KCD_API_KEY?.trim();
@@ -96,6 +120,8 @@ export const authKcdApiKey = async (
         isActive: true,
       };
       req.courierCode = 'CLEANJ';
+      req.kcdResolvedToken = token;
+      injectResolvedTokenIntoBody(req, token);
       return next();
     }
 
@@ -154,6 +180,8 @@ export const authKcdApiKey = async (
 
     req.kcdApiKey = kcdKey;
     req.courierCode = kcdKey.courierCode;
+    req.kcdResolvedToken = token;
+    injectResolvedTokenIntoBody(req, token);
     console.log('[KCD Auth] OK:', { courierCode: kcdKey.courierCode, path: req.path });
     next();
   } catch (error) {

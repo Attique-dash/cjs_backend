@@ -1,5 +1,9 @@
 import { Request } from 'express';
 import crypto from 'crypto';
+import {
+  extractApiTokenFromContentQuery,
+  looksLikeKcdPackageInbound,
+} from './kcd-inbound';
 
 /** Placeholder values Askenish/KCD send in sample payloads — not real tokens */
 const TOKEN_PLACEHOLDERS = new Set([
@@ -25,12 +29,16 @@ export function isRealApiToken(value: unknown): boolean {
 export type KcdTokenSource =
   | 'query.id'
   | 'query.apiKey'
+  | 'query.apiToken'
+  | 'query.token'
+  | 'query.content'
   | 'header.authorization'
   | 'header.x-kcd-api-key'
   | 'header.x-api-key'
+  | 'body.token'
   | 'body.APIToken'
   | 'body.apiToken'
-  | 'body.token';
+  | 'env.KCD_API_KEY';
 
 export type KcdTokenCandidate = {
   source: KcdTokenSource;
@@ -53,34 +61,60 @@ function tokenFromBody(body: unknown): KcdTokenCandidate[] {
   }
 
   for (const item of items) {
+    // Askenish proxy wrapper: prefer top-level token before package APIToken
     const pairs: Array<[KcdTokenSource, unknown]> = [
+      ['body.token', item.token],
       ['body.APIToken', item.APIToken],
       ['body.apiToken', item.apiToken],
-      ['body.token', item.token],
     ];
     for (const [source, raw] of pairs) {
       if (isRealApiToken(raw)) {
         found.push({ source, token: String(raw).trim() });
       }
     }
+
+    if (item.content !== undefined) {
+      let content: unknown = item.content;
+      if (typeof content === 'string') {
+        try {
+          content = JSON.parse(content);
+        } catch {
+          const fromQuery = extractApiTokenFromContentQuery(content);
+          if (fromQuery) {
+            found.push({ source: 'query.content', token: fromQuery });
+          }
+          continue;
+        }
+      }
+      found.push(...tokenFromBody(content));
+    }
   }
   return found;
 }
 
 /**
- * Collect API token from all KCD-supported locations.
- * Headers/query win over body so sample APIToken "<API-TOKEN>" does not override x-api-key.
+ * Collect API token from all KCD / Askenish-supported locations.
+ * Headers and query params are checked before body so "<API-TOKEN>" placeholders
+ * in package JSON do not override x-api-key or Authorization.
  */
 export function collectKcdTokenCandidates(req: Request): KcdTokenCandidate[] {
   const candidates: KcdTokenCandidate[] = [];
 
-  const queryId = req.query?.id;
-  if (typeof queryId === 'string' && isRealApiToken(queryId)) {
-    candidates.push({ source: 'query.id', token: queryId.trim() });
+  const queryParams: Array<[KcdTokenSource, unknown]> = [
+    ['query.id', req.query?.id],
+    ['query.apiKey', req.query?.apiKey ?? req.query?.api_key],
+    ['query.apiToken', req.query?.apiToken],
+    ['query.token', req.query?.token],
+  ];
+  for (const [source, raw] of queryParams) {
+    if (typeof raw === 'string' && isRealApiToken(raw)) {
+      candidates.push({ source, token: raw.trim() });
+    }
   }
-  const queryApiKey = req.query?.apiKey ?? req.query?.api_key;
-  if (typeof queryApiKey === 'string' && isRealApiToken(queryApiKey)) {
-    candidates.push({ source: 'query.apiKey', token: queryApiKey.trim() });
+
+  const fromContentQuery = extractApiTokenFromContentQuery(req.query?.content);
+  if (fromContentQuery) {
+    candidates.push({ source: 'query.content', token: fromContentQuery });
   }
 
   const authHeader = req.headers.authorization;
@@ -106,10 +140,30 @@ export function collectKcdTokenCandidates(req: Request): KcdTokenCandidate[] {
   return candidates;
 }
 
+export function resolveEnvAuthFallback(req: Request): string | null {
+  const envKey = process.env.KCD_API_KEY?.trim();
+  if (!envKey || !isRealApiToken(envKey)) return null;
+
+  const path = (req.originalUrl || req.path || '').toLowerCase();
+  const isCustomers = path.includes('/kcd/customers');
+  const isPackageAdd = path.includes('/kcd/packages/add');
+
+  if (isCustomers) {
+    return envKey;
+  }
+
+  if (isPackageAdd && looksLikeKcdPackageInbound(req.body)) {
+    return envKey;
+  }
+
+  return null;
+}
+
 export function extractKcdToken(req: Request): {
   token: string | null;
   candidates: KcdTokenCandidate[];
   rejectedPlaceholders: string[];
+  usedEnvFallback: boolean;
 } {
   const rejectedPlaceholders: string[] = [];
   const body = req.body;
@@ -139,9 +193,19 @@ export function extractKcdToken(req: Request): {
   }
 
   const candidates = collectKcdTokenCandidates(req);
-  const token = candidates.length > 0 ? candidates[0].token : null;
+  let token = candidates.length > 0 ? candidates[0].token : null;
+  let usedEnvFallback = false;
 
-  return { token, candidates, rejectedPlaceholders };
+  if (!token) {
+    const envFallback = resolveEnvAuthFallback(req);
+    if (envFallback) {
+      token = envFallback;
+      usedEnvFallback = true;
+      candidates.push({ source: 'env.KCD_API_KEY', token: envFallback });
+    }
+  }
+
+  return { token, candidates, rejectedPlaceholders, usedEnvFallback };
 }
 
 export function hashApiKey(key: string): string {

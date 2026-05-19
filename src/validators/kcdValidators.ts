@@ -57,9 +57,9 @@ export const addPackageValidation = [
       );
     }
     const normalized = String(raw).trim().toUpperCase();
-    if (!/^[A-Z]{2,6}-\d{2,6}$/.test(normalized)) {
+    if (!/^[A-Z0-9][A-Z0-9-]{1,29}$/.test(normalized)) {
       throw new Error(
-        'Customer code must be in format PREFIX-NNNN (2-6 digits, e.g. CLEAN-001322)'
+        'UserCode must be 2–30 characters (letters, numbers, hyphens), e.g. CLEAN-0033 or EPXUUYE'
       );
     }
     req.body.userCode = normalized;
@@ -216,9 +216,9 @@ export const updatePackageValidation = [
     const raw = b.userCode ?? b.UserCode;
     if (raw === undefined || raw === null || raw === '') return true;
     const normalized = String(raw).trim().toUpperCase();
-    if (!/^[A-Z]{2,6}-\d{2,6}$/.test(normalized)) {
+    if (!/^[A-Z0-9][A-Z0-9-]{1,29}$/.test(normalized)) {
       throw new Error(
-        'Customer code must be in format PREFIX-NNNN (2-6 digits, e.g. CLEAN-001322)'
+        'UserCode must be 2–30 characters (letters, numbers, hyphens), e.g. CLEAN-0033 or EPXUUYE'
       );
     }
     req.body.userCode = normalized;
