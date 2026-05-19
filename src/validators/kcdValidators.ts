@@ -23,18 +23,49 @@ export const generateApiKeyValidation = [
 
 // Validation for adding package - supports both camelCase and PascalCase (PDF format)
 export const addPackageValidation = [
-  // Support both trackingNumber (camelCase) and TrackingNumber (PDF PascalCase)
+  body().custom((_, { req }) => {
+    const b = req.body || {};
+    const tracking =
+      b.trackingNumber ?? b.TrackingNumber ?? b.tracking_number;
+    if (!tracking || !String(tracking).trim()) {
+      throw new Error(
+        'TrackingNumber is required (trackingNumber or TrackingNumber)'
+      );
+    }
+    const tn = String(tracking).trim();
+    if (tn.length < 3 || tn.length > 50) {
+      throw new Error('TrackingNumber must be 3–50 characters');
+    }
+    req.body.trackingNumber = tn;
+    req.body.TrackingNumber = tn;
+    return true;
+  }),
+
   body(['trackingNumber', 'TrackingNumber'])
     .optional()
     .isLength({ min: 3, max: 50 })
     .withMessage('Tracking number must be 3-50 characters'),
   
-  // Support both userCode (camelCase) and UserCode (PDF PascalCase)
-  body(['userCode', 'UserCode'])
-    .notEmpty()
-    .withMessage('Customer code is required')
-    .matches(/^[A-Z]{2,6}-\d{2,5}$/)
-    .withMessage('Customer code must be in format CLEAN-XXXX (2-5 digits)'),
+  // Single check for userCode / UserCode / customerMailbox (avoid duplicate field errors)
+  body().custom((_, { req }) => {
+    const b = req.body || {};
+    const raw =
+      b.userCode ?? b.UserCode ?? b.customerMailbox ?? b.customerCode;
+    if (!raw || !String(raw).trim()) {
+      throw new Error(
+        'Customer code is required (userCode, UserCode, customerMailbox, or customerCode)'
+      );
+    }
+    const normalized = String(raw).trim().toUpperCase();
+    if (!/^[A-Z]{2,6}-\d{2,6}$/.test(normalized)) {
+      throw new Error(
+        'Customer code must be in format PREFIX-NNNN (2-6 digits, e.g. CLEAN-001322)'
+      );
+    }
+    req.body.userCode = normalized;
+    req.body.UserCode = normalized;
+    return true;
+  }),
   
   // Support both weight (camelCase) and Weight (PDF PascalCase) - optional
   body(['weight', 'Weight'])
@@ -180,10 +211,20 @@ export const updatePackageValidation = [
     .isLength({ min: 3, max: 50 })
     .withMessage('Tracking number must be 3-50 characters'),
   
-  body('userCode')
-    .optional()
-    .matches(/^[A-Z]{2,6}-\d{3,5}$/)
-    .withMessage('Customer code must be in format CLEAN-XXXX (3-5 digits)'),
+  body().custom((_, { req }) => {
+    const b = req.body || {};
+    const raw = b.userCode ?? b.UserCode;
+    if (raw === undefined || raw === null || raw === '') return true;
+    const normalized = String(raw).trim().toUpperCase();
+    if (!/^[A-Z]{2,6}-\d{2,6}$/.test(normalized)) {
+      throw new Error(
+        'Customer code must be in format PREFIX-NNNN (2-6 digits, e.g. CLEAN-001322)'
+      );
+    }
+    req.body.userCode = normalized;
+    req.body.UserCode = normalized;
+    return true;
+  }),
   
   body('weight')
     .optional()
@@ -348,14 +389,28 @@ export const getCustomersValidation = [
 export const handleValidationErrors = (req: any, res: any, next: any) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    const seen = new Set<string>();
+    const mapped = errors.array().map((err: any) => {
+      const field = err.path || err.param || 'body';
+      const message =
+        typeof err.msg === 'string' ? err.msg : String(err.msg ?? 'Invalid value');
+      return {
+        field,
+        message,
+        ...(err.value !== undefined && err.value !== '' ? { value: err.value } : {}),
+      };
+    }).filter((e) => {
+      const key = `${e.field}:${e.message}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
     return res.status(400).json({
       success: false,
       message: 'Validation failed',
-      errors: errors.array().map((err: any) => ({
-        field: err.path || err.param,
-        message: err.msg,
-        value: err.value
-      }))
+      errorCode: 'KCD_VALIDATION_FAILED',
+      errors: mapped,
     });
   }
   next();

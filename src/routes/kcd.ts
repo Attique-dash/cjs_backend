@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { Types } from 'mongoose';
 import { authKcdApiKey, AuthenticatedKcdRequest } from '../middleware/authKcd';
+import { unwrapKcdPackageBody } from '../middleware/unwrapKcdBody';
 import { 
   addPackageValidation, 
   updatePackageValidation, 
@@ -111,6 +112,7 @@ router.get('/customers',
 // Add a new package - complete warehouse fields
 // ─────────────────────────────────────────────────────────────
 router.post('/packages/add',
+  unwrapKcdPackageBody,
   authKcdApiKey,
   normalizePdfFields,
   addPackageValidation,
